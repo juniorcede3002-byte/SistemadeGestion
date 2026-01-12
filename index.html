@@ -18,9 +18,9 @@ body{font-family:Arial;background:#f3f4f6;margin:0}
 header{background:#111827;color:#fff;padding:15px}
 .card{background:#fff;padding:15px;margin:15px;border-radius:8px}
 input,select,textarea,button{width:100%;margin-top:8px;padding:8px}
-button{background:#2563eb;color:#fff;border:none}
+button{background:#2563eb;color:#fff;border:none;cursor:pointer}
 table{width:100%;border-collapse:collapse}
-td,th{border:1px solid #ccc;padding:6px}
+td,th{border:1px solid #ccc;padding:6px;text-align:left}
 .hidden{display:none}
 </style>
 </head>
@@ -31,16 +31,20 @@ td,th{border:1px solid #ccc;padding:6px}
 <h2>📄 FCI – Sistema de Solicitudes Documentales</h2>
 </header>
 
+<!-- LOGIN -->
 <section id="login" class="card">
+<h3>Iniciar sesión</h3>
 <input id="email" placeholder="Correo">
 <input id="password" type="password" placeholder="Contraseña">
 <button onclick="login()">Ingresar</button>
 </section>
 
+<!-- PANEL PRINCIPAL -->
 <section id="panel" class="hidden">
 
 <div class="card">
-<h3>Nueva Solicitud</h3>
+<h3>➕ Nueva Solicitud</h3>
+
 <select id="tipoAccion">
 <option>Creación</option>
 <option>Modificación</option>
@@ -57,11 +61,11 @@ td,th{border:1px solid #ccc;padding:6px}
 <input type="date" id="fechaUltimaVersion">
 
 <input type="file" id="archivo">
-<button onclick="crearSolicitud()">Enviar</button>
+<button onclick="crearSolicitud()">Enviar Solicitud</button>
 </div>
 
 <div class="card">
-<h3>Solicitudes</h3>
+<h3>📋 Solicitudes</h3>
 <table>
 <thead>
 <tr>
@@ -78,25 +82,30 @@ td,th{border:1px solid #ccc;padding:6px}
 </section>
 
 <script>
-// ================= CONFIG =================
+// ================= CONFIG FIREBASE =================
 firebase.initializeApp({
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO"
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.firebasestorage.app",
+  messagingSenderId: "709030283072",
+  appId: "1:709030283072:web:5997837b36a448e9515ca5"
 });
 
-emailjs.init("EMAILJS_PUBLIC_KEY");
+emailjs.init("TU_PUBLIC_KEY_EMAILJS"); // Reemplaza con tu EmailJS Public Key
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 let usuario = {};
-// ========================================
+// ===================================================
 
+// LOGIN
 function login(){
-  auth.signInWithEmailAndPassword(email.value,password.value);
+  auth.signInWithEmailAndPassword(email.value,password.value)
+  .catch(err=>alert("Error: "+err.message));
 }
 
+// SESIÓN
 auth.onAuthStateChanged(async u=>{
   if(!u) return;
   const snap = await db.collection("users").doc(u.uid).get();
@@ -109,6 +118,7 @@ auth.onAuthStateChanged(async u=>{
   cargarSolicitudes();
 });
 
+// GENERAR ID UNICO
 async function generarID(){
   const ref = db.collection("counters").doc("global");
   return db.runTransaction(async t=>{
@@ -119,18 +129,18 @@ async function generarID(){
   });
 }
 
+// SUBIR ARCHIVO A CLOUDINARY
 async function subirArchivo(file){
   const form = new FormData();
-  form.append("file",file);
-  form.append("upload_preset","UPLOAD_PRESET");
-  const res = await fetch(
-    "https://api.cloudinary.com/v1_1/CLOUD_NAME/auto/upload",
-    {method:"POST",body:form}
-  );
+  form.append("file", file);
+  form.append("upload_preset", "fci_unsigned"); // tu preset
+  const res = await fetch("https://api.cloudinary.com/v1_1/df79cjklp/auto/upload",
+    {method:"POST", body:form});
   const data = await res.json();
   return data.secure_url;
 }
 
+// CREAR SOLICITUD
 async function crearSolicitud(){
   const id = await generarID();
   let url = "";
@@ -139,7 +149,7 @@ async function crearSolicitud(){
     url = await subirArchivo(archivo.files[0]);
   }
 
-  await db.collection("solicitudes").add({
+  const nuevaSolicitud = {
     idSolicitud:id,
     tipoAccion:tipoAccion.value,
     nombreDocumento:nombreDocumento.value,
@@ -156,50 +166,77 @@ async function crearSolicitud(){
       correo:usuario.correo
     },
     fecha:firebase.firestore.FieldValue.serverTimestamp()
-  });
+  };
+
+  await db.collection("solicitudes").add(nuevaSolicitud);
+
+  // AUTOREPLY AL USUARIO
+  enviarCorreo(usuario.correo,id,"Pendiente","Tu solicitud fue registrada correctamente.");
+
+  // NOTIFICACIÓN AL GERENTE (si hay email del gerente)
+  if(gerencia.value){
+    enviarCorreo("correo_gerente@empresa.com",id,"Pendiente de aprobación","Tienes una solicitud pendiente de revisión.");
+  }
 
   alert("Solicitud creada: "+id);
   cargarSolicitudes();
 }
 
+// CARGAR SOLICITUDES SEGUN ROL
 async function cargarSolicitudes(){
   tabla.innerHTML="";
   let q;
 
   if(usuario.rol==="usuario"){
-    q = db.collection("solicitudes")
-      .where("solicitante.uid","==",usuario.uid);
-  }else if(usuario.rol==="gerente"){
-    q = db.collection("solicitudes")
-      .where("gerencia","==",usuario.gerencia);
-  }else{
+    q = db.collection("solicitudes").where("solicitante.uid","==",usuario.uid);
+  } else if(usuario.rol==="gerente"){
+    q = db.collection("solicitudes").where("gerencia","==",usuario.gerencia);
+  } else {
     q = db.collection("solicitudes");
   }
 
   const snap = await q.get();
   snap.forEach(d=>{
     const s = d.data();
+    let boton = "";
+
+    if(usuario.rol==="gerente" && s.estado!=="finalizado"){
+      boton = `<button onclick="finalizar('${d.id}')">Finalizar</button>`;
+    }
+
     tabla.innerHTML+=`
     <tr>
       <td>${s.idSolicitud}</td>
       <td>${s.nombreDocumento}</td>
       <td>${s.estado}</td>
-      <td>
-        ${usuario.rol==="gerente" ? 
-          `<button onclick="finalizar('${d.id}')">Finalizar</button>` : ""}
-      </td>
+      <td>${boton}</td>
     </tr>`;
   });
 }
 
+// FINALIZAR SOLICITUD (SOLO GERENTE)
 async function finalizar(id){
   await db.collection("solicitudes").doc(id).update({
     estado:"finalizado",
     "gerente.aprobado":true,
     "gerente.nombre":usuario.correo
   });
+  // Notificación al solicitante
+  const doc = await db.collection("solicitudes").doc(id).get();
+  enviarCorreo(doc.data().solicitante.correo,doc.data().idSolicitud,"Finalizado","La solicitud fue aprobada y cerrada.");
   cargarSolicitudes();
 }
+
+// FUNCIÓN GENERAL EMAILJS
+function enviarCorreo(destino,id,estado,mensaje){
+  emailjs.send("TU_SERVICE_ID","TU_TEMPLATE_ID",{
+    to_email: destino,
+    id_solicitud: id,
+    estado: estado,
+    mensaje: mensaje
+  }).catch(err=>console.log("Error email:",err));
+}
+
 </script>
 
 </body>
