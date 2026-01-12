@@ -18,10 +18,10 @@
         .btn-grad { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); transition: transform 0.2s; }
         .btn-grad:hover { transform: translateY(-1px); box-shadow: 0 10px 15px -3px rgba(37,99,235,0.4); }
         .stat-card { padding: 20px; border-radius: 16px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; }
-        input, select, textarea { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; font-size: 0.9rem; outline: none; }
+        input, select, textarea { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; font-size: 0.9rem; outline: none; background: white; }
         input:focus { border-color: #3b82f6; ring: 2px solid #dbeafe; }
         th { background: #f8fafc; font-size: 0.7rem; font-weight: 800; color: #64748b; text-transform: uppercase; padding: 16px; letter-spacing: 0.05em; }
-        td { padding: 16px; border-bottom: 1px solid #f1f5f9; }
+        td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         .section-view { display: none; animation: fadeIn 0.4s ease-out; }
         .section-view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -75,28 +75,16 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div class="stat-card bg-white">
-                    <span class="text-slate-400 text-[10px] font-bold uppercase">Total Solicitudes</span>
-                    <span id="stat-total" class="text-3xl font-black text-slate-800">0</span>
-                </div>
-                <div class="stat-card bg-white border-l-4 border-l-blue-500">
-                    <span class="text-slate-400 text-[10px] font-bold uppercase">Pendientes</span>
-                    <span id="stat-pendientes" class="text-3xl font-black text-blue-600">0</span>
-                </div>
-                <div class="stat-card bg-white border-l-4 border-l-purple-500">
-                    <span class="text-slate-400 text-[10px] font-bold uppercase">Esperando Gerente</span>
-                    <span id="stat-gerente" class="text-3xl font-black text-purple-600">0</span>
-                </div>
-                <div class="stat-card bg-white border-l-4 border-l-emerald-500">
-                    <span class="text-slate-400 text-[10px] font-bold uppercase">Finalizados</span>
-                    <span id="stat-finalizados" class="text-3xl font-black text-emerald-600">0</span>
-                </div>
+                <div class="stat-card bg-white"><span class="text-slate-400 text-[10px] font-bold uppercase">Total</span><span id="stat-total" class="text-3xl font-black">0</span></div>
+                <div class="stat-card bg-white border-l-4 border-l-blue-500"><span class="text-slate-400 text-[10px] font-bold uppercase">Pendientes</span><span id="stat-pendientes" class="text-3xl font-black text-blue-600">0</span></div>
+                <div class="stat-card bg-white border-l-4 border-l-purple-500"><span class="text-slate-400 text-[10px] font-bold uppercase">Gerencia</span><span id="stat-gerente" class="text-3xl font-black text-purple-600">0</span></div>
+                <div class="stat-card bg-white border-l-4 border-l-emerald-500"><span class="text-slate-400 text-[10px] font-bold uppercase">Finalizados</span><span id="stat-finalizados" class="text-3xl font-black text-emerald-600">0</span></div>
             </div>
 
             <div class="glass-card p-8 border-l-8 border-blue-600">
-                <h3 class="text-lg font-bold mb-6">Nueva Solicitud</h3>
+                <h3 class="text-lg font-bold mb-6 italic">✨ Nueva Solicitud</h3>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="md:col-span-2"><label class="text-[10px] font-bold">Nombre del Documento</label><input type="text" id="solNombreDoc" class="w-full"></div>
+                    <div class="md:col-span-2"><label class="text-[10px] font-bold">Nombre del Documento</label><input type="text" id="solNombreDoc" class="w-full" placeholder="Ej: Manual de Operaciones"></div>
                     <div>
                         <label class="text-[10px] font-bold">Acción</label>
                         <select id="solTipoAccion" onchange="toggleModificacionFields()" class="w-full">
@@ -112,24 +100,24 @@
                     <div id="divVer" class="hidden"><label class="text-[10px] font-bold">Versión</label><input type="text" id="solVersion" class="w-full"></div>
                     <div id="divFec" class="hidden"><label class="text-[10px] font-bold">Fecha Versión</label><input type="date" id="solFechaVersion" class="w-full"></div>
 
-                    <div class="md:col-span-3"><label class="text-[10px] font-bold">Justificación</label><textarea id="solMotivo" class="w-full"></textarea></div>
+                    <div class="md:col-span-3"><label class="text-[10px] font-bold">Justificación</label><textarea id="solMotivo" class="w-full" placeholder="Escriba el motivo aquí..."></textarea></div>
                     <div class="md:col-span-2"><label class="text-[10px] font-bold">Adjuntar Archivo</label><input type="file" id="solDocumento" class="w-full bg-slate-50"></div>
-                    <div class="flex items-end"><button onclick="crearSolicitud()" class="btn-grad text-white w-full py-4 rounded-xl font-bold shadow-lg shadow-blue-500/30">ENVIAR SOLICITUD</button></div>
+                    <div class="flex items-end"><button onclick="crearSolicitud()" class="btn-grad text-white w-full py-4 rounded-xl font-bold">ENVIAR SOLICITUD</button></div>
                 </div>
             </div>
         </section>
 
         <section id="view-solicitudes" class="section-view">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-6">Bandeja de Solicitudes</h2>
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-6 italic">📋 Listado de Solicitudes</h2>
             <div class="glass-card overflow-hidden">
                 <table class="w-full text-left">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>Documento</th>
-                            <th>Ubicación</th>
+                            <th>Solicitante</th>
+                            <th>Estructura</th>
                             <th>Estado</th>
-                            <th>Gestión</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="solicitudesTableBody"></tbody>
@@ -138,40 +126,34 @@
         </section>
 
         <section id="view-estructura" class="section-view">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-6">Administración de Estructura</h2>
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-6">Administración</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div class="glass-card p-6">
-                    <h3 class="font-bold mb-4">Gerencias</h3>
-                    <div class="flex gap-2 mb-4"><input type="text" id="newGerencia" class="flex-1" placeholder="Nueva Gerencia..."><button onclick="crearGerencia()" class="bg-blue-600 text-white px-4 rounded-lg font-bold">+</button></div>
-                    <div class="max-h-96 overflow-y-auto"><table class="w-full text-xs"><tbody id="gerenciasTableBody"></tbody></table></div>
+                    <h3 class="font-bold mb-4 uppercase text-xs text-slate-400 tracking-widest">Gerencias</h3>
+                    <div class="flex gap-2 mb-4"><input type="text" id="newGerencia" class="flex-1" placeholder="Nombre..."><button onclick="crearGerencia()" class="bg-blue-600 text-white px-4 rounded-lg font-bold">+</button></div>
+                    <table class="w-full text-xs"><tbody id="gerenciasTableBody"></tbody></table>
                 </div>
                 <div class="glass-card p-6">
-                    <h3 class="font-bold mb-4">Departamentos</h3>
-                    <div class="flex gap-2 mb-4"><input type="text" id="newDepartamento" class="flex-1" placeholder="Nuevo Depto..."><button onclick="crearDepartamento()" class="bg-blue-600 text-white px-4 rounded-lg font-bold">+</button></div>
-                    <div class="max-h-96 overflow-y-auto"><table class="w-full text-xs"><tbody id="departamentosTableBody"></tbody></table></div>
+                    <h3 class="font-bold mb-4 uppercase text-xs text-slate-400 tracking-widest">Departamentos</h3>
+                    <div class="flex gap-2 mb-4"><input type="text" id="newDepartamento" class="flex-1" placeholder="Nombre..."><button onclick="crearDepartamento()" class="bg-blue-600 text-white px-4 rounded-lg font-bold">+</button></div>
+                    <table class="w-full text-xs"><tbody id="departamentosTableBody"></tbody></table>
                 </div>
             </div>
         </section>
 
         <section id="view-usuarios" class="section-view">
-            <h2 class="text-2xl font-extrabold text-slate-800 mb-6">Control de Usuarios</h2>
+            <h2 class="text-2xl font-extrabold text-slate-800 mb-6">Usuarios</h2>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div class="glass-card p-6 md:col-span-1">
-                    <h3 class="font-bold mb-4 border-b pb-2">Crear Usuario</h3>
-                    <label class="text-[10px] font-bold">Usuario</label><input type="text" id="newUser" class="w-full mb-2">
-                    <label class="text-[10px] font-bold">Rol</label>
+                <div class="glass-card p-6"><h3 class="font-bold mb-4 text-xs uppercase">Crear Usuario</h3>
+                    <input type="text" id="newUser" placeholder="Usuario" class="w-full mb-2">
                     <select id="newRole" class="w-full mb-2"><option value="user">Usuario</option><option value="gerente">Gerente</option><option value="admin">Admin</option></select>
-                    <label class="text-[10px] font-bold">Gerencia Asignada</label><select id="newUserGerencia" class="w-full mb-2"></select>
-                    <label class="text-[10px] font-bold">Password</label><input type="password" id="newPass" class="w-full mb-4">
-                    <button onclick="crearUsuario()" class="btn-grad text-white w-full py-3 rounded-lg font-bold">REGISTRAR</button>
+                    <select id="newUserGerencia" class="w-full mb-2"></select>
+                    <input type="password" id="newPass" placeholder="Password" class="w-full mb-4">
+                    <button onclick="crearUsuario()" class="btn-grad text-white w-full py-3 rounded-lg font-bold text-xs">REGISTRAR</button>
                 </div>
-                <div class="glass-card p-6 md:col-span-3">
-                    <h3 class="font-bold mb-4">Usuarios en el sistema</h3>
-                    <table class="w-full text-sm"><thead><tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Borrar</th></tr></thead><tbody id="usersTableBody"></tbody></table>
-                </div>
+                <div class="glass-card p-6 md:col-span-3"><table class="w-full text-sm"><thead><tr><th>User</th><th>Rol</th><th>Gerencia</th><th>Acción</th></tr></thead><tbody id="usersTableBody"></tbody></table></div>
             </div>
         </section>
-
     </main>
 </div>
 
@@ -179,7 +161,6 @@
     <div class="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl">
         <h3 class="text-xl font-bold mb-6">Actualizar Estado de Gestión</h3>
         <input type="hidden" id="modalSolId">
-        <label class="text-[10px] font-bold">Seleccionar Estado</label>
         <select id="modalEstadoAdmin" onchange="mostrarCamposModal()" class="w-full mb-4 font-bold text-blue-600">
             <option value="">Seleccione...</option>
             <option value="Pendiente">Pendiente</option>
@@ -189,8 +170,8 @@
             <option value="Aprobación SGC">Aprobación SGC</option>
             <option value="Solicitar Aprobación Gerente">SOLICITAR APROBACIÓN GERENTE</option>
         </select>
-        <div id="fieldFecha" class="hidden mb-4"><label class="text-[10px] font-bold">Citar para:</label><input type="datetime-local" id="modalFecha" class="w-full"></div>
-        <div id="fieldMotivoModal" class="hidden mb-6"><label class="text-[10px] font-bold">Observación/Motivo:</label><textarea id="modalMotivoExtra" class="w-full"></textarea></div>
+        <div id="fieldFecha" class="hidden mb-4"><input type="datetime-local" id="modalFecha" class="w-full"></div>
+        <textarea id="modalMotivoExtra" class="w-full mb-6" placeholder="Observaciones..."></textarea>
         <div class="grid grid-cols-2 gap-4">
             <button onclick="cerrarModal()" class="py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-xl">Cancelar</button>
             <button onclick="guardarGestionAdmin()" class="btn-grad text-white py-3 font-bold rounded-xl">Guardar</button>
@@ -199,7 +180,7 @@
 </div>
 
 <script>
-// --- FIREBASE ---
+// --- CONFIGURACIÓN ---
 const firebaseConfig = {
     apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
     authDomain: "sistemadegestion-7400d.firebaseapp.com",
@@ -213,30 +194,16 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 let currentUserData = null;
 
-// --- NAVEGACIÓN ---
-function showSection(id) {
-    document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.getElementById('nav-' + id.replace('view-', '')).classList.add('active');
-}
-
-function toggleModificacionFields() {
-    const a = document.getElementById("solTipoAccion").value;
-    const special = (a === "Modificación" || a === "Inactivación");
-    ["divCod", "divVer", "divFec"].forEach(id => document.getElementById(id).classList.toggle("hidden", !special));
-}
-
-// --- CORE ---
+// --- LOGIN ---
 async function login() {
     const u = document.getElementById("loginUser").value, p = document.getElementById("loginPass").value;
     if(u === "Admin" && p === "123456") { currentUserData = {usuario:"Admin", role:"admin", gerenciaId:"global"}; iniciarApp(); return; }
     const snap = await db.collection("users").where("usuario","==",u).where("password","==",p).get();
-    if(!snap.empty){ currentUserData = {id:snap.docs[0].id, ...snap.docs[0].data()}; iniciarApp(); } else alert("Error");
+    if(!snap.empty){ currentUserData = {id:snap.docs[0].id, ...snap.docs[0].data()}; iniciarApp(); } else alert("Error de acceso");
 }
 
 function iniciarApp() {
-    document.getElementById("loginDiv").classList.add("hidden");
+    document.getElementById("loginDiv").style.display = "none";
     document.getElementById("appDiv").classList.remove("hidden");
     document.getElementById("currentUser").innerText = currentUserData.usuario;
     document.getElementById("currentRole").innerText = currentUserData.role;
@@ -247,129 +214,122 @@ function iniciarApp() {
     actualizarTodo();
 }
 
-function actualizarTodo() { cargarListas(); cargarSolicitudes(); cargarUsuarios(); }
+function showSection(id) {
+    document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('nav-' + id.replace('view-', '')).classList.add('active');
+}
 
-// --- SOLICITUDES Y STATS ---
+function toggleModificacionFields() {
+    const a = document.getElementById("solTipoAccion").value;
+    const special = (a === "Modificación" || a === "Inactivación");
+    document.getElementById("divCod").classList.toggle("hidden", !special);
+    document.getElementById("divVer").classList.toggle("hidden", !special);
+    document.getElementById("divFec").classList.toggle("hidden", !special);
+}
+
+// --- DATOS ---
+async function cargarListas() {
+    const sg = document.getElementById("selectGerencia"), sd = document.getElementById("selectDepartamento"), su = document.getElementById("newUserGerencia"), tG = document.getElementById("gerenciasTableBody"), tD = document.getElementById("departamentosTableBody");
+    sg.innerHTML = sd.innerHTML = su.innerHTML = "<option value=''>Seleccione...</option>";
+    tG.innerHTML = tD.innerHTML = "";
+    
+    const gSnap = await db.collection("gerencias").get();
+    gSnap.forEach(doc => {
+        const d = doc.data();
+        sg.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`;
+        su.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`;
+        tG.innerHTML += `<tr><td class="p-2 font-bold">${d.nombre}</td><td class="text-right"><button onclick="eliminarDoc('gerencias','${doc.id}', cargarListas)" class="text-red-400">✕</button></td></tr>`;
+    });
+
+    const dSnap = await db.collection("departamentos").get();
+    dSnap.forEach(doc => {
+        const d = doc.data();
+        sd.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`;
+        tD.innerHTML += `<tr><td class="p-2 font-bold">${d.nombre}</td><td class="text-right"><button onclick="eliminarDoc('departamentos','${doc.id}', cargarListas)" class="text-red-400">✕</button></td></tr>`;
+    });
+}
+
 async function cargarSolicitudes() {
     const tb = document.getElementById("solicitudesTableBody"); tb.innerHTML = "";
-    const gSnap = await db.collection("gerencias").get(); const gers = {}; gSnap.forEach(d => gers[d.id] = d.data().nombre);
-    const dSnap = await db.collection("departamentos").get(); const deps = {}; dSnap.forEach(d => deps[d.id] = d.data().nombre);
+    const gers = {}, deps = {};
+    (await db.collection("gerencias").get()).forEach(d => gers[d.id] = d.data().nombre);
+    (await db.collection("departamentos").get()).forEach(d => deps[d.id] = d.data().nombre);
 
     const snap = await db.collection("solicitudes").orderBy("fecha", "desc").get();
-    
-    // Contadores para Estadísticas
-    let total = 0, pends = 0, ger = 0, fins = 0;
+    let t = 0, p = 0, g = 0, f = 0;
 
     snap.forEach(doc => {
         const d = doc.data();
-        
-        // Lógica de conteo (Filtro por gerencia si no es admin)
-        const belongsToMe = (currentUserData.role === 'admin' || d.gerenciaId === currentUserData.gerenciaId);
-        
-        if(belongsToMe) {
-            total++;
-            if(d.estado === "Pendiente") pends++;
-            if(d.estado === "Solicitar Aprobación Gerente") ger++;
-            if(d.estado === "Finalizado") fins++;
-        }
-
         if(currentUserData.role === "gerente" && d.gerenciaId !== currentUserData.gerenciaId) return;
-
-        let badge = "bg-slate-100 text-slate-600";
-        if(d.estado === "Pendiente") badge = "bg-blue-50 text-blue-600";
-        if(d.estado === "Solicitar Aprobación Gerente") badge = "bg-purple-100 text-purple-600 animate-pulse";
-        if(d.estado === "Finalizado") badge = "bg-emerald-50 text-emerald-600";
+        
+        t++;
+        if(d.estado === "Pendiente") p++;
+        if(d.estado === "Solicitar Aprobación Gerente") g++;
+        if(d.estado === "Finalizado") f++;
 
         tb.innerHTML += `<tr>
-            <td class="font-mono text-[10px] font-bold text-blue-600">${d.solId}</td>
-            <td><p class="font-bold text-sm">${d.nombreDoc}</p><p class="text-[9px] uppercase font-bold text-slate-400">${d.tipoAccion}</p></td>
-            <td><p class="text-[10px] font-bold">${gers[d.gerenciaId] || 'S/G'}</p><p class="text-[9px] text-slate-400">${deps[d.departamentoId] || ''}</p></td>
-            <td><span class="px-3 py-1 rounded-full text-[9px] font-bold ${badge}">${d.estado}</span></td>
+            <td class="font-mono text-blue-600 text-xs font-bold">${d.solId || 'N/A'}</td>
+            <td><p class="font-bold text-sm">${d.nombreDoc || 'Sin nombre'}</p><p class="text-[10px] text-slate-400 uppercase">${d.usuario || 'Anónimo'}</p></td>
+            <td><p class="text-xs font-bold">${gers[d.gerenciaId] || 'S/G'}</p><p class="text-[10px] text-slate-400">${deps[d.departamentoId] || ''}</p></td>
+            <td><span class="px-2 py-1 rounded-full text-[9px] font-bold ${d.estado === 'Finalizado' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}">${d.estado}</span></td>
             <td><div class="flex gap-2">
-                ${d.documento ? `<a href="${d.documento}" target="_blank">📄</a>`:''}
-                ${currentUserData.role === 'admin' ? `<button onclick="abrirModalAdmin('${doc.id}')" class="text-[10px] bg-slate-800 text-white px-3 py-1 rounded-lg">GESTIONAR</button>`:''}
-                ${(currentUserData.role === 'gerente' && d.estado === 'Solicitar Aprobación Gerente') ? `
-                    <button onclick="gestionarGerente('${doc.id}', 'Aprobado')" class="bg-emerald-500 text-white px-2 py-1 rounded text-[9px]">Aprobar</button>
-                    <button onclick="gestionarGerente('${doc.id}', 'Rechazado')" class="bg-red-500 text-white px-2 py-1 rounded text-[9px]">Rechazar</button>
-                `:''}
+                ${d.documento ? `<a href="${d.documento}" target="_blank" class="text-blue-500">📄</a>`:''}
+                ${currentUserData.role === 'admin' ? `<button onclick="abrirModalAdmin('${doc.id}')" class="bg-slate-800 text-white px-2 py-1 rounded text-[9px]">GESTIONAR</button>`:''}
+                ${(currentUserData.role === 'gerente' && d.estado === 'Solicitar Aprobación Gerente') ? `<button onclick="gestionarGerente('${doc.id}', 'Aprobado')" class="bg-emerald-500 text-white px-2 py-1 rounded text-[9px]">Aprobar</button>`:''}
             </div></td></tr>`;
     });
-
-    // Actualizar UI Stats
-    document.getElementById("stat-total").innerText = total;
-    document.getElementById("stat-pendientes").innerText = pends;
-    document.getElementById("stat-gerente").innerText = ger;
-    document.getElementById("stat-finalizados").innerText = fins;
+    document.getElementById("stat-total").innerText = t;
+    document.getElementById("stat-pendientes").innerText = p;
+    document.getElementById("stat-gerente").innerText = g;
+    document.getElementById("stat-finalizados").innerText = f;
 }
 
-// --- RESTO DE FUNCIONES (Igual que antes) ---
+// --- ACCIONES ---
 async function crearSolicitud() {
-    const n = document.getElementById("solNombreDoc").value, a = document.getElementById("solTipoAccion").value, g = document.getElementById("selectGerencia").value, d = document.getElementById("selectDepartamento").value, m = document.getElementById("solMotivo").value, f = document.getElementById("solDocumento").files[0];
-    if(!n || !g || !m) return alert("Faltan datos");
-    let url = ""; if(f){ const ref = storage.ref('docs/' + Date.now() + "_" + f.name); await ref.put(f); url = await ref.getDownloadURL(); }
-    const cRef = db.collection("counters").doc("solicitudes"), cSnap = await cRef.get();
-    let num = (cSnap.exists) ? cSnap.data().count + 1 : 1; await cRef.set({count: num});
-    const sid = "FCI-SOL-" + String(num).padStart(4, "0");
-    await db.collection("solicitudes").doc(sid).set({
-        solId: sid, nombreDoc: n, tipoAccion: a, usuario: currentUserData.usuario, gerenciaId: g, departamentoId: d, motivo: m, documento: url, estado: "Pendiente",
-        codificacion: document.getElementById("solCodificacion").value, version: document.getElementById("solVersion").value, fechaVersion: document.getElementById("solFechaVersion").value, fecha: new Date().toISOString()
-    });
-    alert("Enviada"); cargarSolicitudes();
-}
+    const btn = event.target; btn.disabled = true; btn.innerText = "Enviando...";
+    try {
+        const n = document.getElementById("solNombreDoc").value, a = document.getElementById("solTipoAccion").value, g = document.getElementById("selectGerencia").value, d = document.getElementById("selectDepartamento").value, m = document.getElementById("solMotivo").value, f = document.getElementById("solDocumento").files[0];
+        if(!n || !g || !m) throw "Complete campos obligatorios";
 
-async function cargarListas() {
-    const sg = document.getElementById("selectGerencia"), sd = document.getElementById("selectDepartamento"), su = document.getElementById("newUserGerencia"), tG = document.getElementById("gerenciasTableBody"), tD = document.getElementById("departamentosTableBody");
-    sg.innerHTML = sd.innerHTML = su.innerHTML = "<option value=''>Seleccione...</option>"; su.innerHTML += "<option value='global'>Global (Admin)</option>"; tG.innerHTML = tD.innerHTML = "";
-    const gSnap = await db.collection("gerencias").get();
-    gSnap.forEach(doc => {
-        const d = doc.data(); sg.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`; su.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`;
-        tG.innerHTML += `<tr><td class="font-bold">${d.nombre}</td><td class="text-right"><button onclick="eliminarDoc('gerencias','${doc.id}', cargarListas)" class="text-red-400">✕</button></td></tr>`;
-    });
-    const dSnap = await db.collection("departamentos").get();
-    dSnap.forEach(doc => {
-        const d = doc.data(); sd.innerHTML += `<option value="${doc.id}">${d.nombre}</option>`;
-        tD.innerHTML += `<tr><td class="font-bold">${d.nombre}</td><td class="text-right"><button onclick="eliminarDoc('departamentos','${doc.id}', cargarListas)" class="text-red-400">✕</button></td></tr>`;
-    });
+        let url = ""; if(f){ const ref = storage.ref('docs/' + Date.now() + "_" + f.name); await ref.put(f); url = await ref.getDownloadURL(); }
+
+        const cRef = db.collection("counters").doc("solicitudes"), cSnap = await cRef.get();
+        let num = (cSnap.exists) ? cSnap.data().count + 1 : 1; await cRef.set({count: num});
+        const sid = "FCI-SOL-" + String(num).padStart(4, "0");
+
+        await db.collection("solicitudes").add({
+            solId: sid, nombreDoc: n, tipoAccion: a, usuario: currentUserData.usuario, gerenciaId: g, departamentoId: d, motivo: m, documento: url, estado: "Pendiente", fecha: new Date().toISOString()
+        });
+        alert("Solicitud enviada con éxito"); cargarSolicitudes();
+    } catch(e) { alert(e); } finally { btn.disabled = false; btn.innerText = "ENVIAR SOLICITUD"; }
 }
 
 async function cargarUsuarios() {
     const t = document.getElementById("usersTableBody"); t.innerHTML = "";
     const gSnap = await db.collection("gerencias").get(); const gers = {global: "Global"}; gSnap.forEach(d => gers[d.id] = d.data().nombre);
-    const snap = await db.collection("users").get();
-    snap.forEach(doc => {
-        const d = doc.data(); t.innerHTML += `<tr><td class="font-bold">${d.usuario}</td><td><span class="bg-slate-100 px-2 py-1 rounded text-[10px] font-bold">${d.role}</span></td><td>${gers[d.gerenciaId] || 'S/G'}</td><td class="text-center"><button onclick="eliminarDoc('users','${doc.id}', cargarUsuarios)" class="text-red-500">✕</button></td></tr>`;
+    (await db.collection("users").get()).forEach(doc => {
+        const d = doc.data(); t.innerHTML += `<tr><td class="font-bold">${d.usuario}</td><td>${d.role}</td><td>${gers[d.gerenciaId] || '-'}</td><td><button onclick="eliminarDoc('users','${doc.id}', cargarUsuarios)" class="text-red-500">✕</button></td></tr>`;
     });
 }
 
 async function crearUsuario(){
     const u = document.getElementById("newUser").value, r = document.getElementById("newRole").value, g = document.getElementById("newUserGerencia").value, p = document.getElementById("newPass").value;
-    if(!u || !p) return alert("Campos vacíos");
-    await db.collection("users").add({usuario:u, role:r, gerenciaId:g, password:p});
-    alert("Usuario Creado"); cargarUsuarios();
+    if(u && p){ await db.collection("users").add({usuario:u, role:r, gerenciaId:g, password:p}); cargarUsuarios(); }
 }
 async function crearGerencia(){ const n = document.getElementById("newGerencia").value; if(n){ await db.collection("gerencias").add({nombre:n}); cargarListas(); } }
 async function crearDepartamento(){ const n = document.getElementById("newDepartamento").value; if(n){ await db.collection("departamentos").add({nombre:n}); cargarListas(); } }
 async function eliminarDoc(col, id, cb) { if(confirm("¿Seguro?")){ await db.collection(col).doc(id).delete(); cb(); } }
-
 function abrirModalAdmin(id) { document.getElementById("modalSolId").value = id; document.getElementById("modalAdmin").style.display = "flex"; }
 function cerrarModal() { document.getElementById("modalAdmin").style.display = "none"; }
-function mostrarCamposModal() {
-    const v = document.getElementById("modalEstadoAdmin").value;
-    document.getElementById("fieldFecha").classList.toggle("hidden", v !== "En Reunión");
-    document.getElementById("fieldMotivoModal").classList.toggle("hidden", !v || v === "Pendiente");
-}
+function mostrarCamposModal() { document.getElementById("fieldFecha").classList.toggle("hidden", document.getElementById("modalEstadoAdmin").value !== "En Reunión"); }
 async function guardarGestionAdmin() {
-    const id = document.getElementById("modalSolId").value, est = document.getElementById("modalEstadoAdmin").value, mot = document.getElementById("modalMotivoExtra").value;
-    let up = { estado: est, ultimoMotivo: mot };
-    if(est === "En Reunión") up.fechaReunion = document.getElementById("modalFecha").value;
-    await db.collection("solicitudes").doc(id).update(up);
+    await db.collection("solicitudes").doc(document.getElementById("modalSolId").value).update({ estado: document.getElementById("modalEstadoAdmin").value, ultimoMotivo: document.getElementById("modalMotivoExtra").value });
     cerrarModal(); cargarSolicitudes();
 }
-async function gestionarGerente(id, res){
-    const m = prompt("Motivo:");
-    await db.collection("solicitudes").doc(id).update({ estado: res === 'Aprobado' ? 'Finalizado' : 'Rechazado por Gerente', ultimoMotivo: m });
-    cargarSolicitudes();
-}
+async function gestionarGerente(id, res){ await db.collection("solicitudes").doc(id).update({ estado: 'Finalizado' }); cargarSolicitudes(); }
+function actualizarTodo() { cargarListas(); cargarSolicitudes(); cargarUsuarios(); }
 function logout() { location.reload(); }
 </script>
 </body>
