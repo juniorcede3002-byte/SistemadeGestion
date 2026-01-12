@@ -2,180 +2,211 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sistema de Gestión Documental</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FCI | Gestión Documental</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family: Arial, sans-serif;
-  background:#f3f4f6;
-}
-header{
-  background:#1f2937;
-  color:#fff;
-  padding:12px 16px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-button{
-  padding:8px 12px;
-  border:none;
-  background:#2563eb;
-  color:#fff;
-  border-radius:4px;
-  cursor:pointer;
-}
-button.secondary{
-  background:#6b7280;
-}
-.container{
-  padding:16px;
-}
-.card{
-  background:#fff;
-  padding:16px;
-  border-radius:6px;
-  margin-bottom:16px;
-}
-input,textarea,select{
-  width:100%;
-  padding:8px;
-  margin-top:6px;
-  margin-bottom:10px;
-}
-nav button{
-  margin-right:6px;
-}
-.hidden{
-  display:none;
-}
-.table{
-  width:100%;
-  border-collapse:collapse;
-}
-.table th,.table td{
-  border-bottom:1px solid #e5e7eb;
-  padding:8px;
-  text-align:left;
-}
-.badge{
-  padding:3px 8px;
-  border-radius:12px;
-  font-size:12px;
-  background:#e5e7eb;
-}
-.badge.pendiente{background:#fde68a;}
-.badge.aprobado{background:#86efac;}
+body{font-family:Arial;background:#f3f4f6;margin:0}
+header{background:#111827;color:#fff;padding:15px}
+.card{background:#fff;padding:15px;margin:15px;border-radius:8px}
+input,select,textarea,button{width:100%;margin-top:8px;padding:8px}
+button{background:#2563eb;color:#fff;border:none;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td,th{border:1px solid #ccc;padding:6px}
+.hidden{display:none}
+.badge{padding:4px 8px;border-radius:5px;background:#ddd}
 </style>
 </head>
 
 <body>
 
 <header>
-  <strong>Sistema de Gestión Documental</strong>
-  <div>
-    <span>Usuario: admin</span>
-    <button class="secondary">Salir</button>
-  </div>
+<h2>📄 FCI – Sistema de Gestión Documental</h2>
 </header>
 
-<div class="container">
+<section class="card">
+<h3>👤 Usuario activo</h3>
+<p><b>Usuario:</b> <span id="uNombre"></span></p>
+<p><b>Correo:</b> <span id="uCorreo"></span></p>
+<p><b>Rol:</b> <span id="uRol"></span></p>
+</section>
 
-  <!-- MENÚ -->
-  <nav>
-    <button onclick="mostrar('panel')">Panel</button>
-    <button onclick="mostrar('solicitudes')">Solicitudes</button>
-    <button onclick="mostrar('nueva')">Nueva Solicitud</button>
-    <button onclick="mostrar('perfil')">Perfil</button>
-  </nav>
+<!-- CREAR SOLICITUD -->
+<section class="card">
+<h3>➕ Nueva Solicitud</h3>
 
-  <!-- PANEL -->
-  <div id="panel" class="card">
-    <h3>Panel General</h3>
-    <p>Bienvenido al Sistema de Gestión Documental.</p>
-    <ul>
-      <li>📄 Gestión de solicitudes</li>
-      <li>📎 Adjuntar comprobantes</li>
-      <li>🖊 Firma de recepción</li>
-      <li>👤 Roles: usuario / administrador</li>
-    </ul>
-  </div>
+<select id="tipoAccion">
+<option>Creación</option>
+<option>Modificación</option>
+<option>Consulta</option>
+<option>Solicitar reunión</option>
+</select>
 
-  <!-- SOLICITUDES -->
-  <div id="solicitudes" class="card hidden">
-    <h3>Solicitudes</h3>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Título</th>
-          <th>Usuario</th>
-          <th>Estado</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>001</td>
-          <td>Solicitud de Compra</td>
-          <td>usuario1</td>
-          <td><span class="badge pendiente">Pendiente</span></td>
-          <td>
-            <button>Ver</button>
-            <button class="secondary">Adjuntar</button>
-          </td>
-        </tr>
-        <tr>
-          <td>002</td>
-          <td>Reembolso</td>
-          <td>usuario2</td>
-          <td><span class="badge aprobado">Aprobado</span></td>
-          <td>
-            <button>Ver</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+<input id="nombreDocumento" placeholder="Nombre del documento">
+<textarea id="motivo" placeholder="Motivo"></textarea>
 
-  <!-- NUEVA -->
-  <div id="nueva" class="card hidden">
-    <h3>Nueva Solicitud</h3>
-    <form>
-      <label>Título</label>
-      <input placeholder="Título del documento">
-      <label>Descripción</label>
-      <textarea rows="4" placeholder="Descripción detallada"></textarea>
-      <label>Adjuntar Comprobante</label>
-      <input type="file">
-      <button>Enviar Solicitud</button>
-    </form>
-  </div>
+<input type="date" id="fechaReunion" placeholder="Fecha reunión (si aplica)">
+<input type="file" id="archivo">
 
-  <!-- PERFIL -->
-  <div id="perfil" class="card hidden">
-    <h3>Perfil de Usuario</h3>
-    <p><strong>Nombre:</strong> Admin</p>
-    <p><strong>Rol:</strong> Administrador</p>
-    <p><strong>Historial:</strong></p>
-    <ul>
-      <li>Solicitud #001 – Pendiente</li>
-      <li>Solicitud #002 – Aprobada</li>
-    </ul>
-  </div>
+<button onclick="crearSolicitud()">Enviar Solicitud</button>
+</section>
 
-</div>
+<!-- SOLICITUDES -->
+<section class="card">
+<h3>📋 Solicitudes</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Documento</th>
+<th>Estado</th>
+<th>Solicitante</th>
+<th>Acción</th>
+</tr>
+</thead>
+<tbody id="tablaSolicitudes"></tbody>
+</table>
+</section>
+
+<!-- MODAL DETALLE -->
+<section id="detalle" class="card hidden"></section>
 
 <script>
-function mostrar(id){
-  ["panel","solicitudes","nueva","perfil"].forEach(v=>{
-    document.getElementById(v).classList.add("hidden");
-  });
-  document.getElementById(id).classList.remove("hidden");
-}
-</script>
+// ================= FIREBASE =================
+firebase.initializeApp({
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d"
+});
+const db = firebase.firestore();
 
+// ================= EMAILJS =================
+emailjs.init("2jVnfkJKKG0bpKN-U");
+
+// ================= USUARIO ACTIVO (CAMBIA AQUÍ) =================
+const usuarioActivo = {
+  usuario: "Admin",
+  correo: "admin@fci.com",
+  rol: "admin"
+};
+
+document.getElementById("uNombre").textContent = usuarioActivo.usuario;
+document.getElementById("uCorreo").textContent = usuarioActivo.correo;
+document.getElementById("uRol").textContent = usuarioActivo.rol;
+
+// ================= CONTADOR =================
+async function generarID(){
+  const ref = db.collection("counters").doc("solicitudes");
+  return db.runTransaction(async t=>{
+    const d = await t.get(ref);
+    let n = (d.exists ? d.data().valor : 0) + 1;
+    t.set(ref,{valor:n});
+    return "FCI-SOL-" + String(n).padStart(4,"0");
+  });
+}
+
+// ================= CLOUDINARY =================
+async function subirArchivo(file){
+  if(!file) return "";
+  const form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", "fci_documentos");
+
+  const res = await fetch(
+    "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload",
+    {method:"POST", body:form}
+  );
+
+  if(!res.ok) return "";
+  const data = await res.json();
+  return data.secure_url || "";
+}
+
+// ================= CREAR SOLICITUD =================
+async function crearSolicitud(){
+  const id = await generarID();
+  const archivo = document.getElementById("archivo").files[0];
+  const url = await subirArchivo(archivo);
+
+  await db.collection("solicitudes").add({
+    idSolicitud: id,
+    tipoAccion: tipoAccion.value,
+    documento: nombreDocumento.value,
+    motivo: motivo.value,
+    fechaReunion: fechaReunion.value || "",
+    archivo: url,
+    estado: "Pendiente",
+    solicitante: {
+      usuario: usuarioActivo.usuario,
+      correo: usuarioActivo.correo
+    },
+    fecha: firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  cargarSolicitudes();
+}
+
+// ================= LISTAR =================
+async function cargarSolicitudes(){
+  tablaSolicitudes.innerHTML="";
+  const snap = await db.collection("solicitudes").orderBy("fecha","desc").get();
+
+  snap.forEach(doc=>{
+    const s = doc.data();
+    tablaSolicitudes.innerHTML += `
+      <tr>
+        <td>${s.idSolicitud}</td>
+        <td>${s.documento}</td>
+        <td><span class="badge">${s.estado}</span></td>
+        <td>${s.solicitante.usuario}</td>
+        <td><button onclick="verDetalle('${doc.id}')">Ver</button></td>
+      </tr>`;
+  });
+}
+
+// ================= DETALLE =================
+async function verDetalle(id){
+  const d = await db.collection("solicitudes").doc(id).get();
+  const s = d.data();
+
+  detalle.classList.remove("hidden");
+  detalle.innerHTML = `
+    <h3>📄 ${s.idSolicitud}</h3>
+    <p><b>Documento:</b> ${s.documento}</p>
+    <p><b>Motivo:</b> ${s.motivo}</p>
+    <p><b>Solicitante:</b> ${s.solicitante.usuario} (${s.solicitante.correo})</p>
+    <p><b>Estado:</b> ${s.estado}</p>
+
+    ${usuarioActivo.rol==="admin" ? `
+    <select id="nuevoEstado">
+      <option>Pendiente</option>
+      <option>Consulta</option>
+      <option>Aprobado</option>
+      <option>Verificado</option>
+      <option>Finalizado</option>
+    </select>
+    <button onclick="cambiarEstado('${id}')">Actualizar Estado</button>
+    ` : ""}
+  `;
+}
+
+async function cambiarEstado(id){
+  await db.collection("solicitudes").doc(id).update({
+    estado: document.getElementById("nuevoEstado").value
+  });
+  cargarSolicitudes();
+  detalle.classList.add("hidden");
+}
+
+// ================= INIT =================
+cargarSolicitudes();
+</script>
 </body>
 </html>
