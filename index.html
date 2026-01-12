@@ -2,233 +2,225 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Vendors | Sistema de Gestión</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Gestión Documental</title>
 
-<!-- Firebase COMPAT -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+<!-- Icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 <style>
-body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0 }
-header { background:#111; color:#fff; padding:15px }
-section { padding:20px }
-.card { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px }
-input, select, textarea, button {
-  width:100%; padding:10px; margin-top:5px; margin-bottom:10px
-}
-button { cursor:pointer; background:#111; color:#fff; border:none }
-.hidden { display:none }
-.admin { border-left:5px solid #e53935 }
-.user { border-left:5px solid #43a047 }
+body{margin:0;font-family:Arial;background:#f4f4f4}
+header{background:#111;color:#fff;padding:15px;display:flex;justify-content:space-between}
+button,input,select{padding:10px;margin-top:8px;width:100%}
+.container{padding:20px;display:none}
+.tabs button{width:auto;margin-right:5px}
+.card{background:#fff;padding:15px;border-radius:8px;margin-top:15px}
+.status-pendiente{color:orange}
+.status-revision-de-pago{color:#2196f3}
+.status-pago-verificado{color:green}
+.status-entregado{color:black}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
+.modal-content{background:#fff;padding:20px;border-radius:8px;width:90%;max-width:500px}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h2>Vendors – Sistema de Gestión</h2>
+  <strong>Sistema de Gestión Documental</strong>
+  <div>
+    <span id="userLabel"></span>
+    <button onclick="logout()">Salir</button>
+  </div>
 </header>
 
-<section id="login">
-  <h3>Iniciar sesión</h3>
-  <form onsubmit="login(event)">
-    <input id="username" placeholder="Usuario" required>
-    <input id="password" type="password" placeholder="Contraseña" required>
-    <button>Entrar</button>
-  </form>
-</section>
+<div class="container" id="login">
+  <h2>Iniciar Sesión</h2>
+  <input id="user" placeholder="Usuario">
+  <input id="pass" type="password" placeholder="Contraseña">
+  <button onclick="login()">Entrar</button>
+</div>
 
-<section id="panel" class="hidden"></section>
+<div class="container" id="app">
+  <div class="tabs">
+    <button onclick="showTab('products')">Productos</button>
+    <button onclick="showTab('cart')">Carrito</button>
+    <button onclick="showTab('orders')">Mis Solicitudes</button>
+    <button id="adminBtn" onclick="showTab('admin')">Admin</button>
+  </div>
+
+  <div id="products" class="card"></div>
+  <div id="cart" class="card"></div>
+  <div id="orders" class="card"></div>
+  <div id="admin" class="card"></div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <div id="modalBody"></div>
+    <button onclick="closeModal()">Cerrar</button>
+  </div>
+</div>
 
 <script>
-/* =====================================================
-   🔥 FIREBASE CONFIG (TU API – NO SE ELIMINA NADA)
-===================================================== */
-
-// Tu configuración original ADAPTADA a compat
+// 🔥 FIREBASE CONFIG
 firebase.initializeApp({
   apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
   authDomain: "sistemadegestion-7400d.firebaseapp.com",
-  projectId: "sistemadegestion-7400d",
-  storageBucket: "sistemadegestion-7400d.firebasestorage.app",
-  messagingSenderId: "709030283072",
-  appId: "1:709030283072:web:5997837b36a448e9515ca5"
+  projectId: "sistemadegestion-7400d"
 });
-
 const db = firebase.firestore();
 
-/* =====================================================
-   🔐 LOGIN INTERNO (SIN FIREBASE AUTH)
-===================================================== */
+// 👤 USUARIOS INTERNOS
+const USERS = [
+  {user:"admin",pass:"123456",role:"admin"},
+  {user:"usuario1",pass:"123456",role:"user"}
+];
 
-let currentUser = null;
+let currentUser=null;
+let role=null;
+let cart=[];
 
-async function login(e){
-  e.preventDefault();
-
-  const user = username.value.trim();
-  const pass = password.value.trim();
-
-  const snap = await db.collection("users")
-    .where("username","==",user)
-    .where("password","==",pass)
-    .get();
-
-  if(snap.empty){
-    alert("Credenciales incorrectas");
-    return;
-  }
-
-  currentUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
-  document.getElementById("login").classList.add("hidden");
-  loadPanel();
+// 🔐 LOGIN
+function login(){
+  const u=user.value,p=pass.value;
+  const found=USERS.find(x=>x.user===u&&x.pass===p);
+  if(!found) return alert("Credenciales incorrectas");
+  currentUser=u; role=found.role;
+  sessionStorage.setItem("user",u);
+  sessionStorage.setItem("role",role);
+  init();
 }
 
-/* =====================================================
-   🧠 PANEL PRINCIPAL
-===================================================== */
-
-function loadPanel(){
-  panel.classList.remove("hidden");
-  panel.innerHTML = `
-    <h3>Bienvenido, ${currentUser.name}</h3>
-    <p><b>Rol:</b> ${currentUser.role}</p>
-
-    ${currentUser.role === "admin" ? `
-      <button onclick="showCreateUser()">Crear Usuario</button>
-      <button onclick="loadOrders(true)">Ver Todos los Pedidos</button>
-    ` : `
-      <button onclick="createOrder()">Nueva Solicitud</button>
-      <button onclick="loadOrders(false)">Mis Solicitudes</button>
-    `}
-
-    <div id="content"></div>
-  `;
+function logout(){
+  sessionStorage.clear();
+  location.reload();
 }
 
-/* =====================================================
-   👤 ADMIN – CREAR USUARIOS
-===================================================== */
-
-function showCreateUser(){
-  content().innerHTML = `
-    <h4>Crear Usuario</h4>
-    <form onsubmit="createUser(event)">
-      <input placeholder="Nombre" required>
-      <input placeholder="Usuario" required>
-      <input placeholder="Contraseña" required>
-      <select>
-        <option value="user">Usuario</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button>Crear</button>
-    </form>
-  `;
+function init(){
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  userLabel.innerText=`Usuario: ${currentUser} (${role})`;
+  adminBtn.style.display=role==="admin"?"inline":"none";
+  loadProducts();
+  loadOrders();
+  showTab("products");
 }
 
-async function createUser(e){
-  e.preventDefault();
-  const f = e.target;
-
-  await db.collection("users").add({
-    name: f[0].value,
-    username: f[1].value,
-    password: f[2].value,
-    role: f[3].value,
-    createdAt: Date.now()
-  });
-
-  alert("Usuario creado correctamente");
-  f.reset();
+// 🧭 TABS
+function showTab(id){
+  ["products","cart","orders","admin"].forEach(t=>document.getElementById(t).style.display="none");
+  document.getElementById(id).style.display="block";
+  if(id==="cart") renderCart();
+  if(id==="admin") loadAdminOrders();
 }
 
-/* =====================================================
-   📦 USUARIO – CREAR SOLICITUD
-===================================================== */
-
-function createOrder(){
-  content().innerHTML = `
-    <h4>Nueva Solicitud</h4>
-    <form onsubmit="saveOrder(event)">
-      <input placeholder="Producto" required>
-      <textarea placeholder="Descripción" required></textarea>
-      <input type="number" placeholder="Precio" required>
-      <button>Enviar Solicitud</button>
-    </form>
-  `;
-}
-
-async function saveOrder(e){
-  e.preventDefault();
-  const f = e.target;
-
-  await db.collection("orders").add({
-    userId: currentUser.id,
-    product: f[0].value,
-    description: f[1].value,
-    price: Number(f[2].value),
-    status: "pendiente",
-    createdAt: Date.now()
-  });
-
-  alert("Solicitud enviada");
-  f.reset();
-}
-
-/* =====================================================
-   📋 PEDIDOS (ADMIN / USER)
-===================================================== */
-
-function loadOrders(isAdmin){
-  let q = db.collection("orders");
-  if(!isAdmin){
-    q = q.where("userId","==",currentUser.id);
-  }
-
-  q.onSnapshot(snap=>{
-    content().innerHTML = "<h4>Solicitudes</h4>";
-
-    snap.forEach(doc=>{
-      const o = doc.data();
-      content().innerHTML += `
-        <div class="card ${isAdmin?'admin':'user'}">
-          <b>${o.product}</b>
-          <p>${o.description}</p>
-          <p><b>$${o.price}</b></p>
-          <p>Estado: ${o.status}</p>
-
-          ${!isAdmin ? `
-            <input placeholder="URL comprobante" onchange="addReceipt('${doc.id}',this.value)">
-          ` : `
-            <select onchange="updateStatus('${doc.id}',this.value)">
-              <option ${o.status==='pendiente'?'selected':''}>pendiente</option>
-              <option ${o.status==='en revisión'?'selected':''}>en revisión</option>
-              <option ${o.status==='aprobado'?'selected':''}>aprobado</option>
-              <option ${o.status==='entregado'?'selected':''}>entregado</option>
-            </select>
-          `}
-        </div>
-      `;
+// 🛍 PRODUCTOS
+function loadProducts(){
+  db.collection("products").onSnapshot(s=>{
+    products.innerHTML="<h3>Productos</h3>";
+    s.forEach(d=>{
+      const p=d.data();
+      products.innerHTML+=`
+        <div class="card">
+          <b>${p.name}</b> - $${p.price}
+          <button onclick="addToCart('${p.name}',${p.price})">Agregar</button>
+        </div>`;
     });
   });
 }
 
-function addReceipt(id,url){
-  db.collection("orders").doc(id).update({
-    receiptUrl: url,
-    status: "en revisión"
+function addToCart(name,price){
+  cart.push({name,price});
+  alert("Agregado");
+}
+
+// 🛒 CARRITO
+function renderCart(){
+  cartDiv.innerHTML="";
+  cart.innerHTML="<h3>Carrito</h3>";
+  let total=0;
+  cart.forEach(p=>{total+=p.price;cart.innerHTML+=`<p>${p.name} $${p.price}</p>`});
+  cart.innerHTML+=`<b>Total: $${total}</b>
+  <button onclick="checkout()">Enviar Solicitud</button>`;
+}
+
+function checkout(){
+  if(cart.length===0) return;
+  db.collection("orders").add({
+    owner:currentUser,
+    products:cart,
+    status:"pendiente",
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  cart=[];
+  alert("Solicitud enviada");
+}
+
+// 📦 SOLICITUDES USUARIO
+function loadOrders(){
+  db.collection("orders").orderBy("createdAt","desc").onSnapshot(s=>{
+    orders.innerHTML="<h3>Mis Solicitudes</h3>";
+    s.forEach(d=>{
+      const o=d.data();
+      if(o.owner!==currentUser && role!=="admin") return;
+      orders.innerHTML+=`
+      <div class="card">
+        Estado: <span class="status-${o.status.replace(/ /g,'-')}">${o.status}</span>
+        <ul>${o.products.map(p=>`<li>${p.name}</li>`).join("")}</ul>
+        ${!o.comprobante?`<input type="file" onchange="uploadComprobante('${d.id}',this.files[0])">`:`<img src="${o.comprobante}" width="150">`}
+      </div>`;
+    });
   });
 }
 
-function updateStatus(id,status){
-  db.collection("orders").doc(id).update({ status });
+// 🧾 ADMIN
+function loadAdminOrders(){
+  admin.innerHTML="<h3>Panel Admin</h3>";
+  db.collection("orders").onSnapshot(s=>{
+    admin.innerHTML="<h3>Panel Admin</h3>";
+    s.forEach(d=>{
+      const o=d.data();
+      admin.innerHTML+=`
+      <div class="card">
+        ${o.owner} - ${o.status}
+        <select onchange="updateStatus('${d.id}',this.value)">
+          <option>pendiente</option>
+          <option>revision de pago</option>
+          <option>pago verificado</option>
+          <option>entregado</option>
+        </select>
+      </div>`;
+    });
+  });
 }
 
-function content(){
-  return document.getElementById("content");
+function updateStatus(id,v){
+  db.collection("orders").doc(id).update({status:v});
+}
+
+// ☁ CLOUDINARY
+async function uploadComprobante(id,file){
+  const fd=new FormData();
+  fd.append("file",file);
+  fd.append("upload_preset","vendors_preset");
+  const r=await fetch("https://api.cloudinary.com/v1_1/df79cjklp/upload",{method:"POST",body:fd});
+  const j=await r.json();
+  await db.collection("orders").doc(id).update({comprobante:j.secure_url,status:"revision de pago"});
+  alert("Comprobante enviado");
+}
+
+// AUTO INIT
+if(sessionStorage.getItem("user")){
+  currentUser=sessionStorage.getItem("user");
+  role=sessionStorage.getItem("role");
+  init();
+}else{
+  login.style.display="block";
 }
 </script>
-
 </body>
 </html>
