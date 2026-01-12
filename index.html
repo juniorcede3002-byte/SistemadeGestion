@@ -131,7 +131,6 @@ const firebaseConfig = {
   messagingSenderId: "709030283072",
   appId: "1:709030283072:web:5997837b36a448e9515ca5"
 };
-
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 emailjs.init("2jVnfkJKKG0bpKN-U");
@@ -141,13 +140,31 @@ let usuarioActual = null;
 
 // ================= LOGIN =================
 async function login(){
-  const user = document.getElementById("loginUser").value;
-  const pass = document.getElementById("loginPass").value;
+  const userInput = document.getElementById("loginUser").value;
+  const passInput = document.getElementById("loginPass").value;
   const loginError = document.getElementById("loginError");
 
+  // Usuario Admin fijo
+  if(userInput === "Admin" && passInput === "123456"){
+    usuarioActual = {
+      uid: "admin-001",
+      usuario: "Admin",
+      correo: "admin@fcipty.com",
+      rol: "admin",
+      gerencia: "Gerencia Demo",
+      activo: true
+    };
+    loginError.innerText = "";
+    document.getElementById("loginPanel").classList.add("hidden");
+    document.getElementById("panel").classList.remove("hidden");
+    cargarUsuarios(); cargarGerencias(); cargarDepartamentos(); cargarSolicitudes();
+    return;
+  }
+
+  // Verificar usuarios creados manualmente
   const snap = await db.collection("users")
-    .where("usuario","==",user)
-    .where("password","==",pass)
+    .where("usuario","==",userInput)
+    .where("password","==",passInput)
     .get();
 
   if(!snap.empty){
@@ -187,13 +204,8 @@ async function crearSolicitud(){
   const archivoFile = document.getElementById("archivo").files[0];
   let url = null;
   if(archivoFile){
-    try{
-      url = await subirArchivo(archivoFile);
-    } catch(err){
-      console.error("Error subiendo archivo:", err);
-      alert("No se pudo subir el archivo");
-      return;
-    }
+    try{ url = await subirArchivo(archivoFile); } 
+    catch(err){ console.error("Error subiendo archivo:", err); alert("No se pudo subir el archivo"); return; }
   }
 
   const id = await generarID();
