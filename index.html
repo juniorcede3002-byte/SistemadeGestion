@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Gestión FCI 🗂️</title>
+<title>Sistema de Gestión FCI</title>
 <style>
 body { font-family: Arial; margin:0; background:#f4f6f8; }
 header { background:#2c3e50; color:white; padding:15px; text-align:center; }
 .container { padding:20px; }
 input, select, button, textarea { padding:5px; margin:5px 0; width:100%; }
 button { cursor:pointer; }
-.tabs { display:flex; gap:10px; margin-bottom:10px; }
+.tabs { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
 .tab { padding:10px 15px; background:#ccc; cursor:pointer; border-radius:5px; }
 .tab.active { background:#2c3e50; color:white; }
 .tabContent { display:none; }
@@ -18,6 +18,7 @@ button { cursor:pointer; }
 table { width:100%; border-collapse: collapse; margin-top:10px; }
 table, th, td { border:1px solid #ccc; }
 th, td { padding:5px; text-align:left; }
+.commentBox { margin-top:5px; }
 </style>
 </head>
 <body>
@@ -40,6 +41,180 @@ th, td { padding:5px; text-align:left; }
   <button id="btnLogout" style="background:#e74c3c;color:white;">Cerrar sesión</button>
 </div>
 
-<script type="module" src="app.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, query, where, getDocs, addDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.appspot.com",
+  messagingSenderId: "709030283072",
+  appId: "1:709030283072:web:5997837b36a448e9515ca5"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Variables globales
+let currentUser = null;
+
+// LOGIN
+document.getElementById("btnLogin").addEventListener("click", async () => {
+  const usuario = document.getElementById("usuario").value;
+  const password = document.getElementById("password").value;
+  if(!usuario || !password){ alert("Ingrese usuario y contraseña"); return; }
+
+  const q = query(collection(db, "usuarios"), where("usuario","==",usuario), where("password","==",password));
+  const snapshot = await getDocs(q);
+
+  if(snapshot.empty){ alert("Usuario o contraseña incorrectos"); return; }
+
+  currentUser = snapshot.docs[0].data();
+  document.getElementById("loginDiv").style.display = "none";
+  document.getElementById("dashboardDiv").style.display = "block";
+  cargarDashboard();
+});
+
+document.getElementById("btnLogout").addEventListener("click", () => {
+  currentUser = null;
+  document.getElementById("loginDiv").style.display = "block";
+  document.getElementById("dashboardDiv").style.display = "none";
+});
+
+// DASHBOARD
+function cargarDashboard() {
+  const tabsDiv = document.getElementById("tabsDiv");
+  const tabContents = document.getElementById("tabContents");
+  tabsDiv.innerHTML = ""; tabContents.innerHTML = "";
+
+  const tabs = [];
+  if(currentUser.rol==="Admin"){ tabs.push({name:"Usuarios",id:"usuariosTab"}); tabs.push({name:"Solicitudes",id:"solicitudesTab"}); tabs.push({name:"Nueva Solicitud",id:"nuevaSolicitudTab"}); }
+  if(currentUser.rol==="Gerente"){ tabs.push({name:"Solicitudes",id:"solicitudesTab"}); tabs.push({name:"Nueva Solicitud",id:"nuevaSolicitudTab"}); }
+  if(currentUser.rol==="Usuario"){ tabs.push({name:"Mis Solicitudes",id:"solicitudesTab"}); tabs.push({name:"Nueva Solicitud",id:"nuevaSolicitudTab"}); }
+
+  tabs.forEach((t,i)=>{
+    const tab = document.createElement("div");
+    tab.className="tab"+(i===0?" active":""); tab.textContent=t.name;
+    tab.onclick=()=>abrirTab(t.id); tabsDiv.appendChild(tab);
+    const content = document.createElement("div"); content.id=t.id; content.className="tabContent"+(i===0?" active":""); tabContents.appendChild(content);
+  });
+  cargarContenidoTabs();
+}
+
+function abrirTab(tabId){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tabContent").forEach(tc=>tc.classList.remove("active"));
+  const tabs = Array.from(document.querySelectorAll(".tab"));
+  tabs[tabs.findIndex(t=>t.textContent.includes(tabId.split("Tab")[0]))].classList.add("active");
+  document.getElementById(tabId).classList.add("active");
+}
+
+// CONTENIDO
+function cargarContenidoTabs(){
+  if(currentUser.rol==="Admin") cargarUsuarios();
+  cargarSolicitudes();
+  cargarNuevaSolicitud();
+}
+
+// USUARIOS
+async function cargarUsuarios(){
+  const container=document.getElementById("usuariosTab");
+  container.innerHTML="<h3>Usuarios</h3>";
+  const snapshot = await getDocs(collection(db,"usuarios"));
+  const table = document.createElement("table");
+  table.innerHTML="<tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Departamento</th></tr>";
+  snapshot.forEach(d=>{
+    const data=d.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${data.usuario}</td><td>${data.rol}</td><td>${data.gerencia||''}</td><td>${data.departamento||''}</td>`;
+    table.appendChild(tr);
+  });
+  container.appendChild(table);
+}
+
+// SOLICITUDES
+async function cargarSolicitudes(){
+  const container=document.getElementById("solicitudesTab");
+  container.innerHTML="<h3>Solicitudes</h3>";
+  let q;
+  if(currentUser.rol==="Usuario") q = query(collection(db,"solicitudes"), where("usuario","==",currentUser.usuario));
+  else q = collection(db,"solicitudes");
+  const snapshot = await getDocs(q);
+  const table=document.createElement("table");
+  table.innerHTML="<tr><th>ID</th><th>Nombre</th><th>Acción</th><th>Estado</th><th>Detalles</th></tr>";
+  snapshot.forEach(d=>{
+    const s=d.data();
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${s.id}</td><td>${s.nombreDocumento}</td><td>${s.accion}</td><td>${s.estado}</td><td><button onclick='verDetalle("${d.id}")'>Ver</button></td>`;
+    table.appendChild(tr);
+  });
+  container.appendChild(table);
+}
+
+// NUEVA SOLICITUD
+function cargarNuevaSolicitud(){
+  const container=document.getElementById("nuevaSolicitudTab");
+  container.innerHTML=`
+    <h3>Nueva Solicitud</h3>
+    <input type="text" id="nombreDoc" placeholder="Nombre del documento">
+    <select id="accionDoc">
+      <option value="Creación">Creación</option>
+      <option value="Modificación">Modificación</option>
+      <option value="Inactivación">Inactivación</option>
+    </select>
+    <input type="text" id="gerenciaDoc" placeholder="Gerencia">
+    <input type="text" id="departamentoDoc" placeholder="Departamento">
+    <textarea id="motivoDoc" placeholder="Motivo"></textarea>
+    <input type="file" id="fileDoc">
+    <button onclick="crearSolicitud()">Crear Solicitud</button>
+  `;
+}
+
+window.crearSolicitud=async()=>{
+  const nombreDocumento=document.getElementById("nombreDoc").value;
+  const accion=document.getElementById("accionDoc").value;
+  const gerencia=document.getElementById("gerenciaDoc").value;
+  const departamento=document.getElementById("departamentoDoc").value;
+  const motivo=document.getElementById("motivoDoc").value;
+  const file=document.getElementById("fileDoc").files[0];
+
+  if(!nombreDocumento || !accion || !gerencia || !departamento){ alert("Complete todos los campos"); return; }
+
+  let fileUrl="";
+  if(file){
+    const data=new FormData();
+    data.append("file",file);
+    data.append("upload_preset","fci_documentos");
+    const res=await fetch("https://api.cloudinary.com/v1_1/df79cjklp/auto/upload",{method:"POST",body:data});
+    const json=await res.json();
+    fileUrl=json.secure_url;
+  }
+
+  await addDoc(collection(db,"solicitudes"),{
+    id: Date.now(),
+    usuario: currentUser.usuario,
+    correo: currentUser.correo||"",
+    nombreDocumento,
+    accion,
+    gerencia,
+    departamento,
+    motivo,
+    archivo:fileUrl,
+    estado:"Pendiente",
+    comentarios:[]
+  });
+  alert("Solicitud creada");
+  cargarSolicitudes();
+};
+
+// DETALLE
+window.verDetalle=async(id)=>{
+  const docRef=doc(db,"solicitudes",id);
+  const docSnap=await getDocs(docRef);
+  alert(JSON.stringify(docSnap.data(),null,2));
+};
+</script>
 </body>
 </html>
