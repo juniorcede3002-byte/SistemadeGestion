@@ -3,96 +3,89 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Gestión de Documentos</title>
+<title>Login Sistema Gestión Documentos - Login</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <style>
-  body { font-family: Arial; margin: 20px; background: #f4f4f4; }
-  h1,h2 { color:#333; }
-  .section { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
-  input, select, button, textarea { padding:8px; margin:4px 0; width:100%; }
+  body { font-family: Arial; margin: 0; background: #f4f4f4; }
+  .login, .dashboard { max-width: 600px; margin: 50px auto; background: #fff; padding:20px; border-radius:5px; }
+  h1,h2 { text-align:center; color:#333; }
+  input, button, select, textarea { width: 100%; padding:8px; margin:5px 0; }
   table { width: 100%; border-collapse: collapse; margin-top: 10px; }
   th, td { border: 1px solid #ccc; padding:6px; text-align:left; }
   th { background:#eee; }
+  .hidden { display:none; }
 </style>
 </head>
 <body>
 
-<h1>Sistema de Gestión de Documentos</h1>
-
-<div class="section">
-  <h2>Usuarios</h2>
-  <input type="text" id="usuario_nombre" placeholder="Nombre de usuario">
-  <input type="text" id="usuario_correo" placeholder="Correo">
-  <select id="usuario_rol">
-    <option value="admin">Admin</option>
-    <option value="gerente">Gerente</option>
-    <option value="normal">Usuario</option>
-  </select>
-  <button onclick="crearUsuario()">Agregar Usuario</button>
-  <table id="tablaUsuarios">
-    <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead>
-    <tbody></tbody>
-  </table>
+<div class="login" id="loginScreen">
+  <h1>Login</h1>
+  <input type="text" id="login_usuario" placeholder="Usuario">
+  <input type="password" id="login_contrasena" placeholder="Contraseña">
+  <button onclick="login()">Ingresar</button>
+  <p id="login_error" style="color:red;"></p>
 </div>
 
-<div class="section">
-  <h2>Gerencias</h2>
-  <input type="text" id="gerencia_nombre" placeholder="Nombre de la Gerencia">
-  <button onclick="crearGerencia()">Agregar Gerencia</button>
-  <table id="tablaGerencias">
-    <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</div>
+<div class="dashboard hidden" id="dashboardScreen">
+  <h1>Bienvenido, <span id="usuarioActual"></span></h1>
+  <button onclick="logout()">Cerrar Sesión</button>
 
-<div class="section">
-  <h2>Departamentos</h2>
-  <input type="text" id="departamento_nombre" placeholder="Nombre del Departamento">
-  <button onclick="crearDepartamento()">Agregar Departamento</button>
-  <table id="tablaDepartamentos">
-    <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
-    <tbody></tbody>
-  </table>
-</div>
+  <div class="section">
+    <h2>Usuarios</h2>
+    <input type="text" id="usuario_nombre" placeholder="Nombre de usuario">
+    <input type="password" id="usuario_contrasena" placeholder="Contraseña">
+    <input type="text" id="usuario_correo" placeholder="Correo para notificaciones">
+    <select id="usuario_rol">
+      <option value="admin">Admin</option>
+      <option value="gerente">Gerente</option>
+      <option value="normal">Usuario</option>
+    </select>
+    <button onclick="crearUsuario()">Agregar Usuario</button>
+    <table id="tablaUsuarios">
+      <thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Acciones</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-<div class="section">
-  <h2>Crear Solicitud</h2>
-  <select id="solicitante_usuario"></select>
-  <select id="solicitud_tipo_documento">
-    <option value="Procedimiento">Procedimiento</option>
-    <option value="Guía">Guía</option>
-    <option value="Instructivo">Instructivo</option>
-    <option value="Manual">Manual</option>
-    <option value="Formato">Formato</option>
-  </select>
-  <select id="solicitud_accion">
-    <option value="Creación">Creación</option>
-    <option value="Modificación">Modificación</option>
-    <option value="Inactivación">Inactivación</option>
-  </select>
-  <input type="text" id="solicitud_nombre" placeholder="Nombre del Documento">
-  <input type="text" id="solicitud_fecha_version" placeholder="Fecha Última Versión (solo modificar/inactivar)">
-  <input type="text" id="solicitud_version" placeholder="Última Versión (solo modificar/inactivar)">
-  <input type="text" id="solicitud_codificacion" placeholder="Codificación (solo modificar/inactivar)">
-  <select id="solicitud_gerencia"></select>
-  <select id="solicitud_departamento"></select>
-  <textarea id="solicitud_motivo" placeholder="Motivo"></textarea>
-  <input type="file" id="solicitud_archivo">
-  <button onclick="crearSolicitud()">Crear Solicitud</button>
+  <div class="section">
+    <h2>Crear Solicitud</h2>
+    <select id="solicitante_usuario"></select>
+    <select id="solicitud_tipo_documento">
+      <option value="Procedimiento">Procedimiento</option>
+      <option value="Guía">Guía</option>
+      <option value="Instructivo">Instructivo</option>
+      <option value="Manual">Manual</option>
+      <option value="Formato">Formato</option>
+    </select>
+    <select id="solicitud_accion">
+      <option value="Creación">Creación</option>
+      <option value="Modificación">Modificación</option>
+      <option value="Inactivación">Inactivación</option>
+    </select>
+    <input type="text" id="solicitud_nombre" placeholder="Nombre del Documento">
+    <input type="text" id="solicitud_fecha_version" placeholder="Fecha Última Versión (solo modificar/inactivar)">
+    <input type="text" id="solicitud_version" placeholder="Última Versión (solo modificar/inactivar)">
+    <input type="text" id="solicitud_codificacion" placeholder="Codificación (solo modificar/inactivar)">
+    <select id="solicitud_gerencia"></select>
+    <select id="solicitud_departamento"></select>
+    <textarea id="solicitud_motivo" placeholder="Motivo"></textarea>
+    <input type="file" id="solicitud_archivo">
+    <button onclick="crearSolicitud()">Crear Solicitud</button>
 
-  <table id="tablaSolicitudes">
-    <thead><tr>
-      <th>ID</th><th>Usuario</th><th>Documento</th><th>Acción</th><th>Gerencia</th>
-      <th>Departamento</th><th>Motivo</th><th>Estado</th><th>Archivo</th><th>Acciones</th>
-    </tr></thead>
-    <tbody></tbody>
-  </table>
+    <table id="tablaSolicitudes">
+      <thead><tr>
+        <th>ID</th><th>Usuario</th><th>Documento</th><th>Acción</th><th>Gerencia</th>
+        <th>Departamento</th><th>Motivo</th><th>Estado</th><th>Archivo</th><th>Acciones</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <script>
-  // ====== Firebase ======
+  // ===== Firebase =====
   const firebaseConfig = {
     apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
     authDomain: "sistemadegestion-7400d.firebaseapp.com",
@@ -108,15 +101,51 @@
   const cloudName = 'df79cjklp';
   const uploadPreset = 'fci_documentos';
 
-  // ====== USUARIOS ======
+  let usuarioActivo=null;
+
+  // ===== Login =====
+  async function login(){
+    const usuario=document.getElementById('login_usuario').value;
+    const contrasena=document.getElementById('login_contrasena').value;
+    const errorP=document.getElementById('login_error');
+    errorP.textContent='';
+
+    if(usuario==='Admin' && contrasena==='1130'){ // login admin
+      usuarioActivo={nombre:'Admin', rol:'admin'};
+      mostrarDashboard();
+      return;
+    }
+
+    const snapshot=await db.collection('usuarios').where('nombre','==',usuario).where('contrasena','==',contrasena).get();
+    if(snapshot.empty){ errorP.textContent='Usuario o contraseña incorrectos'; return; }
+    usuarioActivo={nombre:usuario, ...snapshot.docs[0].data()};
+    mostrarDashboard();
+  }
+
+  function logout(){
+    usuarioActivo=null;
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('dashboardScreen').classList.add('hidden');
+  }
+
+  function mostrarDashboard(){
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('dashboardScreen').classList.remove('hidden');
+    document.getElementById('usuarioActual').textContent=usuarioActivo.nombre;
+    cargarUsuarios(); cargarGerencias(); cargarDepartamentos(); cargarSolicitudes();
+  }
+
+  // ===== Usuarios =====
   async function crearUsuario(){
-    const nombre = document.getElementById('usuario_nombre').value;
-    const correo = document.getElementById('usuario_correo').value;
-    const rol = document.getElementById('usuario_rol').value;
-    if(!nombre||!correo){ alert('Completa todos los campos'); return; }
-    await db.collection('usuarios').add({nombre, correo, rol});
+    const nombre=document.getElementById('usuario_nombre').value;
+    const contrasena=document.getElementById('usuario_contrasena').value;
+    const correo=document.getElementById('usuario_correo').value;
+    const rol=document.getElementById('usuario_rol').value;
+    if(!nombre || !contrasena || !correo){ alert('Completa todos los campos'); return; }
+    await db.collection('usuarios').add({nombre, contrasena, correo, rol});
     cargarUsuarios();
     document.getElementById('usuario_nombre').value='';
+    document.getElementById('usuario_contrasena').value='';
     document.getElementById('usuario_correo').value='';
   }
 
@@ -135,39 +164,10 @@
   }
   async function eliminarUsuario(id){ await db.collection('usuarios').doc(id).delete(); cargarUsuarios(); }
 
-  // ====== GERENCIAS ======
-  async function crearGerencia(){ const nombre = document.getElementById('gerencia_nombre').value; if(!nombre){alert('Ingrese nombre'); return;} await db.collection('gerencias').add({nombre}); cargarGerencias(); document.getElementById('gerencia_nombre').value=''; }
-  async function cargarGerencias(){
-    const tbody = document.querySelector('#tablaGerencias tbody'); tbody.innerHTML='';
-    const select = document.getElementById('solicitud_gerencia'); select.innerHTML='<option value="">Seleccione Gerencia</option>';
-    const snapshot = await db.collection('gerencias').get();
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const tr=document.createElement('tr'); tr.innerHTML=`<td>${data.nombre}</td><td><button onclick="eliminarGerencia('${doc.id}')">Eliminar</button></td>`;
-      tbody.appendChild(tr);
-      const option=document.createElement('option'); option.value=data.nombre; option.textContent=data.nombre; select.appendChild(option);
-    });
-  }
-  async function eliminarGerencia(id){ await db.collection('gerencias').doc(id).delete(); cargarGerencias(); }
-
-  // ====== DEPARTAMENTOS ======
-  async function crearDepartamento(){ const nombre = document.getElementById('departamento_nombre').value; if(!nombre){alert('Ingrese nombre'); return;} await db.collection('departamentos').add({nombre}); cargarDepartamentos(); document.getElementById('departamento_nombre').value=''; }
-  async function cargarDepartamentos(){
-    const tbody=document.querySelector('#tablaDepartamentos tbody'); tbody.innerHTML='';
-    const select = document.getElementById('solicitud_departamento'); select.innerHTML='<option value="">Seleccione Departamento</option>';
-    const snapshot = await db.collection('departamentos').get();
-    snapshot.forEach(doc=>{
-      const data = doc.data();
-      const tr=document.createElement('tr'); tr.innerHTML=`<td>${data.nombre}</td><td><button onclick="eliminarDepartamento('${doc.id}')">Eliminar</button></td>`;
-      tbody.appendChild(tr);
-      const option=document.createElement('option'); option.value=data.nombre; option.textContent=data.nombre; select.appendChild(option);
-    });
-  }
-  async function eliminarDepartamento(id){ await db.collection('departamentos').doc(id).delete(); cargarDepartamentos(); }
-
-  // ====== SOLICITUDES ======
+  // ===== Solicitudes =====
   async function crearSolicitud(){
-    const usuario = document.getElementById('solicitante_usuario').value;
+    if(!usuarioActivo){ alert('No hay usuario activo'); return; }
+    const usuario = usuarioActivo.nombre;
     const tipo_documento = document.getElementById('solicitud_tipo_documento').value;
     const accion = document.getElementById('solicitud_accion').value;
     const nombre = document.getElementById('solicitud_nombre').value;
@@ -188,7 +188,6 @@
       archivoURL=res.data.secure_url;
     }
 
-    // Contador de solicitudes
     const counterRef=db.collection('counters').doc('solicitudes');
     const counterDoc=await counterRef.get();
     let counter=1; if(counterDoc.exists){ counter=counterDoc.data().count+1; }
@@ -222,37 +221,16 @@
         <td>${data.gerencia}</td>
         <td>${data.departamento}</td>
         <td>${data.motivo}</td>
-        <td>
-          <select onchange="cambiarEstado('${doc.id}', this.value)">
-            <option value="Pendiente" ${data.estado==='Pendiente'?'selected':''}>Pendiente</option>
-            <option value="Aprobado" ${data.estado==='Aprobado'?'selected':''}>Aprobado</option>
-            <option value="Rechazado" ${data.estado==='Rechazado'?'selected':''}>Rechazado</option>
-            <option value="Finalizado" ${data.estado==='Finalizado'?'selected':''}>Finalizado</option>
-          </select>
-        </td>
+        <td>${data.estado}</td>
         <td>${data.archivo?`<a href="${data.archivo}" target="_blank">Ver</a>`:''}</td>
         <td><button onclick="eliminarSolicitud('${doc.id}')">Eliminar</button></td>`;
       tbody.appendChild(tr);
     });
   }
-
-  async function cambiarEstado(id, nuevoEstado){
-    if(nuevoEstado==='Rechazado'){
-      const motivo = prompt('Ingrese el motivo del rechazo:');
-      await db.collection('solicitudes').doc(id).update({estado:nuevoEstado, observacion:motivo});
-    }else if(nuevoEstado==='Aprobado'){
-      await db.collection('solicitudes').doc(id).update({estado:'Finalizado'});
-    }else{
-      await db.collection('solicitudes').doc(id).update({estado:nuevoEstado});
-    }
-    cargarSolicitudes();
-  }
-
   async function eliminarSolicitud(id){ await db.collection('solicitudes').doc(id).delete(); cargarSolicitudes(); }
 
-  // ====== Inicializar ======
-  cargarUsuarios(); cargarGerencias(); cargarDepartamentos(); cargarSolicitudes();
+  // ===== Inicial =====
+  cargarUsuarios(); cargarSolicitudes();
 </script>
-
 </body>
 </html>
