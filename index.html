@@ -3,27 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <title>Sistema de Gestión Documental</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- Icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
 <style>
-body{margin:0;font-family:Arial;background:#f4f4f4}
-header{background:#111;color:#fff;padding:15px;display:flex;justify-content:space-between}
-button,input,select{padding:10px;margin-top:8px;width:100%}
-.container{padding:20px;display:none}
-.tabs button{width:auto;margin-right:5px}
-.card{background:#fff;padding:15px;border-radius:8px;margin-top:15px}
-.status-pendiente{color:orange}
-.status-revision-de-pago{color:#2196f3}
-.status-pago-verificado{color:green}
-.status-entregado{color:black}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center}
-.modal-content{background:#fff;padding:20px;border-radius:8px;width:90%;max-width:500px}
+body{
+  font-family: Arial, sans-serif;
+  background:#f2f4f8;
+  margin:0;
+}
+header{
+  background:#1f2937;
+  color:#fff;
+  padding:10px 15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+button{
+  padding:6px 10px;
+  cursor:pointer;
+}
+input,textarea,select{
+  width:100%;
+  padding:6px;
+  margin:4px 0;
+}
+.container{
+  padding:15px;
+}
+.card{
+  background:#fff;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:5px;
+}
+.hidden{display:none;}
+nav button{margin-right:5px;}
 </style>
 </head>
 
@@ -31,196 +50,141 @@ button,input,select{padding:10px;margin-top:8px;width:100%}
 
 <header>
   <strong>Sistema de Gestión Documental</strong>
-  <div>
+  <div id="headerUser" class="hidden">
     <span id="userLabel"></span>
     <button onclick="logout()">Salir</button>
   </div>
 </header>
 
-<div class="container" id="login">
-  <h2>Iniciar Sesión</h2>
-  <input id="user" placeholder="Usuario">
-  <input id="pass" type="password" placeholder="Contraseña">
-  <button onclick="login()">Entrar</button>
+<!-- LOGIN -->
+<div id="login" class="container">
+  <div class="card">
+    <h3>Iniciar Sesión</h3>
+    <input id="loginUser" placeholder="Usuario">
+    <input id="loginPass" type="password" placeholder="Contraseña">
+    <button onclick="login()">Ingresar</button>
+    <p id="loginError" style="color:red;"></p>
+  </div>
 </div>
 
-<div class="container" id="app">
-  <div class="tabs">
-    <button onclick="showTab('products')">Productos</button>
-    <button onclick="showTab('cart')">Carrito</button>
-    <button onclick="showTab('orders')">Mis Solicitudes</button>
-    <button id="adminBtn" onclick="showTab('admin')">Admin</button>
+<!-- APP -->
+<div id="app" class="container hidden">
+
+  <nav>
+    <button onclick="showTab('solicitudes')">Solicitudes</button>
+    <button onclick="showTab('nueva')">Nueva Solicitud</button>
+    <button id="adminBtn" onclick="showTab('admin')" class="hidden">Administración</button>
+  </nav>
+
+  <!-- SOLICITUDES -->
+  <div id="solicitudes" class="card hidden">
+    <h3>Solicitudes</h3>
+    <div id="listaSolicitudes"></div>
   </div>
 
-  <div id="products" class="card"></div>
-  <div id="cart" class="card"></div>
-  <div id="orders" class="card"></div>
-  <div id="admin" class="card"></div>
-</div>
-
-<div class="modal" id="modal">
-  <div class="modal-content">
-    <div id="modalBody"></div>
-    <button onclick="closeModal()">Cerrar</button>
+  <!-- NUEVA -->
+  <div id="nueva" class="card hidden">
+    <h3>Nueva Solicitud</h3>
+    <form onsubmit="crearSolicitud(event)">
+      <input id="titulo" placeholder="Título" required>
+      <textarea id="descripcion" placeholder="Descripción" required></textarea>
+      <button>Crear</button>
+    </form>
   </div>
+
+  <!-- ADMIN -->
+  <div id="admin" class="card hidden">
+    <h3>Panel Administrador</h3>
+    <p>Solo visible para admin</p>
+  </div>
+
 </div>
 
 <script>
-// 🔥 FIREBASE CONFIG
+// ================= FIREBASE =================
 firebase.initializeApp({
   apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
   authDomain: "sistemadegestion-7400d.firebaseapp.com",
-  projectId: "sistemadegestion-7400d"
+  projectId: "sistemadegestion-7400d",
 });
 const db = firebase.firestore();
 
-// 👤 USUARIOS INTERNOS
-const USERS = [
-  {user:"admin",pass:"123456",role:"admin"},
-  {user:"usuario1",pass:"123456",role:"user"}
-];
+// ================= USUARIOS =================
+const USERS = {
+  admin:{pass:"123456", role:"admin"},
+  usuario:{pass:"123456", role:"user"}
+};
 
-let currentUser=null;
-let role=null;
-let cart=[];
+let currentUser = null;
+let role = null;
 
-// 🔐 LOGIN
+// ================= LOGIN =================
 function login(){
-  const u=user.value,p=pass.value;
-  const found=USERS.find(x=>x.user===u&&x.pass===p);
-  if(!found) return alert("Credenciales incorrectas");
-  currentUser=u; role=found.role;
-  sessionStorage.setItem("user",u);
-  sessionStorage.setItem("role",role);
-  init();
+  const u = loginUser.value;
+  const p = loginPass.value;
+
+  if(!USERS[u] || USERS[u].pass !== p){
+    loginError.innerText = "Credenciales incorrectas";
+    return;
+  }
+
+  currentUser = u;
+  role = USERS[u].role;
+
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("app").classList.remove("hidden");
+  document.getElementById("headerUser").classList.remove("hidden");
+  userLabel.innerText = `${u} (${role})`;
+  adminBtn.classList.toggle("hidden", role!=="admin");
+
+  showTab("solicitudes");
+  cargarSolicitudes();
 }
 
+// ================= LOGOUT =================
 function logout(){
-  sessionStorage.clear();
   location.reload();
 }
 
-function init(){
-  document.getElementById("login").style.display="none";
-  document.getElementById("app").style.display="block";
-  userLabel.innerText=`Usuario: ${currentUser} (${role})`;
-  adminBtn.style.display=role==="admin"?"inline":"none";
-  loadProducts();
-  loadOrders();
-  showTab("products");
-}
-
-// 🧭 TABS
+// ================= TABS =================
 function showTab(id){
-  ["products","cart","orders","admin"].forEach(t=>document.getElementById(t).style.display="none");
-  document.getElementById(id).style.display="block";
-  if(id==="cart") renderCart();
-  if(id==="admin") loadAdminOrders();
+  ["solicitudes","nueva","admin"].forEach(t=>{
+    document.getElementById(t).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
 }
 
-// 🛍 PRODUCTOS
-function loadProducts(){
-  db.collection("products").onSnapshot(s=>{
-    products.innerHTML="<h3>Productos</h3>";
-    s.forEach(d=>{
-      const p=d.data();
-      products.innerHTML+=`
+// ================= SOLICITUDES =================
+function crearSolicitud(e){
+  e.preventDefault();
+  db.collection("solicitudes").add({
+    titulo:titulo.value,
+    descripcion:descripcion.value,
+    usuario:currentUser,
+    fecha:new Date()
+  });
+  titulo.value="";
+  descripcion.value="";
+  cargarSolicitudes();
+  showTab("solicitudes");
+}
+
+function cargarSolicitudes(){
+  listaSolicitudes.innerHTML="Cargando...";
+  db.collection("solicitudes").orderBy("fecha","desc").onSnapshot(snap=>{
+    listaSolicitudes.innerHTML="";
+    snap.forEach(doc=>{
+      const d = doc.data();
+      listaSolicitudes.innerHTML+=`
         <div class="card">
-          <b>${p.name}</b> - $${p.price}
-          <button onclick="addToCart('${p.name}',${p.price})">Agregar</button>
+          <strong>${d.titulo}</strong>
+          <p>${d.descripcion}</p>
+          <small>${d.usuario}</small>
         </div>`;
     });
   });
 }
-
-function addToCart(name,price){
-  cart.push({name,price});
-  alert("Agregado");
-}
-
-// 🛒 CARRITO
-function renderCart(){
-  cartDiv.innerHTML="";
-  cart.innerHTML="<h3>Carrito</h3>";
-  let total=0;
-  cart.forEach(p=>{total+=p.price;cart.innerHTML+=`<p>${p.name} $${p.price}</p>`});
-  cart.innerHTML+=`<b>Total: $${total}</b>
-  <button onclick="checkout()">Enviar Solicitud</button>`;
-}
-
-function checkout(){
-  if(cart.length===0) return;
-  db.collection("orders").add({
-    owner:currentUser,
-    products:cart,
-    status:"pendiente",
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  });
-  cart=[];
-  alert("Solicitud enviada");
-}
-
-// 📦 SOLICITUDES USUARIO
-function loadOrders(){
-  db.collection("orders").orderBy("createdAt","desc").onSnapshot(s=>{
-    orders.innerHTML="<h3>Mis Solicitudes</h3>";
-    s.forEach(d=>{
-      const o=d.data();
-      if(o.owner!==currentUser && role!=="admin") return;
-      orders.innerHTML+=`
-      <div class="card">
-        Estado: <span class="status-${o.status.replace(/ /g,'-')}">${o.status}</span>
-        <ul>${o.products.map(p=>`<li>${p.name}</li>`).join("")}</ul>
-        ${!o.comprobante?`<input type="file" onchange="uploadComprobante('${d.id}',this.files[0])">`:`<img src="${o.comprobante}" width="150">`}
-      </div>`;
-    });
-  });
-}
-
-// 🧾 ADMIN
-function loadAdminOrders(){
-  admin.innerHTML="<h3>Panel Admin</h3>";
-  db.collection("orders").onSnapshot(s=>{
-    admin.innerHTML="<h3>Panel Admin</h3>";
-    s.forEach(d=>{
-      const o=d.data();
-      admin.innerHTML+=`
-      <div class="card">
-        ${o.owner} - ${o.status}
-        <select onchange="updateStatus('${d.id}',this.value)">
-          <option>pendiente</option>
-          <option>revision de pago</option>
-          <option>pago verificado</option>
-          <option>entregado</option>
-        </select>
-      </div>`;
-    });
-  });
-}
-
-function updateStatus(id,v){
-  db.collection("orders").doc(id).update({status:v});
-}
-
-// ☁ CLOUDINARY
-async function uploadComprobante(id,file){
-  const fd=new FormData();
-  fd.append("file",file);
-  fd.append("upload_preset","vendors_preset");
-  const r=await fetch("https://api.cloudinary.com/v1_1/df79cjklp/upload",{method:"POST",body:fd});
-  const j=await r.json();
-  await db.collection("orders").doc(id).update({comprobante:j.secure_url,status:"revision de pago"});
-  alert("Comprobante enviado");
-}
-
-// AUTO INIT
-if(sessionStorage.getItem("user")){
-  currentUser=sessionStorage.getItem("user");
-  role=sessionStorage.getItem("role");
-  init();
-}else{
-  login.style.display="block";
-}
 </script>
+
 </body>
 </html>
