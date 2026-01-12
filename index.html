@@ -1,329 +1,234 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión FCI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; }
-        .glass-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .btn-grad { background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color: white; border-radius: 12px; font-weight: bold; transition: all 0.2s; }
-        .btn-grad:disabled { background: #94a3b8; cursor: not-allowed; }
-        input, select, textarea { border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px; font-size: 0.9rem; outline: none; width: 100%; background: #ffffff; }
-        .section-view { display: none; }
-        .section-view.active { display: block; animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        #modalAdmin { display: none; position: fixed; z-index: 10000; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
-        .sidebar-item { transition: all 0.3s; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: #64748b; font-weight: 600; }
-        .sidebar-item:hover { background-color: #f1f5f9; color: #2563eb; }
-        .sidebar-item.active { background-color: #eff6ff; color: #2563eb; border-right: 4px solid #2563eb; }
-    </style>
+<meta charset="UTF-8">
+<title>Vendors | Sistema de Gestión</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase COMPAT -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body { font-family: Arial, sans-serif; background:#f2f2f2; margin:0 }
+header { background:#111; color:#fff; padding:15px }
+section { padding:20px }
+.card { background:#fff; padding:15px; margin-bottom:15px; border-radius:8px }
+input, select, textarea, button {
+  width:100%; padding:10px; margin-top:5px; margin-bottom:10px
+}
+button { cursor:pointer; background:#111; color:#fff; border:none }
+.hidden { display:none }
+.admin { border-left:5px solid #e53935 }
+.user { border-left:5px solid #43a047 }
+</style>
 </head>
+
 <body>
 
-<div id="loginDiv" class="min-h-screen flex items-center justify-center p-4">
-    <div class="glass-card p-10 w-full max-w-md text-center">
-        <h1 class="text-3xl font-extrabold mb-8 italic">FCI <span class="text-blue-600">SGC</span></h1>
-        <div class="space-y-4">
-            <input type="text" id="loginUser" placeholder="Usuario">
-            <input type="password" id="loginPass" placeholder="Contraseña">
-            <button onclick="login()" class="btn-grad w-full py-4 shadow-lg shadow-blue-200">ACCEDER AL PANEL</button>
-        </div>
-    </div>
-</div>
+<header>
+  <h2>Vendors – Sistema de Gestión</h2>
+</header>
 
-<div id="appDiv" class="hidden min-h-screen flex">
-    <aside class="w-64 bg-white border-r p-6 flex flex-col fixed h-full shadow-sm">
-        <div class="mb-10"><h1 class="text-xl font-black italic">FCI <span class="text-blue-600">DASH</span></h1></div>
-        <nav class="flex-1 space-y-2">
-            <div onclick="showSection('view-home')" class="sidebar-item active" id="nav-home">🏠 Escritorio</div>
-            <div onclick="showSection('view-solicitudes')" class="sidebar-item" id="nav-sol">📋 Solicitudes</div>
-            <div onclick="showSection('view-admin')" id="nav-admin" class="sidebar-item hidden">⚙️ Administración</div>
-        </nav>
-        <div class="mt-auto p-4 bg-slate-50 rounded-xl">
-            <p id="currentUserDisplay" class="text-sm font-bold truncate"></p>
-            <p id="currentRoleDisplay" class="text-[10px] text-blue-600 font-bold uppercase"></p>
-            <button onclick="logout()" class="text-xs text-red-500 mt-2 font-bold hover:underline">Cerrar Sesión</button>
-        </div>
-    </aside>
+<section id="login">
+  <h3>Iniciar sesión</h3>
+  <form onsubmit="login(event)">
+    <input id="username" placeholder="Usuario" required>
+    <input id="password" type="password" placeholder="Contraseña" required>
+    <button>Entrar</button>
+  </form>
+</section>
 
-    <main class="ml-64 flex-1 p-8">
-        
-        <section id="view-home" class="section-view active">
-            <div class="glass-card p-8 max-w-4xl mx-auto">
-                <h3 class="text-xl font-bold mb-6 italic">✨ Nueva Solicitud de Documento</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Nombre del Documento</label><input type="text" id="solNombreDocumento"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Acción</label>
-                        <select id="solTipoAccion">
-                            <option value="Creación">Creación</option>
-                            <option value="Modificación">Modificación</option>
-                            <option value="Inactivación">Inactivación</option>
-                        </select>
-                    </div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Gerencia</label><input type="text" id="solGerencia" placeholder="Ej: GSCI"></div>
-                    <div><label class="text-[10px] font-bold text-slate-400 uppercase">Departamento</label><input type="text" id="solDepartamento" placeholder="Ej: ARCHIVOS"></div>
-                    <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Justificación / Motivo</label><textarea id="solMotivo" rows="3"></textarea></div>
-                    <div class="md:col-span-2"><label class="text-[10px] font-bold text-slate-400 uppercase">Adjuntar Archivo (PDF/Word/Imagen)</label><input type="file" id="solDocumento"></div>
-                    <button id="btnEnviar" onclick="crearSolicitud()" class="btn-grad md:col-span-2 py-4 mt-4">ENVIAR SOLICITUD</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="view-solicitudes" class="section-view">
-            <div class="glass-card overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 font-bold text-slate-400 uppercase text-[10px]">
-                        <tr><th class="p-4">ID</th><th>Documento</th><th>Estructura</th><th>Estado</th><th>Acción</th></tr>
-                    </thead>
-                    <tbody id="solicitudesTableBody"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <section id="view-admin" class="section-view">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="glass-card p-6">
-                    <h3 class="font-bold mb-4">Crear Usuario</h3>
-                    <input type="text" id="adminNewUser" placeholder="Usuario" class="mb-2">
-                    <input type="password" id="adminNewPass" placeholder="Password" class="mb-2">
-                    <select id="adminNewRole" class="mb-4">
-                        <option value="user">Usuario Estándar</option>
-                        <option value="gerente">Gerente de Área</option>
-                        <option value="admin">Administrador (SGC)</option>
-                    </select>
-                    <button onclick="crearUsuarioManual()" class="btn-grad w-full py-2">REGISTRAR</button>
-                </div>
-                <div class="glass-card p-6 overflow-y-auto max-h-96">
-                    <h3 class="font-bold mb-4">Usuarios en Sistema</h3>
-                    <ul id="usersList" class="text-xs space-y-2"></ul>
-                </div>
-            </div>
-        </section>
-    </main>
-</div>
-
-<div id="modalAdmin">
-    <div class="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl">
-        <h3 class="font-bold mb-4">Actualizar Estado de Gestión</h3>
-        <input type="hidden" id="modalDocId">
-        <select id="modalEstadoAdmin" class="mb-4 font-bold text-blue-600">
-            <option value="Pendiente">Pendiente</option>
-            <option value="En Reunión">En Reunión</option>
-            <option value="En Consulta">En Consulta</option>
-            <option value="Corrección">Solicitar Corrección</option>
-            <option value="Aprobación SGC">Aprobación SGC</option>
-            <option value="Solicitar Aprobación Gerente">Solicitar Aprobación Gerente</option>
-            <option value="Finalizado">Finalizar Proceso</option>
-        </select>
-        <textarea id="modalObservaciones" placeholder="Observaciones adicionales..." class="mb-4"></textarea>
-        <div class="flex gap-2">
-            <button onclick="cerrarModal()" class="flex-1 py-2 bg-slate-100 rounded-lg font-bold">CANCELAR</button>
-            <button onclick="guardarCambioEstado()" class="flex-1 py-2 btn-grad">GUARDAR</button>
-        </div>
-    </div>
-</div>
+<section id="panel" class="hidden"></section>
 
 <script>
-// CONFIGURACIÓN FIREBASE
-const firebaseConfig = {
-    apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
-    authDomain: "sistemadegestion-7400d.firebaseapp.com",
-    projectId: "sistemadegestion-7400d",
-    storageBucket: "sistemadegestion-7400d.firebasestorage.app",
-    messagingSenderId: "709030283072",
-    appId: "1:709030283072:web:5997837b36a448e9515ca5"
-};
-firebase.initializeApp(firebaseConfig);
+/* =====================================================
+   🔥 FIREBASE CONFIG (TU API – NO SE ELIMINA NADA)
+===================================================== */
+
+// Tu configuración original ADAPTADA a compat
+firebase.initializeApp({
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.firebasestorage.app",
+  messagingSenderId: "709030283072",
+  appId: "1:709030283072:web:5997837b36a448e9515ca5"
+});
+
 const db = firebase.firestore();
-const storage = firebase.storage();
 
-let sesionActiva = null;
+/* =====================================================
+   🔐 LOGIN INTERNO (SIN FIREBASE AUTH)
+===================================================== */
 
-// --- SISTEMA DE LOGIN MANUAL (SIN AUTH) ---
-async function login() {
-    const userIn = document.getElementById("loginUser").value;
-    const passIn = document.getElementById("loginPass").value;
+let currentUser = null;
 
-    if(userIn === "Admin" && passIn === "123456") {
-        sesionActiva = { usuario: "Admin", role: "admin", correo: "admin@fcipty.com", uid: "admin" };
-        return entrarApp();
-    }
+async function login(e){
+  e.preventDefault();
 
-    const snap = await db.collection("users").where("usuario", "==", userIn).where("password", "==", passIn).get();
-    
-    if(!snap.empty) {
-        const d = snap.docs[0].data();
-        sesionActiva = { usuario: d.usuario, role: d.role, correo: d.usuario + "@fcipty.com", uid: snap.docs[0].id };
-        entrarApp();
-    } else {
-        alert("❌ Credenciales incorrectas");
-    }
+  const user = username.value.trim();
+  const pass = password.value.trim();
+
+  const snap = await db.collection("users")
+    .where("username","==",user)
+    .where("password","==",pass)
+    .get();
+
+  if(snap.empty){
+    alert("Credenciales incorrectas");
+    return;
+  }
+
+  currentUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
+  document.getElementById("login").classList.add("hidden");
+  loadPanel();
 }
 
-function entrarApp() {
-    document.getElementById("loginDiv").classList.add("hidden");
-    document.getElementById("appDiv").classList.remove("hidden");
-    document.getElementById("currentUserDisplay").innerText = "👤 " + sesionActiva.usuario;
-    document.getElementById("currentRoleDisplay").innerText = sesionActiva.role;
-    
-    if(sesionActiva.role === "admin") document.getElementById("nav-admin").classList.remove("hidden");
-    cargarSolicitudes();
-    if(sesionActiva.role === "admin") cargarListaUsuarios();
+/* =====================================================
+   🧠 PANEL PRINCIPAL
+===================================================== */
+
+function loadPanel(){
+  panel.classList.remove("hidden");
+  panel.innerHTML = `
+    <h3>Bienvenido, ${currentUser.name}</h3>
+    <p><b>Rol:</b> ${currentUser.role}</p>
+
+    ${currentUser.role === "admin" ? `
+      <button onclick="showCreateUser()">Crear Usuario</button>
+      <button onclick="loadOrders(true)">Ver Todos los Pedidos</button>
+    ` : `
+      <button onclick="createOrder()">Nueva Solicitud</button>
+      <button onclick="loadOrders(false)">Mis Solicitudes</button>
+    `}
+
+    <div id="content"></div>
+  `;
 }
 
-// --- NAVEGACIÓN ---
-function showSection(id) {
-    document.querySelectorAll('.section-view').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-    document.getElementById('nav-' + id.replace('view-', '')).classList.add('active');
+/* =====================================================
+   👤 ADMIN – CREAR USUARIOS
+===================================================== */
+
+function showCreateUser(){
+  content().innerHTML = `
+    <h4>Crear Usuario</h4>
+    <form onsubmit="createUser(event)">
+      <input placeholder="Nombre" required>
+      <input placeholder="Usuario" required>
+      <input placeholder="Contraseña" required>
+      <select>
+        <option value="user">Usuario</option>
+        <option value="admin">Admin</option>
+      </select>
+      <button>Crear</button>
+    </form>
+  `;
 }
 
-// --- GESTIÓN DE SOLICITUDES ---
-async function crearSolicitud() {
-    const btn = document.getElementById("btnEnviar");
-    const n = document.getElementById("solNombreDocumento").value;
-    const g = document.getElementById("solGerencia").value;
-    const d = document.getElementById("solDepartamento").value;
-    const m = document.getElementById("solMotivo").value;
-    const file = document.getElementById("solDocumento").files[0];
+async function createUser(e){
+  e.preventDefault();
+  const f = e.target;
 
-    if(!n || !g || !m) return alert("⚠️ Completa los campos obligatorios.");
+  await db.collection("users").add({
+    name: f[0].value,
+    username: f[1].value,
+    password: f[2].value,
+    role: f[3].value,
+    createdAt: Date.now()
+  });
 
-    btn.disabled = true;
-    btn.innerText = "⏳ Enviando...";
-
-    try {
-        let fileUrl = "";
-        if(file) {
-            const ref = storage.ref(`docs/${Date.now()}_${file.name}`);
-            await ref.put(file);
-            fileUrl = await ref.getDownloadURL();
-        }
-
-        // Obtener contador de folios
-        const counterRef = db.collection("counters").doc("solicitudes");
-        const counterSnap = await counterRef.get();
-        let num = (counterSnap.exists ? counterSnap.data().count : 0) + 1;
-        await counterRef.set({ count: num });
-
-        const folio = "FCI-SOL-" + String(num).padStart(4, '0');
-
-        // Guardar con MAPEO EXACTO a tu base de datos
-        await db.collection("solicitudes").add({
-            idSolicitud: folio,
-            nombreDocumento: n,
-            tipoAccion: document.getElementById("solTipoAccion").value,
-            gerencia: g,
-            departamento: d,
-            motivo: m,
-            solicitante: {
-                correo: sesionActiva.correo,
-                uid: sesionActiva.uid
-            },
-            documento: fileUrl,
-            estado: "Pendiente",
-            fecha: firebase.firestore.FieldValue.serverTimestamp(),
-            codificacionActual: "",
-            ultimaVersion: "1",
-            ultimoMotivo: ""
-        });
-
-        alert("✅ Solicitud registrada exitosamente.");
-        location.reload();
-    } catch (e) {
-        alert("❌ Error: " + e.message);
-        btn.disabled = false;
-        btn.innerText = "ENVIAR SOLICITUD";
-    }
+  alert("Usuario creado correctamente");
+  f.reset();
 }
 
-async function cargarSolicitudes() {
-    const tb = document.getElementById("solicitudesTableBody");
-    tb.innerHTML = "";
-    
-    // El admin ve todo, el gerente ve su área, el usuario solo lo suyo
-    const snap = await db.collection("solicitudes").orderBy("fecha", "desc").get();
+/* =====================================================
+   📦 USUARIO – CREAR SOLICITUD
+===================================================== */
 
-    snap.forEach(doc => {
-        const d = doc.data();
-        
-        // Filtro básico de seguridad manual
-        if(sesionActiva.role === "user" && d.solicitante.uid !== sesionActiva.uid) return;
+function createOrder(){
+  content().innerHTML = `
+    <h4>Nueva Solicitud</h4>
+    <form onsubmit="saveOrder(event)">
+      <input placeholder="Producto" required>
+      <textarea placeholder="Descripción" required></textarea>
+      <input type="number" placeholder="Precio" required>
+      <button>Enviar Solicitud</button>
+    </form>
+  `;
+}
 
-        tb.innerHTML += `<tr class="border-b hover:bg-slate-50">
-            <td class="p-4 font-mono font-bold text-blue-600">${d.idSolicitud || '---'}</td>
-            <td class="p-4"><p class="font-bold">${d.nombreDocumento}</p><p class="text-[10px] text-slate-400">${d.solicitante.correo}</p></td>
-            <td class="p-4 text-xs"><b>${d.gerencia}</b><br>${d.departamento}</td>
-            <td class="p-4"><span class="px-2 py-1 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700 uppercase">${d.estado}</span></td>
-            <td class="p-4 flex gap-2">
-                ${d.documento ? `<a href="${d.documento}" target="_blank" title="Ver Documento">📄</a>` : ''}
-                ${sesionActiva.role === 'admin' ? `<button onclick="abrirModal('${doc.id}', '${d.estado}')" class="text-blue-600 text-xs font-black">GESTIONAR</button>` : ''}
-            </td>
-        </tr>`;
+async function saveOrder(e){
+  e.preventDefault();
+  const f = e.target;
+
+  await db.collection("orders").add({
+    userId: currentUser.id,
+    product: f[0].value,
+    description: f[1].value,
+    price: Number(f[2].value),
+    status: "pendiente",
+    createdAt: Date.now()
+  });
+
+  alert("Solicitud enviada");
+  f.reset();
+}
+
+/* =====================================================
+   📋 PEDIDOS (ADMIN / USER)
+===================================================== */
+
+function loadOrders(isAdmin){
+  let q = db.collection("orders");
+  if(!isAdmin){
+    q = q.where("userId","==",currentUser.id);
+  }
+
+  q.onSnapshot(snap=>{
+    content().innerHTML = "<h4>Solicitudes</h4>";
+
+    snap.forEach(doc=>{
+      const o = doc.data();
+      content().innerHTML += `
+        <div class="card ${isAdmin?'admin':'user'}">
+          <b>${o.product}</b>
+          <p>${o.description}</p>
+          <p><b>$${o.price}</b></p>
+          <p>Estado: ${o.status}</p>
+
+          ${!isAdmin ? `
+            <input placeholder="URL comprobante" onchange="addReceipt('${doc.id}',this.value)">
+          ` : `
+            <select onchange="updateStatus('${doc.id}',this.value)">
+              <option ${o.status==='pendiente'?'selected':''}>pendiente</option>
+              <option ${o.status==='en revisión'?'selected':''}>en revisión</option>
+              <option ${o.status==='aprobado'?'selected':''}>aprobado</option>
+              <option ${o.status==='entregado'?'selected':''}>entregado</option>
+            </select>
+          `}
+        </div>
+      `;
     });
+  });
 }
 
-// --- MODAL ADMIN ---
-function abrirModal(id, estadoActual) {
-    document.getElementById("modalDocId").value = id;
-    document.getElementById("modalEstadoAdmin").value = estadoActual;
-    document.getElementById("modalAdmin").style.display = "flex";
-}
-function cerrarModal() { document.getElementById("modalAdmin").style.display = "none"; }
-
-async function guardarCambioEstado() {
-    const id = document.getElementById("modalDocId").value;
-    const est = document.getElementById("modalEstadoAdmin").value;
-    const obs = document.getElementById("modalObservaciones").value;
-
-    await db.collection("solicitudes").doc(id).update({
-        estado: est,
-        ultimoMotivo: obs
-    });
-    cerrarModal();
-    cargarSolicitudes();
+function addReceipt(id,url){
+  db.collection("orders").doc(id).update({
+    receiptUrl: url,
+    status: "en revisión"
+  });
 }
 
-// --- ADMIN USUARIOS ---
-async function crearUsuarioManual() {
-    const u = document.getElementById("adminNewUser").value;
-    const p = document.getElementById("adminNewPass").value;
-    const r = document.getElementById("adminNewRole").value;
-    if(u && p) {
-        await db.collection("users").add({ usuario: u, password: p, role: r });
-        alert("Usuario creado");
-        cargarListaUsuarios();
-    }
+function updateStatus(id,status){
+  db.collection("orders").doc(id).update({ status });
 }
 
-async function cargarListaUsuarios() {
-    const list = document.getElementById("usersList");
-    list.innerHTML = "";
-    const snap = await db.collection("users").get();
-    snap.forEach(doc => {
-        const d = doc.data();
-        list.innerHTML += `<li class="p-2 bg-white border rounded flex justify-between">
-            <span><b>${d.usuario}</b> (${d.role})</span>
-            <button onclick="eliminarUsuario('${doc.id}')" class="text-red-400">✕</button>
-        </li>`;
-    });
+function content(){
+  return document.getElementById("content");
 }
-
-async function eliminarUsuario(id) {
-    if(confirm("¿Eliminar usuario?")) {
-        await db.collection("users").doc(id).delete();
-        cargarListaUsuarios();
-    }
-}
-
-function logout() { location.reload(); }
 </script>
+
 </body>
 </html>
