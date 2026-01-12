@@ -24,7 +24,6 @@ h3,h4{margin-top:0}
 .hidden{display:none}
 </style>
 </head>
-
 <body>
 
 <header>
@@ -95,16 +94,16 @@ h3,h4{margin-top:0}
 
 <h4>Usuarios</h4>
 <input id="userCorreo" placeholder="Correo">
+<input id="userNombre" placeholder="Usuario">
+<input id="userPass" type="password" placeholder="Contraseña">
 <select id="userRol">
   <option value="usuario">Usuario</option>
   <option value="gerente">Gerente</option>
   <option value="admin">Admin</option>
 </select>
-
 <select id="userGerencia">
   <option value="">Gerencia</option>
 </select>
-
 <button onclick="crearUsuario()">Agregar Usuario</button>
 <ul id="listaUsuarios"></ul>
 
@@ -137,21 +136,28 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 emailjs.init("2jVnfkJKKG0bpKN-U");
 
-// ================= USUARIO DEMO =================
+// ================= USUARIO ACTUAL =================
 let usuarioActual = null;
 
-// Login simple
-function login(){
+// ================= LOGIN =================
+async function login(){
   const user = document.getElementById("loginUser").value;
   const pass = document.getElementById("loginPass").value;
+  const loginError = document.getElementById("loginError");
 
-  if(user === "Admin" && pass === "123456"){
-    usuarioActual = { uid:"demo-admin", correo:"admin@fcipty.com", rol:"admin", gerencia:"" };
+  const snap = await db.collection("users")
+    .where("usuario","==",user)
+    .where("password","==",pass)
+    .get();
+
+  if(!snap.empty){
+    usuarioActual = snap.docs[0].data();
+    loginError.innerText="";
     document.getElementById("loginPanel").classList.add("hidden");
     document.getElementById("panel").classList.remove("hidden");
     cargarUsuarios(); cargarGerencias(); cargarDepartamentos(); cargarSolicitudes();
   } else {
-    document.getElementById("loginError").innerText="Usuario o contraseña incorrectos";
+    loginError.innerText="Usuario o contraseña incorrectos";
   }
 }
 
@@ -178,11 +184,19 @@ async function subirArchivo(file){
 async function crearSolicitud(){
   if(!usuarioActual){ alert("Debes iniciar sesión"); return; }
 
-  const id = await generarID();
-  let url="";
   const archivoFile = document.getElementById("archivo").files[0];
-  if(archivoFile) url = await subirArchivo(archivoFile);
+  let url = null;
+  if(archivoFile){
+    try{
+      url = await subirArchivo(archivoFile);
+    } catch(err){
+      console.error("Error subiendo archivo:", err);
+      alert("No se pudo subir el archivo");
+      return;
+    }
+  }
 
+  const id = await generarID();
   const nuevaSolicitud = {
     idSolicitud:id,
     tipoAccion:document.getElementById("tipoAccion").value,
@@ -190,49 +204,51 @@ async function crearSolicitud(){
     gerencia:document.getElementById("gerenciaSelect").value,
     departamento:document.getElementById("departamentoSelect").value,
     motivo:document.getElementById("motivo").value,
-    codificacionActual:document.getElementById("codificacion").value,
-    ultimaVersion:document.getElementById("ultimaVersion").value,
-    fechaUltimaVersion:document.getElementById("fechaUltimaVersion").value,
-    documento:url,
+    codificacionActual:document.getElementById("codificacion").value || null,
+    ultimaVersion:document.getElementById("ultimaVersion").value || null,
+    fechaUltimaVersion:document.getElementById("fechaUltimaVersion").value || null,
+    documento: url,
     estado:"pendiente",
     solicitante:{ uid:usuarioActual.uid, correo:usuarioActual.correo },
     fecha: firebase.firestore.FieldValue.serverTimestamp()
   };
 
   await db.collection("solicitudes").add(nuevaSolicitud);
-
   alert("Solicitud creada: "+id);
   cargarSolicitudes();
 }
 
-// Cargar solicitudes
-async function cargarSolicitudes(){
-  const tabla=document.getElementById("tabla");
-  tabla.innerHTML="";
-  const snap=await db.collection("solicitudes").get();
-  snap.forEach(d=>{
-    const s=d.data();
-    tabla.innerHTML+=`<tr><td>${s.idSolicitud}</td><td>${s.nombreDocumento}</td><td>${s.estado}</td><td>-</td></tr>`;
-  });
-}
-
 // ================= ADMINISTRACIÓN =================
 async function crearUsuario(){
-  const correo=document.getElementById("userCorreo").value;
-  const rol=document.getElementById("userRol").value;
-  const gerencia=document.getElementById("userGerencia").value;
-  if(!correo || !rol){ alert("Correo y rol obligatorios"); return; }
-  await db.collection("users").add({correo,rol,gerencia,activo:true});
+  const correo = document.getElementById("userCorreo").value;
+  const usuarioInput = document.getElementById("userNombre").value;
+  const password = document.getElementById("userPass").value;
+  const rol = document.getElementById("userRol").value;
+  const gerencia = document.getElementById("userGerencia").value;
+
+  if(!correo || !usuarioInput || !password){ alert("Todos los campos son obligatorios"); return; }
+
+  await db.collection("users").add({correo, usuario:usuarioInput, password, rol, gerencia, activo:true});
   cargarUsuarios();
 }
 
 async function cargarUsuarios(){
-  const ul=document.getElementById("listaUsuarios"); ul.innerHTML="";
-  const snap=await db.collection("users").get();
-  snap.forEach(d=>{ const u=d.data();
-    ul.innerHTML+=`<li>${u.correo} - ${u.rol} - ${u.gerencia}</li>`; });
+  const ul = document.getElementById("listaUsuarios"); ul.innerHTML="";
+  const snap = await db.collection("users").get();
+  snap.forEach(d=>{
+    const u = d.data();
+    ul.innerHTML+=`<li>${u.usuario} (${u.correo}) - ${u.rol} - ${u.gerencia} <button onclick="eliminarUsuario('${d.id}')">Eliminar</button></li>`;
+  });
 }
 
+async function eliminarUsuario(id){
+  if(confirm("Eliminar usuario?")){
+    await db.collection("users").doc(id).delete();
+    cargarUsuarios();
+  }
+}
+
+// ================= GERENCIAS =================
 async function agregarGerencia(){
   const nombre=document.getElementById("nuevaGerencia").value; if(!nombre)return;
   await db.collection("gerencias").add({nombre}); cargarGerencias();
@@ -252,6 +268,7 @@ async function cargarGerencias(){
   });
 }
 
+// ================= DEPARTAMENTOS =================
 async function agregarDepartamento(){
   const nombre=document.getElementById("nuevoDepartamento").value; if(!nombre)return;
   await db.collection("departamentos").add({nombre}); cargarDepartamentos();
@@ -269,8 +286,16 @@ async function cargarDepartamentos(){
   });
 }
 
-// Cargar listas al inicio
-// solo se cargan luego del login
+// ================= SOLICITUDES =================
+async function cargarSolicitudes(){
+  const tabla=document.getElementById("tabla");
+  tabla.innerHTML="";
+  const snap=await db.collection("solicitudes").get();
+  snap.forEach(d=>{
+    const s=d.data();
+    tabla.innerHTML+=`<tr><td>${s.idSolicitud}</td><td>${s.nombreDocumento}</td><td>${s.estado}</td><td>-</td></tr>`;
+  });
+}
 </script>
 </body>
 </html>
