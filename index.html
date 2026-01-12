@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Gestión FCI</title>
+<title>Sistema de Gestión FCI Avanzado</title>
 <style>
 body { font-family: Arial; margin:0; background:#f4f6f8; }
 header { background:#2c3e50; color:white; padding:15px; text-align:center; }
@@ -19,12 +19,13 @@ table { width:100%; border-collapse: collapse; margin-top:10px; }
 table, th, td { border:1px solid #ccc; }
 th, td { padding:5px; text-align:left; }
 .commentBox { margin-top:5px; }
+.statusButton { margin-right:5px; padding:3px 6px; cursor:pointer; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Sistema de Gestión FCI</h1>
+  <h1>Sistema de Gestión FCI Avanzado</h1>
 </header>
 
 <div class="container" id="loginDiv">
@@ -57,7 +58,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Variables globales
 let currentUser = null;
 
 // LOGIN
@@ -135,19 +135,22 @@ async function cargarUsuarios(){
 }
 
 // SOLICITUDES
+const ESTADOS=["Pendiente","Solicitud de reunión","Realizar consultas","Documentado","Verificado","Codificado","Solicitud de aprobación del gerente","Finalizado"];
+
 async function cargarSolicitudes(){
   const container=document.getElementById("solicitudesTab");
   container.innerHTML="<h3>Solicitudes</h3>";
   let q;
   if(currentUser.rol==="Usuario") q = query(collection(db,"solicitudes"), where("usuario","==",currentUser.usuario));
+  else if(currentUser.rol==="Gerente") q = query(collection(db,"solicitudes"), where("gerencia","==",currentUser.gerencia));
   else q = collection(db,"solicitudes");
   const snapshot = await getDocs(q);
   const table=document.createElement("table");
-  table.innerHTML="<tr><th>ID</th><th>Nombre</th><th>Acción</th><th>Estado</th><th>Detalles</th></tr>";
+  table.innerHTML="<tr><th>ID</th><th>Nombre</th><th>Acción</th><th>Estado</th><th>Archivo</th><th>Detalles</th></tr>";
   snapshot.forEach(d=>{
     const s=d.data();
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${s.id}</td><td>${s.nombreDocumento}</td><td>${s.accion}</td><td>${s.estado}</td><td><button onclick='verDetalle("${d.id}")'>Ver</button></td>`;
+    tr.innerHTML=`<td>${s.id}</td><td>${s.nombreDocumento}</td><td>${s.accion}</td><td>${s.estado}</td><td>${s.archivo?'<a href="'+s.archivo+'" target="_blank">Ver</a>':''}</td><td><button onclick='verDetalle("${d.id}")'>Ver</button></td>`;
     table.appendChild(tr);
   });
   container.appendChild(table);
@@ -209,11 +212,24 @@ window.crearSolicitud=async()=>{
   cargarSolicitudes();
 };
 
-// DETALLE
+// DETALLE Y CAMBIO DE ESTADO
 window.verDetalle=async(id)=>{
   const docRef=doc(db,"solicitudes",id);
-  const docSnap=await getDocs(docRef);
-  alert(JSON.stringify(docSnap.data(),null,2));
+  const snap=await getDocs(docRef);
+  const data = snap.data();
+
+  let contenido=`ID: ${data.id}\nNombre: ${data.nombreDocumento}\nAcción: ${data.accion}\nEstado: ${data.estado}\nArchivo: ${data.archivo||''}\nComentarios:\n`;
+  data.comentarios.forEach(c=>contenido+=`- ${c.usuario}: ${c.texto}\n`);
+
+  const nuevoEstado = prompt(contenido+"\n\nCambiar estado a:\n"+ESTADOS.join(", "));
+  if(nuevoEstado && ESTADOS.includes(nuevoEstado)){
+    const comentario = prompt("Agregar comentario para este estado:");
+    const comentarios = data.comentarios || [];
+    if(comentario) comentarios.push({usuario:currentUser.usuario,texto:comentario,fecha:new Date().toLocaleString()});
+    await updateDoc(doc(db,"solicitudes",id),{estado:nuevoEstado,comentarios});
+    alert("Estado actualizado");
+    cargarSolicitudes();
+  }
 };
 </script>
 </body>
