@@ -43,9 +43,9 @@ h2,h3{margin:5px 0}
 <section id="panel" class="card hidden">
 <h3>Bienvenido <span id="nombreUsuario"></span> (<span id="rolUsuario"></span>)</h3>
 
-<div class="card">
+<!-- Panel de Solicitud -->
+<div class="card" id="solicitud-panel">
 <h3>➕ Nueva Solicitud</h3>
-
 <select id="tipoAccion">
 <option>Creación</option>
 <option>Modificación</option>
@@ -65,6 +65,7 @@ h2,h3{margin:5px 0}
 <button onclick="crearSolicitud()">Enviar Solicitud</button>
 </div>
 
+<!-- Tabla de Solicitudes -->
 <div class="card">
 <h3>📋 Solicitudes</h3>
 <table>
@@ -81,15 +82,43 @@ h2,h3{margin:5px 0}
 </table>
 </div>
 
-<div class="card" id="admin-panel" class="hidden">
+<!-- PANEL ADMIN -->
+<div class="card hidden" id="admin-panel">
 <h3>⚙ Panel de Administración</h3>
-<button onclick="cargarUsuarios()">Ver Usuarios</button>
-<button onclick="cargarGerencias()">Ver Gerencias</button>
-<button onclick="cargarDepartamentos()">Ver Departamentos</button>
-<div id="admin-info"></div>
+
+<!-- Usuarios -->
+<div class="card">
+<h4>Usuarios</h4>
+<input id="nuevoUsuario" placeholder="Usuario">
+<input id="nuevoCorreo" placeholder="Correo">
+<input id="nuevaPassword" placeholder="Contraseña">
+<select id="nuevoRol">
+<option value="usuario">Usuario</option>
+<option value="gerente">Gerente</option>
+<option value="admin">Admin</option>
+</select>
+<select id="nuevoGerencia"></select>
+<button onclick="crearUsuario()">Crear Usuario</button>
+<div id="usuarios-lista"></div>
 </div>
 
-</section>
+<!-- Gerencias -->
+<div class="card">
+<h4>Gerencias</h4>
+<input id="nuevaGerenciaInput" placeholder="Nombre Gerencia">
+<button onclick="crearGerencia()">Crear Gerencia</button>
+<div id="gerencias-lista"></div>
+</div>
+
+<!-- Departamentos -->
+<div class="card">
+<h4>Departamentos</h4>
+<input id="nuevoDepartamentoInput" placeholder="Nombre Departamento">
+<button onclick="crearDepartamento()">Crear Departamento</button>
+<div id="departamentos-lista"></div>
+</div>
+
+</div>
 
 <script>
 // ================= CONFIG FIREBASE =================
@@ -108,25 +137,22 @@ const db = firebase.firestore();
 // EmailJS
 emailjs.init("2jVnfkJKKG0bpKN-U");
 
-// ================= USUARIOS (demo / creados por ti) =================
-let usuarios = [
-  {usuario:"Admin", correo:"admin@fcipty.com", password:"123456", rol:"admin", gerencia:"General"},
-  {usuario:"GValle", correo:"gvalle@empresa.com", password:"123456", rol:"gerente", gerencia:"Gerencia1"},
-  {usuario:"AGALLARDO", correo:"agallardo@empresa.com", password:"123456", rol:"usuario", gerencia:"Gerencia1"}
-];
-
+// ================= VARIABLES =================
 let usuarioActual = null;
 
-// ================= FUNCIONES LOGIN =================
-function login(){
+// ================= LOGIN =================
+async function login(){
   const u = document.getElementById("loginUsuario").value;
   const p = document.getElementById("loginPassword").value;
-  const user = usuarios.find(x=>x.usuario==u && x.password==p);
-  if(!user){
+
+  const snap = await db.collection("users").where("usuario","==",u).where("password","==",p).get();
+  if(snap.empty){
     document.getElementById("login-error").innerText="Usuario o contraseña incorrecta";
     return;
   }
+  const user = snap.docs[0].data();
   usuarioActual = user;
+
   document.getElementById("login-section").classList.add("hidden");
   document.getElementById("panel").classList.remove("hidden");
   document.getElementById("nombreUsuario").innerText=user.usuario;
@@ -136,9 +162,12 @@ function login(){
   cargarGerenciasSelect();
   cargarDepartamentosSelect();
   cargarSolicitudes();
+  if(user.rol=="admin") cargarUsuariosList();
+  cargarGerenciasList();
+  cargarDepartamentosList();
 }
 
-// ================= FUNCIONES FIRESTORE =================
+// ================= FUNCIONES SOLICITUD =================
 
 // Generar ID único
 async function generarID(){
@@ -153,9 +182,10 @@ async function generarID(){
 
 // Subir archivo a Cloudinary
 async function subirArchivo(file){
+  if(!file) return "";
   const form = new FormData();
   form.append("file", file);
-  form.append("upload_preset", "fci_documentos"); // preset de Cloudinary
+  form.append("upload_preset", "fci_documentos");
   const res = await fetch("https://api.cloudinary.com/v1_1/df79cjklp/auto/upload",{method:"POST", body:form});
   const data = await res.json();
   return data.secure_url;
@@ -164,9 +194,8 @@ async function subirArchivo(file){
 // Crear solicitud
 async function crearSolicitud(){
   const id = await generarID();
-  let url = "";
   const archivoFile = document.getElementById("archivo").files[0];
-  if(archivoFile){ url = await subirArchivo(archivoFile); }
+  const url = await subirArchivo(archivoFile);
 
   const nuevaSolicitud = {
     idSolicitud: id,
@@ -181,14 +210,13 @@ async function crearSolicitud(){
     documento:url||"",
     estado:"pendiente",
     solicitante:{ usuario: usuarioActual.usuario, correo: usuarioActual.correo },
-    fecha: firebase.firestore.FieldValue.serverTimestamp()
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    firmas:{documentado:null, verificado:null, codificado:null}
   };
 
   await db.collection("solicitudes").add(nuevaSolicitud);
 
-  // EmailJS (autoreply)
   enviarCorreo(usuarioActual.correo,id,"Pendiente","Tu solicitud fue registrada correctamente.");
-
   alert("Solicitud creada: "+id);
   cargarSolicitudes();
 }
@@ -206,9 +234,133 @@ async function cargarSolicitudes(){
         <td>${s.nombreDocumento}</td>
         <td>${s.estado}</td>
         <td>${s.solicitante.usuario} (${s.solicitante.correo})</td>
-        <td><button onclick='verSolicitud("${d.id}")'>Ver detalles</button></td>
+        <td><button onclick='verSolicitud("${d.id}")'>Ver / Cambiar Estado</button></td>
       </tr>`;
   });
+}
+
+// Ver detalles y cambiar estado
+async function verSolicitud(id){
+  const docSnap = await db.collection("solicitudes").doc(id).get();
+  if(!docSnap.exists) return alert("Solicitud no encontrada");
+  const s = docSnap.data();
+  let estadoNuevo = prompt(`Solicitud: ${s.idSolicitud}\nEstado actual: ${s.estado}\nIngresar nuevo estado:\nPendiente, Consulta, Solicitar Reunión, Aprobado Sistema de Gestión, Solicitar Aprobación Gerente, Finalizado`);
+  if(!estadoNuevo) return;
+  s.estado = estadoNuevo;
+  if(estadoNuevo=="Consulta" || estadoNuevo=="Solicitar Reunión"){
+    s.motivo = prompt("Ingrese motivo adicional:") || s.motivo;
+  }
+  if(estadoNuevo=="Aprobado Sistema de Gestión"){
+    s.firmas.documentado = prompt("Nombre Documentado:")||null;
+    s.firmas.verificado = prompt("Nombre Verificado:")||null;
+    s.firmas.codificado = prompt("Nombre Codificado:")||null;
+  }
+  await db.collection("solicitudes").doc(id).set(s);
+  cargarSolicitudes();
+}
+
+// ================= FUNCIONES ADMIN =================
+
+// Crear usuario
+async function crearUsuario(){
+  const u = document.getElementById("nuevoUsuario").value;
+  const c = document.getElementById("nuevoCorreo").value;
+  const p = document.getElementById("nuevaPassword").value;
+  const r = document.getElementById("nuevoRol").value;
+  const g = document.getElementById("nuevoGerencia").value;
+  if(!u||!c||!p||!r||!g) return alert("Completa todos los campos");
+  await db.collection("users").doc(u).set({usuario:u,correo:c,password:p,rol:r,gerencia:g});
+  alert("Usuario creado");
+  cargarUsuariosList();
+}
+
+// Cargar usuarios
+async function cargarUsuariosList(){
+  const snap = await db.collection("users").get();
+  let html="";
+  snap.forEach(d=>{
+    const u = d.data();
+    html+=`<p>${u.usuario} (${u.correo}) - Rol: ${u.rol} - Gerencia: ${u.gerencia} <button onclick="eliminarUsuario('${d.id}')">Eliminar</button></p>`;
+  });
+  document.getElementById("usuarios-lista").innerHTML=html;
+}
+
+// Eliminar usuario
+async function eliminarUsuario(id){
+  await db.collection("users").doc(id).delete();
+  cargarUsuariosList();
+}
+
+// Crear gerencia
+async function crearGerencia(){
+  const g = document.getElementById("nuevaGerenciaInput").value;
+  if(!g) return alert("Ingresa nombre de gerencia");
+  await db.collection("gerencias").add({nombre:g});
+  document.getElementById("nuevaGerenciaInput").value="";
+  cargarGerenciasList();
+  cargarGerenciasSelect();
+}
+
+// Cargar gerencias
+async function cargarGerenciasList(){
+  const snap = await db.collection("gerencias").get();
+  let html="";
+  snap.forEach(d=>{
+    const g = d.data();
+    html+=`<p>${g.nombre} <button onclick="eliminarGerencia('${d.id}')">Eliminar</button></p>`;
+  });
+  document.getElementById("gerencias-lista").innerHTML=html;
+}
+
+// Eliminar gerencia
+async function eliminarGerencia(id){
+  await db.collection("gerencias").doc(id).delete();
+  cargarGerenciasList();
+  cargarGerenciasSelect();
+}
+
+// Crear departamento
+async function crearDepartamento(){
+  const d = document.getElementById("nuevoDepartamentoInput").value;
+  if(!d) return alert("Ingresa nombre de departamento");
+  await db.collection("departamentos").add({nombre:d});
+  document.getElementById("nuevoDepartamentoInput").value="";
+  cargarDepartamentosList();
+  cargarDepartamentosSelect();
+}
+
+// Cargar departamentos
+async function cargarDepartamentosList(){
+  const snap = await db.collection("departamentos").get();
+  let html="";
+  snap.forEach(d=>{
+    const dept = d.data();
+    html+=`<p>${dept.nombre} <button onclick="eliminarDepartamento('${d.id}')">Eliminar</button></p>`;
+  });
+  document.getElementById("departamentos-lista").innerHTML=html;
+}
+
+// Eliminar departamento
+async function eliminarDepartamento(id){
+  await db.collection("departamentos").doc(id).delete();
+  cargarDepartamentosList();
+  cargarDepartamentosSelect();
+}
+
+// Selects
+async function cargarGerenciasSelect(){
+  const sel = document.getElementById("gerencia");
+  sel.innerHTML="";
+  const snap = await db.collection("gerencias").get();
+  snap.forEach(d=> sel.innerHTML+=`<option>${d.data().nombre}</option>`);
+  document.getElementById("nuevoGerencia").innerHTML = sel.innerHTML;
+}
+
+async function cargarDepartamentosSelect(){
+  const sel = document.getElementById("departamento");
+  sel.innerHTML="";
+  const snap = await db.collection("departamentos").get();
+  snap.forEach(d=> sel.innerHTML+=`<option>${d.data().nombre}</option>`);
 }
 
 // EmailJS
@@ -220,74 +372,6 @@ function enviarCorreo(destino,id,estado,mensaje){
     mensaje: mensaje
   }).catch(err=>console.log("Error email:",err));
 }
-
-// ================= FUNCIONES ADMIN =================
-async function cargarUsuarios(){
-  const snap = await db.collection("users").get();
-  let html="<h4>Usuarios</h4>";
-  snap.forEach(d=>{
-    const u = d.data();
-    html+=`<p>${u.usuario} (${u.correo}) - Rol: ${u.rol} - Gerencia: ${u.gerencia}</p>`;
-  });
-  document.getElementById("admin-info").innerHTML=html;
-}
-
-async function cargarGerencias(){
-  const snap = await db.collection("gerencias").get();
-  let html="<h4>Gerencias</h4>";
-  snap.forEach(d=>{
-    const g = d.data();
-    html+=`<p>${g.nombre} <button onclick="eliminarGerencia('${d.id}')">Eliminar</button></p>`;
-  });
-  document.getElementById("admin-info").innerHTML=html;
-}
-
-async function cargarDepartamentos(){
-  const snap = await db.collection("departamentos").get();
-  let html="<h4>Departamentos</h4>";
-  snap.forEach(d=>{
-    const g = d.data();
-    html+=`<p>${g.nombre} <button onclick="eliminarDepartamento('${d.id}')">Eliminar</button></p>`;
-  });
-  document.getElementById("admin-info").innerHTML=html;
-}
-
-// Selects
-async function cargarGerenciasSelect(){
-  const sel = document.getElementById("gerencia");
-  sel.innerHTML="";
-  const snap = await db.collection("gerencias").get();
-  snap.forEach(d=> sel.innerHTML+=`<option>${d.data().nombre}</option>`);
-}
-
-async function cargarDepartamentosSelect(){
-  const sel = document.getElementById("departamento");
-  sel.innerHTML="";
-  const snap = await db.collection("departamentos").get();
-  snap.forEach(d=> sel.innerHTML+=`<option>${d.data().nombre}</option>`);
-}
-
-// Eliminar gerencias/departamentos
-async function eliminarGerencia(id){
-  await db.collection("gerencias").doc(id).delete();
-  cargarGerencias();
-  cargarGerenciasSelect();
-}
-
-async function eliminarDepartamento(id){
-  await db.collection("departamentos").doc(id).delete();
-  cargarDepartamentos();
-  cargarDepartamentosSelect();
-}
-
-// Ver detalles de solicitud
-async function verSolicitud(id){
-  const docSnap = await db.collection("solicitudes").doc(id).get();
-  if(!docSnap.exists) return alert("Solicitud no encontrada");
-  const s = docSnap.data();
-  alert(`ID: ${s.idSolicitud}\nDocumento: ${s.nombreDocumento}\nEstado: ${s.estado}\nSolicitante: ${s.solicitante.usuario} (${s.solicitante.correo})\nMotivo: ${s.motivo}`);
-}
-
 </script>
 </body>
 </html>
