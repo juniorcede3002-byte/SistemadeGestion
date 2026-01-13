@@ -1,613 +1,522 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>FCI | Sistema de Gestión Documental</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>FCI | Dashboard de Gestión Documental</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-<!-- Cloudinary -->
-<script src="https://widget.cloudinary.com/v2.0/global/all.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e293b;
+            --bg: #f8fafc;
+            --text: #334155;
+            --accent: #3b82f6;
+            --white: #ffffff;
+        }
 
-<style>
-body{
-    margin:0;
-    font-family: Arial, sans-serif;
-    background:#f4f6f8;
-}
-header{
-    background:#1e293b;
-    color:white;
-    padding:15px;
-    font-size:18px;
-}
-.container{
-    padding:20px;
-}
-.section{
-    background:white;
-    padding:15px;
-    border-radius:8px;
-    margin-bottom:20px;
-}
-h2{
-    margin-top:0;
-}
-input, select, textarea, button{
-    width:100%;
-    padding:8px;
-    margin-top:5px;
-    margin-bottom:10px;
-}
-button{
-    background:#2563eb;
-    color:white;
-    border:none;
-    cursor:pointer;
-}
-button:hover{
-    opacity:0.9;
-}
-table{
-    width:100%;
-    border-collapse:collapse;
-}
-th, td{
-    border:1px solid #ddd;
-    padding:8px;
-}
-th{
-    background:#e5e7eb;
-}
-.estado{
-    font-weight:bold;
-}
-.detalle-box{
-    background:#f1f5f9;
-    padding:10px;
-    margin-top:10px;
-    border-radius:5px;
-}
-.hidden{
-    display:none;
-}
-</style>
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background: var(--secondary);
+            height: 100vh;
+            color: white;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            border-bottom: 1px solid #334155;
+        }
+
+        .nav-menu {
+            flex-grow: 1;
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #94a3b8;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: #334155;
+            color: white;
+            border-left: 4px solid var(--accent);
+        }
+
+        .nav-item i { margin-right: 15px; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 30px;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        h2 { margin-top: 0; font-weight: 600; color: var(--secondary); font-size: 1.5rem; }
+
+        /* --- FORMULARIOS --- */
+        .grid-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        button {
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+        /* --- TABLAS --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th {
+            text-align: left;
+            background: #f1f5f9;
+            padding: 12px;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .hidden { display: none; }
+    </style>
 </head>
 
 <body>
-<header>
-Sistema de Gestión Documental – Fashion Consult International
-</header>
 
-<div class="container">
+    <div class="sidebar">
+        <div class="sidebar-header">FCI SYSTEM</div>
+        <div class="nav-menu">
+            <div class="nav-item active" onclick="mostrarSeccion('solicitudesSection')"><i class="fas fa-file-alt"></i> Solicitudes</div>
+            <div class="nav-item" onclick="mostrarSeccion('nuevaSolicitudSection')"><i class="fas fa-plus-circle"></i> Nueva Solicitud</div>
+            <div class="nav-item" onclick="mostrarSeccion('usuariosSection')"><i class="fas fa-users"></i> Usuarios</div>
+            <div class="nav-item" onclick="mostrarSeccion('configuracionSection')"><i class="fas fa-cog"></i> Estructura</div>
+        </div>
+    </div>
 
-<!-- USUARIOS -->
-<div class="section">
-<h2>👤 Crear Usuario</h2>
-<input id="u_usuario" placeholder="Usuario">
-<input id="u_password" placeholder="Contraseña">
-<input id="u_correo" placeholder="Correo">
-<select id="u_rol">
-    <option>Admin</option>
-    <option>Gerente</option>
-    <option>Usuario</option>
-</select>
-<input id="u_gerencia" placeholder="Gerencia">
-<input id="u_departamento" placeholder="Departamento">
+    <div class="main-content">
+        
+        <div id="solicitudesSection" class="section">
+            <div class="card">
+                <h2>📋 Panel de Solicitudes</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Documento</th>
+                            <th>Gerencia</th>
+                            <th>Estado</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaSolicitudes"></tbody>
+                </table>
+            </div>
 
-<label><input type="checkbox" id="p_crear"> Puede crear solicitudes</label>
-<label><input type="checkbox" id="p_ver"> Puede ver solicitudes</label>
-<label><input type="checkbox" id="p_aprobar"> Puede aprobar</label>
-<label><input type="checkbox" id="p_usuarios"> Gestionar usuarios</label>
+            <div id="detalleBox" class="card hidden">
+                <h2>🔍 Detalle de Solicitud: <span id="det_codigo"></span></h2>
+                <div class="grid-form">
+                    <p><b>Nombre:</b> <span id="det_nombre"></span></p>
+                    <p><b>Tipo:</b> <span id="det_tipo"></span></p>
+                    <p><b>Acción:</b> <span id="det_accion"></span></p>
+                    <p><b>Estado:</b> <span id="det_estado" class="status-pill"></span></p>
+                </div>
+                
+                <div id="historialBox" style="margin: 20px 0; max-height: 200px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: 8px;"></div>
 
-<button onclick="crearUsuario()">Guardar Usuario</button>
-</div>
+                <h3>Adjuntos</h3>
+                <div id="adjuntosBox" style="margin-bottom: 15px;"></div>
+                <div class="grid-form">
+                    <input type="file" id="archivoAdjunto">
+                    <button onclick="subirDocumento()">📤 Subir a Cloudinary</button>
+                </div>
 
-<!-- SOLICITUD -->
-<div class="section">
-<h2>📄 Nueva Solicitud</h2>
+                <hr>
+                <h3>Actualizar Estado</h3>
+                <div class="grid-form">
+                    <select id="estadoNuevo">
+                        <option value="">-- Seleccionar Nuevo Estado --</option>
+                        <option>Pendiente</option>
+                        <option>Solicitud de reunión</option>
+                        <option>Consulta</option>
+                        <option>Firma documentado</option>
+                        <option>Firma verificado</option>
+                        <option>Aprobación gerente</option>
+                        <option>Finalizado</option>
+                    </select>
+                    <input type="text" id="estadoComentario" placeholder="Agregar un comentario...">
+                    <button onclick="cambiarEstado()">Guardar Cambio</button>
+                </div>
+            </div>
+        </div>
 
-<input id="s_nombre" placeholder="Nombre del documento">
-<select id="s_tipo">
-    <option>Procedimiento</option>
-    <option>Instructivo</option>
-    <option>Formato</option>
-</select>
+        <div id="nuevaSolicitudSection" class="section hidden">
+            <div class="card">
+                <h2>📄 Crear Nueva Solicitud</h2>
+                <div class="grid-form">
+                    <input id="s_nombre" placeholder="Nombre del documento">
+                    <select id="s_tipo">
+                        <option>Procedimiento</option>
+                        <option>Instructivo</option>
+                        <option>Formato</option>
+                    </select>
+                    <select id="s_accion" onchange="accionChange()">
+                        <option value="crear">Crear</option>
+                        <option value="modificar">Modificar</option>
+                        <option value="inactivar">Inactivar</option>
+                    </select>
+                </div>
+                <div id="modBox" class="grid-form hidden">
+                    <input id="s_version" placeholder="Última versión">
+                    <input id="s_codigo" placeholder="Código anterior">
+                </div>
+                <div class="grid-form">
+                    <select id="s_gerencia_select"></select>
+                    <select id="s_departamento_select"></select>
+                </div>
+                <textarea id="s_motivo" placeholder="Motivo de la solicitud" rows="3"></textarea>
+                <button onclick="crearSolicitud()">🚀 Enviar Solicitud</button>
+            </div>
+        </div>
 
-<select id="s_accion" onchange="accionChange()">
-    <option value="crear">Crear</option>
-    <option value="modificar">Modificar</option>
-    <option value="inactivar">Inactivar</option>
-</select>
+        <div id="usuariosSection" class="section hidden">
+            <div class="card">
+                <h2>👤 Gestión de Usuarios</h2>
+                <div class="grid-form">
+                    <input id="u_usuario" placeholder="Username">
+                    <input id="u_pass" type="password" placeholder="Password">
+                    <input id="u_correo" placeholder="Email">
+                    <select id="u_rol">
+                        <option>Usuario</option>
+                        <option>Gerente</option>
+                        <option>Admin</option>
+                    </select>
+                </div>
+                <h4>Permisos</h4>
+                <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 20px;">
+                    <label><input type="checkbox" id="p_solicitar"> Crear Solicitudes</label>
+                    <label><input type="checkbox" id="p_aprobar"> Aprobar</label>
+                    <label><input type="checkbox" id="p_users"> Gestionar Staff</label>
+                </div>
+                <button onclick="crearUsuario()">Guardar Usuario</button>
+                
+                <h3 style="margin-top: 30px;">Listado de Personal</h3>
+                <table>
+                    <thead><tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Acción</th></tr></thead>
+                    <tbody id="usuariosTabla"></tbody>
+                </table>
+            </div>
+        </div>
 
-<div id="modBox" class="hidden">
-<input id="s_version" placeholder="Última versión">
-<input id="s_codigo" placeholder="Código anterior">
-</div>
+        <div id="configuracionSection" class="section hidden">
+            <div class="grid-form">
+                <div class="card">
+                    <h2>🏢 Gerencias</h2>
+                    <input id="g_nombre" placeholder="Nombre Gerencia">
+                    <button onclick="crearGerencia()" style="width: 100%;">Añadir</button>
+                    <ul id="gerenciasLista"></ul>
+                </div>
+                <div class="card">
+                    <h2>📂 Departamentos</h2>
+                    <input id="d_nombre" placeholder="Nombre Depto">
+                    <button onclick="crearDepto()" style="width: 100%;">Añadir</button>
+                    <ul id="deptosLista"></ul>
+                </div>
+            </div>
+        </div>
 
-<input id="s_gerencia" placeholder="Gerencia">
-<input id="s_departamento" placeholder="Departamento">
-<textarea id="s_motivo" placeholder="Motivo"></textarea>
+    </div>
 
-<button onclick="crearSolicitud()">Enviar Solicitud</button>
-</div>
+    <script>
+        /* CONFIGURACIÓN FIREBASE */
+        const firebaseConfig = {
+            apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+            authDomain: "sistemadegestion-7400d.firebaseapp.com",
+            projectId: "sistemadegestion-7400d",
+            storageBucket: "sistemadegestion-7400d.firebasestorage.app",
+            messagingSenderId: "709030283072",
+            appId: "1:709030283072:web:5997837b36a448e9515ca5"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-<!-- LISTADO -->
-<div class="section">
-<h2>📋 Solicitudes</h2>
-<table>
-<thead>
-<tr>
-<th>Código</th>
-<th>Documento</th>
-<th>Gerencia</th>
-<th>Estado</th>
-<th>Acción</th>
-</tr>
-</thead>
-<tbody id="tablaSolicitudes"></tbody>
-</table>
-</div>
+        /* CONFIGURACIÓN CLOUDINARY */
+        const cloudName = "df79cjklp";          
+        const uploadPreset = "fci_documentos"; 
 
-<!-- DETALLE -->
-<div class="section hidden" id="detalle">
-<h2>🔍 Detalle Solicitud</h2>
-<div id="detalleContenido"></div>
+        let solicitudActual = null;
 
-<select id="nuevoEstado" onchange="estadoChange()">
-<option>Pendiente</option>
-<option>Solicitud de reunión</option>
-<option>Consulta</option>
-<option>Firma Documentado</option>
-<option>Firma Verificado</option>
-<option>Firma Codificado</option>
-<option>Solicitud aprobación gerente</option>
-<option>Aprobado por gerente</option>
-<option>Rechazado por gerente</option>
-<option>Finalizado</option>
-</select>
+        /* NAVEGACIÓN */
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
 
-<div id="estadoExtra"></div>
+        /* LÓGICA DE SOLICITUDES */
+        function accionChange(){
+            const accion = document.getElementById("s_accion").value;
+            document.getElementById("modBox").classList.toggle("hidden", accion === "crear");
+        }
 
-<button onclick="actualizarEstado()">Actualizar Estado</button>
-</div>
+        function generarCodigo(){ return "DOC-" + Date.now(); }
 
-</div>
+        function crearSolicitud(){
+            const codigo = generarCodigo();
+            const data = {
+                codigo,
+                nombre: s_nombre.value,
+                tipo: s_tipo.value,
+                accion: s_accion.value,
+                gerencia: s_gerencia_select.value,
+                departamento: s_departamento_select.value,
+                motivo: s_motivo.value,
+                estado: "Pendiente",
+                fecha: new Date(),
+                historial: [{ estado:"Pendiente", fecha:new Date(), comentario:"Solicitud creada" }],
+                adjuntos: []
+            };
 
-<script>
-/* ===============================
-   FIREBASE CONFIG (TU PROYECTO)
-================================ */
-
-// Importar Firebase
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-
-// Configuración Firebase
-const firebaseConfig = {
-  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
-  authDomain: "sistemadegestion-7400d.firebaseapp.com",
-  projectId: "sistemadegestion-7400d",
-  storageBucket: "sistemadegestion-7400d.firebasestorage.app",
-  messagingSenderId: "709030283072",
-  appId: "1:709030283072:web:5997837b36a448e9515ca5"
-};
-
-// Inicializar Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);       // Firestore
-const storage = getStorage(app);     // Storage
-
-/* ===============================
-   UTILIDADES
-================================ */
-function generarCodigo(){
-    return "DOC-" + Date.now();
-}
-
-function accionChange(){
-    const accion = document.getElementById("s_accion").value;
-    document.getElementById("modBox").classList.toggle("hidden", accion === "crear");
-}
-
-/* ===============================
-   CREAR USUARIO
-================================ */
-function crearUsuario(){
-    const data = {
-        usuario: u_usuario.value,
-        password: u_password.value,
-        correo: u_correo.value,
-        rol: u_rol.value,
-        gerencia: u_gerencia.value,
-        departamento: u_departamento.value,
-        permisos:{
-            crear: p_crear.checked,
-            ver: p_ver.checked,
-            aprobar: p_aprobar.checked,
-            usuarios: p_usuarios.checked
-        },
-        creado: new Date()
-    };
-
-    if(!data.usuario || !data.password){
-        alert("Usuario y contraseña requeridos");
-        return;
-    }
-
-    db.collection("usuarios").doc(data.usuario).set(data)
-    .then(()=>{
-        alert("Usuario creado correctamente");
-        document.querySelectorAll("input").forEach(i=>i.value="");
-    });
-}
-
-/* ===============================
-   CREAR SOLICITUD
-================================ */
-function crearSolicitud(){
-    const codigo = generarCodigo();
-    const data = {
-        codigo,
-        nombre: s_nombre.value,
-        tipo: s_tipo.value,
-        accion: s_accion.value,
-        versionAnterior: s_version.value || "",
-        codigoAnterior: s_codigo.value || "",
-        gerencia: s_gerencia.value,
-        departamento: s_departamento.value,
-        motivo: s_motivo.value,
-        estado: "Pendiente",
-        fecha: new Date(),
-        historial:[
-            {
-                estado:"Pendiente",
-                fecha:new Date(),
-                comentario:"Solicitud creada"
-            }
-        ],
-        adjuntos:[]
-    };
-
-    db.collection("solicitudes").doc(codigo).set(data)
-    .then(()=>{
-        alert("Solicitud enviada");
-        cargarSolicitudes();
-        document.querySelectorAll("input, textarea").forEach(i=>i.value="");
-    });
-}
-
-/* ===============================
-   LISTAR SOLICITUDES
-================================ */
-function cargarSolicitudes(){
-    tablaSolicitudes.innerHTML="";
-    db.collection("solicitudes").orderBy("fecha","desc").onSnapshot(snap=>{
-        tablaSolicitudes.innerHTML="";
-        snap.forEach(doc=>{
-            const d = doc.data();
-            tablaSolicitudes.innerHTML += `
-            <tr>
-                <td>${d.codigo}</td>
-                <td>${d.nombre}</td>
-                <td>${d.gerencia}</td>
-                <td class="estado">${d.estado}</td>
-                <td><button onclick="verDetalle('${d.codigo}')">Ver</button></td>
-            </tr>`;
-        });
-    });
-}
-cargarSolicitudes();
-</script>
-
-
-<script>
-/* ===============================
-   VARIABLES GLOBALES
-================================ */
-let solicitudActual = null;
-
-/* ===============================
-   VER DETALLE SOLICITUD
-================================ */
-function verDetalle(codigo){
-    db.collection("solicitudes").doc(codigo).get().then(doc=>{
-        if(!doc.exists) return;
-        solicitudActual = codigo;
-        const d = doc.data();
-
-        document.getElementById("detalleBox").classList.remove("hidden");
-
-        det_codigo.innerText = d.codigo;
-        det_nombre.innerText = d.nombre;
-        det_tipo.innerText = d.tipo;
-        det_accion.innerText = d.accion;
-        det_gerencia.innerText = d.gerencia;
-        det_departamento.innerText = d.departamento;
-        det_estado.innerText = d.estado;
-        det_motivo.innerText = d.motivo;
-
-        /* HISTORIAL */
-        historialBox.innerHTML="";
-        d.historial.forEach(h=>{
-            historialBox.innerHTML+=`
-            <div style="border-left:3px solid #0a2a66;padding:5px;margin:5px">
-                <b>${h.estado}</b><br>
-                ${h.comentario || ""}<br>
-                <small>${new Date(h.fecha.seconds*1000).toLocaleString()}</small>
-            </div>`;
-        });
-
-        /* ADJUNTOS */
-        adjuntosBox.innerHTML="";
-        if(d.adjuntos){
-            d.adjuntos.forEach(a=>{
-                adjuntosBox.innerHTML+=`
-                <a href="${a.url}" target="_blank">📎 ${a.nombre}</a><br>`;
+            db.collection("solicitudes").doc(codigo).set(data).then(()=>{
+                alert("Solicitud enviada con éxito");
+                mostrarSeccion('solicitudesSection');
             });
         }
-    });
-}
 
-/* ===============================
-   CAMBIAR ESTADO
-================================ */
-function cambiarEstado(){
-    const nuevo = estadoNuevo.value;
-    const comentario = estadoComentario.value;
-
-    if(!solicitudActual || !nuevo) return;
-
-    const ref = db.collection("solicitudes").doc(solicitudActual);
-
-    ref.update({
-        estado: nuevo,
-        historial: firebase.firestore.FieldValue.arrayUnion({
-            estado:nuevo,
-            comentario,
-            fecha:new Date()
-        })
-    }).then(()=>{
-        alert("Estado actualizado");
-        estadoComentario.value="";
-        verDetalle(solicitudActual);
-        cargarSolicitudes();
-    });
-}
-
-/* ===============================
-   SUBIR DOCUMENTO (CLOUDINARY)
-================================ */
-function subirDocumento(){
-    const file = archivoAdjunto.files[0];
-    if(!file || !solicitudActual) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "TU_UPLOAD_PRESET");
-
-    fetch("https://api.cloudinary.com/v1_1/TU_CLOUD_NAME/auto/upload",{
-        method:"POST",
-        body:formData
-    })
-    .then(r=>r.json())
-    .then(data=>{
-        return db.collection("solicitudes").doc(solicitudActual).update({
-            adjuntos: firebase.firestore.FieldValue.arrayUnion({
-                nombre:file.name,
-                url:data.secure_url
-            })
-        });
-    })
-    .then(()=>{
-        alert("Documento adjuntado");
-        verDetalle(solicitudActual);
-    });
-}
-</script>
-
-<!-- ===============================
-     DETALLE SOLICITUD UI
-================================ -->
-<div id="detalleBox" class="hidden card">
-    <h2>Detalle de Solicitud</h2>
-
-    <p><b>Código:</b> <span id="det_codigo"></span></p>
-    <p><b>Nombre:</b> <span id="det_nombre"></span></p>
-    <p><b>Tipo:</b> <span id="det_tipo"></span></p>
-    <p><b>Acción:</b> <span id="det_accion"></span></p>
-    <p><b>Gerencia:</b> <span id="det_gerencia"></span></p>
-    <p><b>Departamento:</b> <span id="det_departamento"></span></p>
-    <p><b>Estado actual:</b> <span id="det_estado"></span></p>
-    <p><b>Motivo:</b> <span id="det_motivo"></span></p>
-
-    <h3>Historial</h3>
-    <div id="historialBox"></div>
-
-    <h3>Adjuntar documento</h3>
-    <input type="file" id="archivoAdjunto">
-    <button onclick="subirDocumento()">Subir</button>
-    <div id="adjuntosBox"></div>
-
-    <h3>Cambiar estado</h3>
-    <select id="estadoNuevo">
-        <option value="">-- Seleccionar --</option>
-        <option>Pendiente</option>
-        <option>Solicitud de reunión</option>
-        <option>Consulta</option>
-        <option>Firma documentado</option>
-        <option>Firma verificado</option>
-        <option>Firma codificado</option>
-        <option>Aprobación gerente</option>
-        <option>Finalizado</option>
-    </select>
-
-    <textarea id="estadoComentario" placeholder="Comentario"></textarea>
-    <button onclick="cambiarEstado()">Actualizar estado</button>
-</div>
-
-
-<style>
-.tabs { display:flex; gap:10px; margin-bottom:10px }
-.tab-btn { padding:10px; background:#0a2a66; color:white; border:none; cursor:pointer }
-.tab { display:none }
-.tab.active { display:block }
-.card { background:#fff; padding:15px; border-radius:8px; margin-bottom:15px }
-table { width:100%; border-collapse:collapse }
-td,th { border:1px solid #ccc; padding:5px }
-.hidden{display:none}
-</style>
-
-<div class="tabs">
-    <button class="tab-btn" onclick="abrirTab('usuariosTab')">Usuarios</button>
-    <button class="tab-btn" onclick="abrirTab('gerenciasTab')">Gerencias</button>
-    <button class="tab-btn" onclick="abrirTab('deptosTab')">Departamentos</button>
-    <button class="tab-btn" onclick="abrirTab('solicitudesTab')">Solicitudes</button>
-</div>
-
-<script>
-function abrirTab(id){
-    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-</script>
-
-
-<div id="usuariosTab" class="tab active card">
-    <h2>Usuarios</h2>
-
-    <input id="u_usuario" placeholder="Usuario">
-    <input id="u_pass" placeholder="Contraseña">
-    <input id="u_correo" placeholder="Correo">
-    <select id="u_rol">
-        <option>usuario</option>
-        <option>gerente</option>
-        <option>admin</option>
-    </select>
-    <select id="u_gerencia"></select>
-    <select id="u_departamento"></select>
-
-    <h4>Permisos</h4>
-    <label><input type="checkbox" id="p_solicitar"> Realizar solicitudes</label><br>
-    <label><input type="checkbox" id="p_verpropias"> Ver solicitudes propias</label><br>
-    <label><input type="checkbox" id="p_vergerencia"> Ver solicitudes gerencia</label><br>
-    <label><input type="checkbox" id="p_aprobar"> Aprobar/Rechazar</label><br>
-    <label><input type="checkbox" id="p_users"> Gestionar usuarios</label><br>
-
-    <button onclick="crearUsuario()">Crear usuario</button>
-
-    <h3>Listado</h3>
-    <table>
-        <thead>
-            <tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Acciones</th></tr>
-        </thead>
-        <tbody id="usuariosTabla"></tbody>
-    </table>
-</div>
-
-
-
-<script>
-function crearUsuario(){
-    const data={
-        usuario:u_usuario.value,
-        password:u_pass.value,
-        correo:u_correo.value,
-        rol:u_rol.value,
-        gerencia:u_gerencia.value,
-        departamento:u_departamento.value,
-        permisos:{
-            solicitar:p_solicitar.checked,
-            verPropias:p_verpropias.checked,
-            verGerencia:p_vergerencia.checked,
-            aprobar:p_aprobar.checked,
-            users:p_users.checked
+        function cargarSolicitudes(){
+            db.collection("solicitudes").orderBy("fecha","desc").onSnapshot(snap=>{
+                tablaSolicitudes.innerHTML="";
+                snap.forEach(doc=>{
+                    const d = doc.data();
+                    tablaSolicitudes.innerHTML += `
+                    <tr>
+                        <td><b>${d.codigo}</b></td>
+                        <td>${d.nombre}</td>
+                        <td>${d.gerencia}</td>
+                        <td><span class="status-pill">${d.estado}</span></td>
+                        <td><button onclick="verDetalle('${d.codigo}')">Ver</button></td>
+                    </tr>`;
+                });
+            });
         }
-    };
-    db.collection("usuarios").doc(data.usuario).set(data).then(()=>{
-        alert("Usuario creado");
+
+        function verDetalle(codigo){
+            db.collection("solicitudes").doc(codigo).get().then(doc=>{
+                if(!doc.exists) return;
+                solicitudActual = codigo;
+                const d = doc.data();
+                document.getElementById("detalleBox").classList.remove("hidden");
+                det_codigo.innerText = d.codigo;
+                det_nombre.innerText = d.nombre;
+                det_tipo.innerText = d.tipo;
+                det_accion.innerText = d.accion;
+                det_estado.innerText = d.estado;
+
+                historialBox.innerHTML = d.historial.map(h => `
+                    <div style="font-size:12px; margin-bottom:10px; border-bottom:1px solid #eee">
+                        <b>${h.estado}</b> - ${new Date(h.fecha.seconds*1000).toLocaleString()}<br>
+                        <span style="color:#666">${h.comentario || ''}</span>
+                    </div>
+                `).join('');
+
+                adjuntosBox.innerHTML = (d.adjuntos || []).map(a => `
+                    <a href="${a.url}" target="_blank" style="display:block; color:var(--primary); margin:5px 0;">
+                        <i class="fas fa-paperclip"></i> ${a.nombre}
+                    </a>
+                `).join('');
+            });
+        }
+
+        /* INTEGRACIÓN CLOUDINARY */
+        async function subirDocumento() {
+            const file = document.getElementById("archivoAdjunto").files[0];
+            if (!file || !solicitudActual) return alert("Selecciona un archivo primero");
+
+            const btn = event.target;
+            btn.innerText = "Subiendo...";
+            btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", uploadPreset);
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+                
+                await db.collection("solicitudes").doc(solicitudActual).update({
+                    adjuntos: firebase.firestore.FieldValue.arrayUnion({
+                        nombre: file.name,
+                        url: data.secure_url
+                    })
+                });
+
+                alert("Archivo subido y vinculado");
+                verDetalle(solicitudActual);
+            } catch (error) {
+                console.error(error);
+                alert("Error al subir");
+            } finally {
+                btn.innerText = "📤 Subir a Cloudinary";
+                btn.disabled = false;
+            }
+        }
+
+        function cambiarEstado(){
+            const nuevo = estadoNuevo.value;
+            const comentario = estadoComentario.value;
+            if(!solicitudActual || !nuevo) return;
+
+            db.collection("solicitudes").doc(solicitudActual).update({
+                estado: nuevo,
+                historial: firebase.firestore.FieldValue.arrayUnion({
+                    estado: nuevo,
+                    comentario,
+                    fecha: new Date()
+                })
+            }).then(() => {
+                alert("Estado actualizado");
+                verDetalle(solicitudActual);
+            });
+        }
+
+        /* GESTIÓN DE ESTRUCTURA Y USUARIOS */
+        function crearGerencia(){
+            db.collection("gerencias").add({nombre:g_nombre.value}).then(cargarGerencias);
+        }
+        function cargarGerencias(){
+            gerenciasLista.innerHTML = "";
+            s_gerencia_select.innerHTML = "";
+            db.collection("gerencias").get().then(q=>{
+                q.forEach(d=>{
+                    gerenciasLista.innerHTML+=`<li>${d.data().nombre}</li>`;
+                    s_gerencia_select.innerHTML+=`<option>${d.data().nombre}</option>`;
+                });
+            });
+        }
+
+        function crearDepto(){
+            db.collection("departamentos").add({nombre:d_nombre.value}).then(cargarDeptos);
+        }
+        function cargarDeptos(){
+            deptosLista.innerHTML = "";
+            s_departamento_select.innerHTML = "";
+            db.collection("departamentos").get().then(q=>{
+                q.forEach(d=>{
+                    deptosLista.innerHTML+=`<li>${d.data().nombre}</li>`;
+                    s_departamento_select.innerHTML+=`<option>${d.data().nombre}</option>`;
+                });
+            });
+        }
+
+        function crearUsuario(){
+            const data={
+                usuario: u_usuario.value,
+                password: u_pass.value,
+                correo: u_correo.value,
+                rol: u_rol.value,
+                permisos: {
+                    solicitar: p_solicitar.checked,
+                    aprobar: p_aprobar.checked,
+                    users: p_users.checked
+                }
+            };
+            db.collection("usuarios").doc(data.usuario).set(data).then(()=>{
+                alert("Usuario Guardado");
+                cargarUsuarios();
+            });
+        }
+
+        function cargarUsuarios(){
+            usuariosTabla.innerHTML="";
+            db.collection("usuarios").get().then(q=>{
+                q.forEach(d=>{
+                    const u=d.data();
+                    usuariosTabla.innerHTML+=`<tr><td>${u.usuario}</td><td>${u.rol}</td><td>Admin</td><td><button onclick="this.parentElement.parentElement.remove()">Borrar</button></td></tr>`;
+                });
+            });
+        }
+
+        // Inicialización
+        cargarSolicitudes();
+        cargarGerencias();
+        cargarDeptos();
         cargarUsuarios();
-    });
-}
 
-function cargarUsuarios(){
-    usuariosTabla.innerHTML="";
-    db.collection("usuarios").get().then(q=>{
-        q.forEach(d=>{
-            const u=d.data();
-            usuariosTabla.innerHTML+=`
-            <tr>
-                <td>${u.usuario}</td>
-                <td>${u.rol}</td>
-                <td>${u.gerencia}</td>
-                <td>
-                    <button onclick="eliminarUsuario('${d.id}')">Eliminar</button>
-                </td>
-            </tr>`;
-        });
-    });
-}
-
-function eliminarUsuario(id){
-    if(confirm("Eliminar usuario?")){
-        db.collection("usuarios").doc(id).delete().then(cargarUsuarios);
-    }
-}
-</script>
-
-
-<div id="gerenciasTab" class="tab card">
-    <h2>Gerencias</h2>
-    <input id="g_nombre" placeholder="Nombre">
-    <button onclick="crearGerencia()">Agregar</button>
-    <ul id="gerenciasLista"></ul>
-</div>
-
-<script>
-function crearGerencia(){
-    db.collection("gerencias").add({nombre:g_nombre.value}).then(cargarGerencias);
-}
-function cargarGerencias(){
-    gerenciasLista.innerHTML="";
-    u_gerencia.innerHTML="";
-    db.collection("gerencias").get().then(q=>{
-        q.forEach(d=>{
-            gerenciasLista.innerHTML+=`<li>${d.data().nombre}</li>`;
-            u_gerencia.innerHTML+=`<option>${d.data().nombre}</option>`;
-        });
-    });
-}
-</script>
-
-<div id="deptosTab" class="tab card">
-    <h2>Departamentos</h2>
-    <input id="d_nombre" placeholder="Nombre">
-    <button onclick="crearDepto()">Agregar</button>
-    <ul id="deptosLista"></ul>
-</div>
-
-<script>
-function crearDepto(){
-    db.collection("departamentos").add({nombre:d_nombre.value}).then(cargarDeptos);
-}
-function cargarDeptos(){
-    deptosLista.innerHTML="";
-    u_departamento.innerHTML="";
-    db.collection("departamentos").get().then(q=>{
-        q.forEach(d=>{
-            deptosLista.innerHTML+=`<li>${d.data().nombre}</li>`;
-            u_departamento.innerHTML+=`<option>${d.data().nombre}</option>`;
-        });
-    });
-}
-</script>
-
-<script>
-cargarUsuarios();
-cargarGerencias();
-cargarDeptos();
-</script>
+    </script>
+</body>
+</html>
