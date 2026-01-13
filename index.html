@@ -2,23 +2,23 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>FCI | Sistema de Gestión Documental</title>
+<title>FCI | Gestión Documental</title>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body { font-family: Arial; background:#f4f6f8; margin:0 }
-header { background:#0a2540; color:white; padding:15px }
-section { padding:20px }
-.card { background:white; padding:15px; margin-bottom:15px; border-radius:6px }
-.hidden { display:none }
-button { padding:6px 10px; cursor:pointer }
-input, select, textarea { width:100%; margin:5px 0; padding:6px }
-table { width:100%; border-collapse:collapse }
-th, td { border:1px solid #ccc; padding:6px }
-th { background:#eee }
+body{font-family:Arial;background:#f4f6f9;margin:0}
+header{background:#0f172a;color:#fff;padding:15px}
+section{padding:20px}
+.card{background:#fff;padding:15px;margin-bottom:15px;border-radius:8px}
+input,select,textarea,button{width:100%;margin:5px 0;padding:6px}
+button{cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:6px}
+th{background:#eee}
+hr{margin:15px 0}
 </style>
 </head>
 
@@ -26,86 +26,98 @@ th { background:#eee }
 
 <header>
 <h2>📁 Sistema de Gestión Documental FCI</h2>
-<span id="usuarioActivo"></span>
+<p>Modo abierto (sin login)</p>
 </header>
 
-<section id="login">
-<div class="card">
-<h3>Acceso</h3>
-<input id="loginUser" placeholder="Usuario">
-<input id="loginPass" type="password" placeholder="Contraseña">
-<button onclick="login()">Ingresar</button>
-<p id="loginError" style="color:red"></p>
-</div>
-</section>
+<section>
 
-<section id="dashboard" class="hidden">
-
+<!-- DASHBOARD -->
 <div class="card">
-<button onclick="mostrar('solicitudes')">Solicitudes</button>
-<button onclick="mostrar('usuarios')">Usuarios</button>
-<button onclick="mostrar('gerencias')">Gerencias</button>
-<button onclick="mostrar('departamentos')">Departamentos</button>
+<button onclick="ver('solicitudes')">Solicitudes</button>
+<button onclick="ver('usuarios')">Usuarios</button>
+<button onclick="ver('gerencias')">Gerencias</button>
+<button onclick="ver('departamentos')">Departamentos</button>
 </div>
 
 <!-- SOLICITUDES -->
-<div id="solicitudes" class="card hidden">
-<h3>Nueva Solicitud</h3>
-<select id="tipoDoc">
+<div id="solicitudes" class="card">
+<h3>➕ Nueva Solicitud</h3>
+
+<select id="tipoDocumento">
 <option>Procedimiento</option>
 <option>Guía</option>
 <option>Instructivo</option>
 <option>Manual</option>
 <option>Formato</option>
 </select>
-<input id="nombreDoc" placeholder="Nombre del documento">
+
+<input id="nombreDocumento" placeholder="Nombre del documento">
+
 <select id="accion">
 <option>Creación</option>
 <option>Modificación</option>
 <option>Inactivación</option>
 </select>
+
+<input id="gerencia" placeholder="Gerencia">
+<input id="departamento" placeholder="Departamento">
 <textarea id="motivo" placeholder="Motivo"></textarea>
+
+<hr>
+
+<h4>Datos solo si es modificación / inactivación</h4>
+<input type="date" id="fechaVersion">
+<input id="ultimaVersion" placeholder="Última versión">
+<input id="codificacion" placeholder="Codificación">
+
+<input type="file" id="archivo">
 <button onclick="crearSolicitud()">Crear Solicitud</button>
 
-<h3>Solicitudes</h3>
+<hr>
+
+<h3>📋 Solicitudes</h3>
 <table>
 <thead>
-<tr><th>Código</th><th>Documento</th><th>Estado</th></tr>
+<tr>
+<th>Código</th>
+<th>Documento</th>
+<th>Estado</th>
+<th>Detalles</th>
+</tr>
 </thead>
 <tbody id="tablaSolicitudes"></tbody>
 </table>
 </div>
 
 <!-- USUARIOS -->
-<div id="usuarios" class="card hidden">
-<h3>Crear Usuario</h3>
+<div id="usuarios" class="card" style="display:none">
+<h3>👤 Usuarios</h3>
+
 <input id="uUsuario" placeholder="Usuario">
-<input id="uPass" placeholder="Contraseña">
 <input id="uCorreo" placeholder="Correo">
 <select id="uRol">
-<option value="usuario">Usuario</option>
-<option value="gerente">Gerente</option>
-<option value="admin">Admin</option>
+<option>usuario</option>
+<option>gerente</option>
+<option>admin</option>
 </select>
 <input id="uGerencia" placeholder="Gerencia">
 <input id="uDepto" placeholder="Departamento">
-<button onclick="crearUsuario()">Guardar</button>
+<button onclick="crearUsuario()">Guardar Usuario</button>
 
-<h3>Usuarios</h3>
 <ul id="listaUsuarios"></ul>
 </div>
 
 <!-- GERENCIAS -->
-<div id="gerencias" class="card hidden">
-<h3>Gerencias</h3>
+<div id="gerencias" class="card" style="display:none">
+<h3>🏢 Gerencias</h3>
 <input id="nGerencia" placeholder="Nueva gerencia">
 <button onclick="addGerencia()">Agregar</button>
 <ul id="listaGerencias"></ul>
 </div>
 
 <!-- DEPARTAMENTOS -->
-<div id="departamentos" class="card hidden">
-<h3>Departamentos</h3>
+<div id="departamentos" class="card" style="display:none">
+<h3>🏬 Departamentos</h3>
 <input id="nDepto" placeholder="Departamento">
 <input id="gDepto" placeholder="Gerencia">
 <button onclick="addDepto()">Agregar</button>
@@ -115,139 +127,117 @@ th { background:#eee }
 </section>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
-  authDomain: "sistemadegestion-7400d.firebaseapp.com",
-  projectId: "sistemadegestion-7400d"
-};
-
-firebase.initializeApp(firebaseConfig);
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey:"AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain:"sistemadegestion-7400d.firebaseapp.com",
+  projectId:"sistemadegestion-7400d"
+});
 const db = firebase.firestore();
 
-let usuarioActual = null;
-
-/* LOGIN */
-async function login(){
-  const u = loginUser.value;
-  const p = loginPass.value;
-
-  const q = await db.collection("usuarios")
-    .where("usuario","==",u)
-    .where("password","==",p)
-    .get();
-
-  if(q.empty){
-    loginError.innerText = "Credenciales inválidas";
-    return;
-  }
-
-  usuarioActual = q.docs[0].data();
-  usuarioActivo.innerText = "Usuario: " + usuarioActual.usuario;
-  login.classList.add("hidden");
-  dashboard.classList.remove("hidden");
-
-  cargarUsuarios();
-  cargarSolicitudes();
-  cargarGerencias();
-  cargarDeptos();
-}
-
 /* VISTAS */
-function mostrar(id){
-  ["solicitudes","usuarios","gerencias","departamentos"].forEach(d=>{
-    document.getElementById(d).classList.add("hidden");
-  });
-  document.getElementById(id).classList.remove("hidden");
+function ver(id){
+  ["solicitudes","usuarios","gerencias","departamentos"]
+  .forEach(v=>document.getElementById(v).style.display="none");
+  document.getElementById(id).style.display="block";
 }
 
-/* USUARIOS */
-async function crearUsuario(){
-  await db.collection("usuarios").add({
-    usuario: uUsuario.value,
-    password: uPass.value,
-    correo: uCorreo.value,
-    rol: uRol.value,
-    gerencia: uGerencia.value,
-    departamento: uDepto.value
-  });
-  cargarUsuarios();
-}
-
-async function cargarUsuarios(){
-  listaUsuarios.innerHTML="";
-  const q = await db.collection("usuarios").get();
-  q.forEach(d=>{
-    listaUsuarios.innerHTML += `<li>${d.data().usuario} (${d.data().rol})</li>`;
-  });
+/* CLOUDINARY */
+async function subirArchivo(file){
+  const fd=new FormData();
+  fd.append("file",file);
+  fd.append("upload_preset","fci_documentos");
+  const r=await fetch("https://api.cloudinary.com/v1_1/df79cjklp/auto/upload",{method:"POST",body:fd});
+  const j=await r.json();
+  return j.secure_url || "";
 }
 
 /* SOLICITUDES */
 async function crearSolicitud(){
-  const num = Date.now();
+  let url="";
+  if(archivo.files[0]) url=await subirArchivo(archivo.files[0]);
+
+  const snap = await db.collection("solicitudes").get();
+  const codigo = "FCI-SOL-" + String(snap.size+1).padStart(4,"0");
+
   await db.collection("solicitudes").add({
-    codigo: "FCI-SOL-" + num,
-    solicitante: usuarioActual.usuario,
-    correo: usuarioActual.correo,
-    gerencia: usuarioActual.gerencia,
-    departamento: usuarioActual.departamento,
-    tipo: tipoDoc.value,
-    documento: nombreDoc.value,
+    codigo,
+    tipo: tipoDocumento.value,
+    nombre: nombreDocumento.value,
     accion: accion.value,
+    gerencia: gerencia.value,
+    departamento: departamento.value,
     motivo: motivo.value,
-    estado: "Pendiente"
+    fechaVersion: fechaVersion.value,
+    ultimaVersion: ultimaVersion.value,
+    codificacion: codificacion.value,
+    archivo: url,
+    estado: "Pendiente",
+    historial:[{estado:"Pendiente",fecha:new Date().toISOString()}]
   });
   cargarSolicitudes();
 }
 
 async function cargarSolicitudes(){
   tablaSolicitudes.innerHTML="";
-  let q;
-
-  if(usuarioActual.rol === "admin"){
-    q = await db.collection("solicitudes").get();
-  }else if(usuarioActual.rol === "gerente"){
-    q = await db.collection("solicitudes")
-      .where("gerencia","==",usuarioActual.gerencia).get();
-  }else{
-    q = await db.collection("solicitudes")
-      .where("solicitante","==",usuarioActual.usuario).get();
-  }
-
+  const q=await db.collection("solicitudes").get();
   q.forEach(d=>{
-    const s = d.data();
-    tablaSolicitudes.innerHTML += `
-      <tr>
-        <td>${s.codigo}</td>
-        <td>${s.documento}</td>
-        <td>${s.estado}</td>
-      </tr>`;
+    const s=d.data();
+    tablaSolicitudes.innerHTML+=`
+    <tr>
+      <td>${s.codigo}</td>
+      <td>${s.nombre}</td>
+      <td>${s.estado}</td>
+      <td><button onclick="alert(JSON.stringify(${JSON.stringify(s)},null,2))">Ver</button></td>
+    </tr>`;
   });
+}
+
+/* USUARIOS */
+async function crearUsuario(){
+  await db.collection("usuarios").add({
+    usuario:uUsuario.value,
+    correo:uCorreo.value,
+    rol:uRol.value,
+    gerencia:uGerencia.value,
+    departamento:uDepto.value
+  });
+  cargarUsuarios();
+}
+async function cargarUsuarios(){
+  listaUsuarios.innerHTML="";
+  const q=await db.collection("usuarios").get();
+  q.forEach(d=>listaUsuarios.innerHTML+=`<li>${d.data().usuario} (${d.data().rol})</li>`);
 }
 
 /* GERENCIAS */
 async function addGerencia(){
-  await db.collection("gerencias").add({ nombre:nGerencia.value });
+  await db.collection("gerencias").add({nombre:nGerencia.value});
   cargarGerencias();
 }
 async function cargarGerencias(){
   listaGerencias.innerHTML="";
-  const q = await db.collection("gerencias").get();
+  const q=await db.collection("gerencias").get();
   q.forEach(d=>listaGerencias.innerHTML+=`<li>${d.data().nombre}</li>`);
 }
 
 /* DEPARTAMENTOS */
 async function addDepto(){
-  await db.collection("departamentos").add({
-    nombre:nDepto.value,
-    gerencia:gDepto.value
-  });
+  await db.collection("departamentos").add({nombre:nDepto.value,gerencia:gDepto.value});
   cargarDeptos();
 }
 async function cargarDeptos(){
   listaDeptos.innerHTML="";
-  const q = await db.collection("departamentos").get();
+  const q=await db.collection("departamentos").get();
   q.forEach(d=>listaDeptos.innerHTML+=`<li>${d.data().nombre}</li>`);
 }
+
+/* INIT */
+cargarSolicitudes();
+cargarUsuarios();
+cargarGerencias();
+cargarDeptos();
 </script>
+
 </body>
 </html>
