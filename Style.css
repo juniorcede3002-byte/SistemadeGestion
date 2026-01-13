@@ -1,0 +1,31 @@
+:root {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --success: #166534;
+    --danger: #991b1b;
+    --bg-main: #f8fafc;
+    --white: #ffffff;
+    --border: #e2e8f0;
+    --text-dark: #1e293b;
+    --radius-lg: 1.25rem;
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--bg-main); color: var(--text-dark); }
+
+.input-light {
+    width: 100%; background: #f1f5f9; border: 2px solid transparent;
+    padding: 1rem; border-radius: var(--radius-lg); outline: none; transition: 0.3s;
+}
+.input-light:focus { background: white; border-color: var(--primary); }
+
+.view { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.hidden { display: none !important; }
+.card { background: white; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--border); box-shadow: var(--shadow); }
+
+.badge { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+.status-pendiente { background: #fef3c7; color: #92400e; }
+.status-finalizado { background: #dcfce7; color: #166534; }
