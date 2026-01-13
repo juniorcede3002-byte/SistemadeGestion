@@ -1,123 +1,277 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI | Gestión Documental Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Sistema de Gestión Documental</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;background:#f4f6f9}
+.hidden{display:none}
+input,select,textarea,button{padding:8px;margin:5px;width:100%}
+button{cursor:pointer}
+.card{background:#fff;padding:15px;margin:10px;border-radius:8px}
+nav{background:#1f2937;color:#fff;padding:10px;display:flex;gap:10px}
+nav button{width:auto}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:6px}
+th{background:#eee}
+.badge{padding:3px 6px;border-radius:4px;font-size:12px}
+.estado-pendiente{background:#facc15}
+.estado-finalizado{background:#4ade80}
+.estado-rechazado{background:#f87171}
+</style>
 </head>
+
 <body>
 
-    <div id="pantalla-login" class="fixed inset-0 z-[200] bg-white flex items-center justify-center p-6">
-        <div class="w-full max-w-sm text-center">
-            <div class="text-6xl mb-4">📄</div>
-            <h1 class="text-3xl font-bold mb-8 text-indigo-900">FCI Documental</h1>
-            <div class="space-y-4">
-                <input id="login-user" type="text" placeholder="Usuario" class="input-light">
-                <input id="login-pass" type="password" placeholder="Contraseña" class="input-light">
-                <button onclick="iniciarSesion()" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-2xl shadow-lg hover:bg-indigo-700 transition-all">Ingresar al Sistema</button>
-            </div>
-        </div>
-    </div>
+<!-- LOGIN -->
+<div id="login" class="card">
+<h2>Ingreso al Sistema</h2>
+<input id="loginUsuario" placeholder="Usuario">
+<input id="loginPassword" type="password" placeholder="Contraseña">
+<button onclick="login()">Ingresar</button>
+<p id="loginError" style="color:red"></p>
+</div>
 
-    <div id="interfaz-app" class="hidden min-h-screen flex">
-        
-        <aside id="sidebar" class="w-72 bg-white border-r p-6 flex flex-col fixed h-full transition-transform">
-            <h1 class="text-xl font-bold text-indigo-600 mb-10"><i class="fas fa-folder-open mr-2"></i>FCI Docs</h1>
-            <nav id="menu-dinamico" class="space-y-2 flex-1"></nav>
-            <button onclick="location.reload()" class="mt-auto flex items-center gap-3 p-4 text-red-500 font-bold hover:bg-red-50 rounded-xl transition">
-                <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-            </button>
-        </aside>
+<!-- DASHBOARD -->
+<div id="app" class="hidden">
 
-        <main class="flex-1 ml-72 p-10">
-            
-            <section id="pag-solicitudes" class="view hidden space-y-6">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">Gestión de Solicitudes</h2>
-                    <button id="btn-nueva-sol" onclick="verPagina('crear-sol')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg">+ Nueva Solicitud</button>
-                </div>
-                <div class="bg-white rounded-3xl border shadow-sm overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b">
-                            <tr>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">Código</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">Documento</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">Estado</th>
-                                <th class="p-4 text-xs font-bold text-slate-500 uppercase">Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabla-solicitudes-body" class="divide-y text-sm"></tbody>
-                    </table>
-                </div>
-            </section>
+<nav>
+<span id="userInfo"></span>
+<button onclick="mostrar('solicitudes')">Solicitudes</button>
+<button onclick="mostrar('usuarios')" id="btnUsuarios">Usuarios</button>
+<button onclick="logout()">Salir</button>
+</nav>
 
-            <section id="pag-detalle" class="view hidden space-y-6">
-                <button onclick="verPagina('solicitudes')" class="text-indigo-600 font-bold"><i class="fas fa-arrow-left mr-2"></i>Volver</button>
-                <div id="detalle-content" class="card space-y-4">
-                    </div>
-            </section>
+<!-- SOLICITUDES -->
+<div id="solicitudes" class="card hidden">
+<h3>Solicitudes</h3>
 
-            <section id="pag-admin" class="view hidden space-y-6">
-                <h2 class="text-2xl font-bold">Configuración de Estructura</h2>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="card">
-                        <h3 class="font-bold mb-4">Gerencias</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input id="in-gerencia" class="input-light" placeholder="Nombre">
-                            <button onclick="crearDato('gerencias', 'in-gerencia')" class="bg-indigo-600 text-white px-4 rounded-xl">Add</button>
-                        </div>
-                        <ul id="lista-gerencias" class="space-y-2"></ul>
-                    </div>
-                    <div class="card">
-                        <h3 class="font-bold mb-4">Departamentos</h3>
-                        <div class="flex gap-2 mb-4">
-                            <input id="in-depto" class="input-light" placeholder="Nombre">
-                            <button onclick="crearDato('departamentos', 'in-depto')" class="bg-indigo-600 text-white px-4 rounded-xl">Add</button>
-                        </div>
-                        <ul id="lista-deptos" class="space-y-2"></ul>
-                    </div>
-                </div>
-            </section>
+<button onclick="nuevaSolicitud()">Nueva Solicitud</button>
 
-            <section id="pag-usuarios" class="view hidden space-y-6">
-                <div class="card">
-                    <h2 class="text-2xl font-bold mb-6">Control de Acceso</h2>
-                    <div class="grid grid-cols-4 gap-4 mb-8">
-                        <input id="u-id" placeholder="Usuario ID" class="input-light">
-                        <input id="u-pass" type="password" placeholder="Clave" class="input-light">
-                        <select id="u-rol" class="input-light">
-                            <option value="admin">Administrador</option>
-                            <option value="user">Aplicante</option>
-                        </select>
-                        <button onclick="guardarUsuario()" class="bg-indigo-600 text-white rounded-2xl font-bold">Crear</button>
-                    </div>
-                    <div id="lista-usuarios-db" class="grid grid-cols-3 gap-4"></div>
-                </div>
-            </section>
+<table>
+<thead>
+<tr>
+<th>Documento</th>
+<th>Tipo</th>
+<th>Estado</th>
+<th>Acciones</th>
+</tr>
+</thead>
+<tbody id="tablaSolicitudes"></tbody>
+</table>
+</div>
 
-            <section id="pag-crear-sol" class="view hidden max-w-2xl mx-auto">
-                <div class="card space-y-4">
-                    <h2 class="text-2xl font-bold text-center">Formulario de Solicitud</h2>
-                    <input id="s-nombre" placeholder="Nombre del Documento" class="input-light">
-                    <div class="grid grid-cols-2 gap-4">
-                        <select id="s-tipo" class="input-light">
-                            <option>Procedimiento</option>
-                            <option>Instructivo</option>
-                            <option>Formato</option>
-                        </select>
-                        <select id="s-gerencia" class="input-light"></select>
-                    </div>
-                    <textarea id="s-motivo" placeholder="Describa el motivo..." class="input-light h-32"></textarea>
-                    <button onclick="enviarSolicitud()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold shadow-lg">Enviar a Revisión</button>
-                </div>
-            </section>
+<!-- NUEVA SOLICITUD -->
+<div id="formSolicitud" class="card hidden">
+<h3>Nueva Solicitud</h3>
 
-        </main>
-    </div>
+<input id="docNombre" placeholder="Nombre del documento">
+<select id="docTipo">
+<option>Procedimiento</option>
+<option>Guía</option>
+<option>Instructivo</option>
+<option>Manual</option>
+<option>Formato</option>
+</select>
 
-    <script type="module" src="script.js"></script>
+<select id="docAccion">
+<option>Creación</option>
+<option>Modificación</option>
+<option>Inactivación</option>
+</select>
+
+<input id="docGerencia" placeholder="Gerencia">
+<input id="docDepartamento" placeholder="Departamento">
+<textarea id="docMotivo" placeholder="Motivo"></textarea>
+
+<input type="file" id="docArchivo">
+
+<button onclick="guardarSolicitud()">Guardar</button>
+<button onclick="mostrar('solicitudes')">Cancelar</button>
+</div>
+
+<!-- USUARIOS -->
+<div id="usuarios" class="card hidden">
+<h3>Gestión de Usuarios</h3>
+
+<input id="uUsuario" placeholder="Usuario">
+<input id="uPassword" placeholder="Contraseña">
+<input id="uCorreo" placeholder="Correo">
+<select id="uRol">
+<option value="usuario">Usuario</option>
+<option value="gerente">Gerente</option>
+<option value="admin">Admin</option>
+</select>
+<input id="uGerencia" placeholder="Gerencia">
+<input id="uDepartamento" placeholder="Departamento">
+
+<button onclick="crearUsuario()">Crear Usuario</button>
+
+<table>
+<thead>
+<tr>
+<th>Usuario</th>
+<th>Rol</th>
+<th>Activo</th>
+</tr>
+</thead>
+<tbody id="tablaUsuarios"></tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+// ================= FIREBASE =================
+firebase.initializeApp({
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d"
+});
+const db = firebase.firestore();
+
+// ================= CLOUDINARY =================
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload";
+const CLOUDINARY_PRESET = "fci_documentos";
+
+// ================= SESIÓN =================
+let usuarioActual = null;
+
+// ================= LOGIN =================
+async function login(){
+  const u = loginUsuario.value.trim();
+  const p = loginPassword.value.trim();
+  loginError.textContent = "";
+
+  const q = await db.collection("usuarios")
+    .where("usuario","==",u)
+    .where("password","==",p)
+    .where("activo","==",true)
+    .get();
+
+  if(q.empty){
+    loginError.textContent="Credenciales inválidas";
+    return;
+  }
+
+  usuarioActual = {id:q.docs[0].id,...q.docs[0].data()};
+  login.classList.add("hidden");
+  app.classList.remove("hidden");
+  userInfo.textContent = usuarioActual.usuario+" ("+usuarioActual.rol+")";
+
+  if(usuarioActual.rol!=="admin"){
+    btnUsuarios.style.display="none";
+  }
+
+  cargarSolicitudes();
+  if(usuarioActual.rol==="admin") cargarUsuarios();
+}
+
+// ================= LOGOUT =================
+function logout(){
+  location.reload();
+}
+
+// ================= VISTAS =================
+function mostrar(id){
+  ["solicitudes","usuarios","formSolicitud"].forEach(v=>{
+    document.getElementById(v).classList.add("hidden");
+  });
+  document.getElementById(id).classList.remove("hidden");
+}
+
+// ================= SOLICITUDES =================
+function nuevaSolicitud(){
+  mostrar("formSolicitud");
+}
+
+async function guardarSolicitud(){
+  let archivoURL = "";
+  const file = docArchivo.files[0];
+  if(file){
+    const fd = new FormData();
+    fd.append("file",file);
+    fd.append("upload_preset",CLOUDINARY_PRESET);
+    const r = await fetch(CLOUDINARY_URL,{method:"POST",body:fd});
+    archivoURL = (await r.json()).secure_url;
+  }
+
+  await db.collection("solicitudes").add({
+    nombre:docNombre.value,
+    tipo:docTipo.value,
+    accion:docAccion.value,
+    gerencia:docGerencia.value,
+    departamento:docDepartamento.value,
+    motivo:docMotivo.value,
+    archivo:archivoURL,
+    estado:"Pendiente",
+    creador:usuarioActual.usuario,
+    rolCreador:usuarioActual.rol,
+    fecha:new Date()
+  });
+
+  mostrar("solicitudes");
+  cargarSolicitudes();
+}
+
+async function cargarSolicitudes(){
+  tablaSolicitudes.innerHTML="";
+  let q = db.collection("solicitudes");
+
+  if(usuarioActual.rol==="usuario"){
+    q = q.where("creador","==",usuarioActual.usuario);
+  }
+  if(usuarioActual.rol==="gerente"){
+    q = q.where("gerencia","==",usuarioActual.gerencia);
+  }
+
+  const snap = await q.get();
+  snap.forEach(d=>{
+    const s=d.data();
+    tablaSolicitudes.innerHTML+=`
+      <tr>
+        <td>${s.nombre}</td>
+        <td>${s.tipo}</td>
+        <td><span class="badge estado-${s.estado.toLowerCase()}">${s.estado}</span></td>
+        <td>${s.archivo?`<a href="${s.archivo}" target="_blank">Ver</a>`:""}</td>
+      </tr>`;
+  });
+}
+
+// ================= USUARIOS =================
+async function crearUsuario(){
+  await db.collection("usuarios").add({
+    usuario:uUsuario.value,
+    password:uPassword.value,
+    correo:uCorreo.value,
+    rol:uRol.value,
+    gerencia:uGerencia.value,
+    departamento:uDepartamento.value,
+    activo:true
+  });
+  cargarUsuarios();
+}
+
+async function cargarUsuarios(){
+  tablaUsuarios.innerHTML="";
+  const snap = await db.collection("usuarios").get();
+  snap.forEach(d=>{
+    const u=d.data();
+    tablaUsuarios.innerHTML+=`
+    <tr>
+      <td>${u.usuario}</td>
+      <td>${u.rol}</td>
+      <td>${u.activo}</td>
+    </tr>`;
+  });
+}
+</script>
+
 </body>
 </html>
