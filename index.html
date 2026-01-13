@@ -3,72 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <title>Sistema de Gestión Documental</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
 body{margin:0;font-family:Arial;background:#f4f6f9}
+nav{background:#1f2937;color:#fff;padding:10px;display:flex;gap:10px}
+nav button{padding:6px 12px}
+.card{background:#fff;margin:10px;padding:15px;border-radius:8px}
 .hidden{display:none}
 input,select,textarea,button{padding:8px;margin:5px;width:100%}
-button{cursor:pointer}
-.card{background:#fff;padding:15px;margin:10px;border-radius:8px}
-nav{background:#1f2937;color:#fff;padding:10px;display:flex;gap:10px}
-nav button{width:auto}
 table{width:100%;border-collapse:collapse}
-th,td{border:1px solid #ddd;padding:6px}
+th,td{border:1px solid #ccc;padding:6px}
 th{background:#eee}
-.badge{padding:3px 6px;border-radius:4px;font-size:12px}
-.estado-pendiente{background:#facc15}
-.estado-finalizado{background:#4ade80}
-.estado-rechazado{background:#f87171}
+.estado{padding:4px 6px;border-radius:4px;font-size:12px}
+.pendiente{background:#fde047}
+.finalizado{background:#4ade80}
+.rechazado{background:#f87171}
 </style>
 </head>
 
 <body>
 
-<!-- LOGIN -->
-<div id="login" class="card">
-<h2>Ingreso al Sistema</h2>
-<input id="loginUsuario" placeholder="Usuario">
-<input id="loginPassword" type="password" placeholder="Contraseña">
-<button onclick="login()">Ingresar</button>
-<p id="loginError" style="color:red"></p>
-</div>
-
-<!-- DASHBOARD -->
-<div id="app" class="hidden">
-
 <nav>
-<span id="userInfo"></span>
-<button onclick="mostrar('solicitudes')">Solicitudes</button>
-<button onclick="mostrar('usuarios')" id="btnUsuarios">Usuarios</button>
-<button onclick="logout()">Salir</button>
+<strong>Dashboard Admin – Gestión Documental</strong>
+<button onclick="vista('solicitudes')">Solicitudes</button>
+<button onclick="vista('usuarios')">Usuarios</button>
+<button onclick="vista('nuevaSolicitud')">Nueva Solicitud</button>
 </nav>
 
 <!-- SOLICITUDES -->
-<div id="solicitudes" class="card hidden">
+<div id="solicitudes" class="card">
 <h3>Solicitudes</h3>
-
-<button onclick="nuevaSolicitud()">Nueva Solicitud</button>
-
 <table>
 <thead>
 <tr>
 <th>Documento</th>
 <th>Tipo</th>
+<th>Acción</th>
 <th>Estado</th>
-<th>Acciones</th>
+<th>Archivo</th>
 </tr>
 </thead>
-<tbody id="tablaSolicitudes"></tbody>
+<tbody id="listaSolicitudes"></tbody>
 </table>
 </div>
 
 <!-- NUEVA SOLICITUD -->
-<div id="formSolicitud" class="card hidden">
+<div id="nuevaSolicitud" class="card hidden">
 <h3>Nueva Solicitud</h3>
 
 <input id="docNombre" placeholder="Nombre del documento">
@@ -90,27 +74,35 @@ th{background:#eee}
 <input id="docDepartamento" placeholder="Departamento">
 <textarea id="docMotivo" placeholder="Motivo"></textarea>
 
+<select id="docEstado">
+<option>Pendiente</option>
+<option>Solicitud de reunión</option>
+<option>Consulta</option>
+<option>3 firmas</option>
+<option>Aprobación gerente</option>
+<option>Finalizado</option>
+<option>Rechazado</option>
+</select>
+
 <input type="file" id="docArchivo">
 
-<button onclick="guardarSolicitud()">Guardar</button>
-<button onclick="mostrar('solicitudes')">Cancelar</button>
+<button onclick="guardarSolicitud()">Guardar Solicitud</button>
 </div>
 
 <!-- USUARIOS -->
 <div id="usuarios" class="card hidden">
-<h3>Gestión de Usuarios</h3>
+<h3>Usuarios</h3>
 
 <input id="uUsuario" placeholder="Usuario">
 <input id="uPassword" placeholder="Contraseña">
 <input id="uCorreo" placeholder="Correo">
 <select id="uRol">
-<option value="usuario">Usuario</option>
-<option value="gerente">Gerente</option>
-<option value="admin">Admin</option>
+<option>usuario</option>
+<option>gerente</option>
+<option>admin</option>
 </select>
 <input id="uGerencia" placeholder="Gerencia">
 <input id="uDepartamento" placeholder="Departamento">
-
 <button onclick="crearUsuario()">Crear Usuario</button>
 
 <table>
@@ -118,13 +110,11 @@ th{background:#eee}
 <tr>
 <th>Usuario</th>
 <th>Rol</th>
-<th>Activo</th>
+<th>Gerencia</th>
 </tr>
 </thead>
-<tbody id="tablaUsuarios"></tbody>
+<tbody id="listaUsuarios"></tbody>
 </table>
-</div>
-
 </div>
 
 <script>
@@ -137,69 +127,27 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 // ================= CLOUDINARY =================
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload";
-const CLOUDINARY_PRESET = "fci_documentos";
-
-// ================= SESIÓN =================
-let usuarioActual = null;
-
-// ================= LOGIN =================
-async function login(){
-  const u = loginUsuario.value.trim();
-  const p = loginPassword.value.trim();
-  loginError.textContent = "";
-
-  const q = await db.collection("usuarios")
-    .where("usuario","==",u)
-    .where("password","==",p)
-    .where("activo","==",true)
-    .get();
-
-  if(q.empty){
-    loginError.textContent="Credenciales inválidas";
-    return;
-  }
-
-  usuarioActual = {id:q.docs[0].id,...q.docs[0].data()};
-  login.classList.add("hidden");
-  app.classList.remove("hidden");
-  userInfo.textContent = usuarioActual.usuario+" ("+usuarioActual.rol+")";
-
-  if(usuarioActual.rol!=="admin"){
-    btnUsuarios.style.display="none";
-  }
-
-  cargarSolicitudes();
-  if(usuarioActual.rol==="admin") cargarUsuarios();
-}
-
-// ================= LOGOUT =================
-function logout(){
-  location.reload();
-}
+const CLOUD_URL = "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload";
+const CLOUD_PRESET = "fci_documentos";
 
 // ================= VISTAS =================
-function mostrar(id){
-  ["solicitudes","usuarios","formSolicitud"].forEach(v=>{
+function vista(id){
+  ["solicitudes","usuarios","nuevaSolicitud"].forEach(v=>{
     document.getElementById(v).classList.add("hidden");
   });
   document.getElementById(id).classList.remove("hidden");
 }
 
 // ================= SOLICITUDES =================
-function nuevaSolicitud(){
-  mostrar("formSolicitud");
-}
-
 async function guardarSolicitud(){
-  let archivoURL = "";
+  let archivo = "";
   const file = docArchivo.files[0];
   if(file){
     const fd = new FormData();
     fd.append("file",file);
-    fd.append("upload_preset",CLOUDINARY_PRESET);
-    const r = await fetch(CLOUDINARY_URL,{method:"POST",body:fd});
-    archivoURL = (await r.json()).secure_url;
+    fd.append("upload_preset",CLOUD_PRESET);
+    const r = await fetch(CLOUD_URL,{method:"POST",body:fd});
+    archivo = (await r.json()).secure_url;
   }
 
   await db.collection("solicitudes").add({
@@ -209,38 +157,28 @@ async function guardarSolicitud(){
     gerencia:docGerencia.value,
     departamento:docDepartamento.value,
     motivo:docMotivo.value,
-    archivo:archivoURL,
-    estado:"Pendiente",
-    creador:usuarioActual.usuario,
-    rolCreador:usuarioActual.rol,
+    estado:docEstado.value,
+    archivo,
     fecha:new Date()
   });
 
-  mostrar("solicitudes");
+  vista("solicitudes");
   cargarSolicitudes();
 }
 
 async function cargarSolicitudes(){
-  tablaSolicitudes.innerHTML="";
-  let q = db.collection("solicitudes");
-
-  if(usuarioActual.rol==="usuario"){
-    q = q.where("creador","==",usuarioActual.usuario);
-  }
-  if(usuarioActual.rol==="gerente"){
-    q = q.where("gerencia","==",usuarioActual.gerencia);
-  }
-
-  const snap = await q.get();
-  snap.forEach(d=>{
-    const s=d.data();
-    tablaSolicitudes.innerHTML+=`
-      <tr>
-        <td>${s.nombre}</td>
-        <td>${s.tipo}</td>
-        <td><span class="badge estado-${s.estado.toLowerCase()}">${s.estado}</span></td>
-        <td>${s.archivo?`<a href="${s.archivo}" target="_blank">Ver</a>`:""}</td>
-      </tr>`;
+  listaSolicitudes.innerHTML="";
+  const s = await db.collection("solicitudes").orderBy("fecha","desc").get();
+  s.forEach(d=>{
+    const x=d.data();
+    listaSolicitudes.innerHTML+=`
+    <tr>
+      <td>${x.nombre}</td>
+      <td>${x.tipo}</td>
+      <td>${x.accion}</td>
+      <td><span class="estado ${x.estado.toLowerCase().replace(/ /g,'')}">${x.estado}</span></td>
+      <td>${x.archivo?`<a href="${x.archivo}" target="_blank">Ver</a>`:""}</td>
+    </tr>`;
   });
 }
 
@@ -259,18 +197,22 @@ async function crearUsuario(){
 }
 
 async function cargarUsuarios(){
-  tablaUsuarios.innerHTML="";
-  const snap = await db.collection("usuarios").get();
-  snap.forEach(d=>{
-    const u=d.data();
-    tablaUsuarios.innerHTML+=`
+  listaUsuarios.innerHTML="";
+  const u = await db.collection("usuarios").get();
+  u.forEach(d=>{
+    const x=d.data();
+    listaUsuarios.innerHTML+=`
     <tr>
-      <td>${u.usuario}</td>
-      <td>${u.rol}</td>
-      <td>${u.activo}</td>
+      <td>${x.usuario}</td>
+      <td>${x.rol}</td>
+      <td>${x.gerencia}</td>
     </tr>`;
   });
 }
+
+// ================= INIT =================
+cargarSolicitudes();
+cargarUsuarios();
 </script>
 
 </body>
