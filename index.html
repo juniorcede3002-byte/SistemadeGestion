@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Sistema de Gestión Documental</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -12,44 +11,209 @@
 body { font-family: Arial; margin:0; background:#f4f6f8; }
 header { background:#1f2937; color:white; padding:15px; }
 .container { padding:20px; }
-.card { background:white; padding:15px; border-radius:8px; margin-bottom:20px; }
-button { padding:6px 12px; cursor:pointer; }
+.card { background:white; padding:15px; border-radius:8px; margin-bottom:20px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+button { padding:6px 12px; cursor:pointer; margin-top:5px; }
 select, input, textarea { width:100%; margin:5px 0; padding:6px; }
 .grid { display:grid; grid-template-columns: repeat(3,1fr); gap:15px; }
+h3 { margin-top:0; }
 </style>
 </head>
 
 <body>
 
 <header>
-<h2>📊 Dashboard - Sistema de Gestión</h2>
+<h2>📊 Dashboard - Sistema de Gestión Documental</h2>
 </header>
 
 <div class="container">
 
 <div class="grid">
+  <!-- Gráfica Estados -->
   <div class="card">
     <h3>Solicitudes por Estado</h3>
     <canvas id="chartEstados"></canvas>
   </div>
 
+  <!-- Gráfica Gerencias -->
   <div class="card">
     <h3>Solicitudes por Gerencia</h3>
     <canvas id="chartGerencias"></canvas>
   </div>
 
+  <!-- Crear Solicitud -->
   <div class="card">
-    <h3>Crear Solicitud</h3>
+    <h3>Crear Nueva Solicitud</h3>
     <input id="titulo" placeholder="Título">
     <textarea id="descripcion" placeholder="Descripción"></textarea>
     <input type="file" id="archivo">
-    <button onclick="crearSolicitud()">Crear</button>
+    <select id="gerenciaSelect">
+      <option value="Finanzas">Finanzas</option>
+      <option value="RRHH">RRHH</option>
+      <option value="Compras">Compras</option>
+      <option value="IT">IT</option>
+      <option value="General">General</option>
+    </select>
+    <button onclick="crearSolicitud()">Crear Solicitud</button>
   </div>
 </div>
 
+<!-- Lista de solicitudes -->
 <div class="card">
 <h3>📋 Solicitudes</h3>
 <div id="listaSolicitudes"></div>
 </div>
 
 </div>
+
+<script>
+// 🔥 FIREBASE
+firebase.initializeApp({
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.appspot.com"
+});
+const db = firebase.firestore();
+
+// ☁️ CLOUDINARY
+const CLOUDINARY_CLOUD = "df79cjklp";
+const UPLOAD_PRESET = "fci_documentos";
+
+// 🔹 Estados
+const ESTADOS = [
+  "pendiente",
+  "solicitud de reunión",
+  "consulta",
+  "documentado",
+  "verificado",
+  "codificado",
+  "aprobación de gerente",
+  "finalizado",
+  "rechazado"
+];
+
+// 🔹 Subir archivo a Cloudinary
+async function subirArchivo(file){
+  if(!file) return "";
+  let form = new FormData();
+  form.append("file", file);
+  form.append("upload_preset", UPLOAD_PRESET);
+  let res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/upload`, { method:"POST", body:form });
+  let data = await res.json();
+  return data.secure_url;
+}
+
+// 🔹 Crear solicitud
+async function crearSolicitud(){
+  let url = "";
+  let file = document.getElementById("archivo").files[0];
+  if(file) url = await subirArchivo(file);
+
+  let titulo = document.getElementById("titulo").value;
+  let descripcion = document.getElementById("descripcion").value;
+  let gerencia = document.getElementById("gerenciaSelect").value;
+
+  await db.collection("solicitudes").add({
+    titulo,
+    descripcion,
+    usuario: "Admin",
+    gerencia,
+    estado: "pendiente",
+    fechaReunion: "",
+    documentos: url ? [url] : [],
+    comentarios: [],
+    historial: [{estado:"pendiente", fecha:new Date()}],
+    fecha: new Date()
+  });
+
+  document.getElementById("titulo").value="";
+  document.getElementById("descripcion").value="";
+  document.getElementById("archivo").value="";
+  cargarSolicitudes();
+}
+
+// 🔹 Cargar solicitudes
+async function cargarSolicitudes(){
+  const lista = document.getElementById("listaSolicitudes");
+  lista.innerHTML = "";
+  let snap = await db.collection("solicitudes").orderBy("fecha","desc").get();
+  let estadosGrafica = {};
+  let gerenciasGrafica = {};
+
+  snap.forEach(doc=>{
+    let d = doc.data();
+
+    // Graficas
+    estadosGrafica[d.estado] = (estadosGrafica[d.estado]||0)+1;
+    gerenciasGrafica[d.gerencia] = (gerenciasGrafica[d.gerencia]||0)+1;
+
+    // Lista
+    let comentariosHtml = d.comentarios.map(c=>`<li>${c}</li>`).join("");
+    let historialHtml = d.historial.map(h=>`<li>${h.estado} - ${new Date(h.fecha.seconds*1000 || h.fecha).toLocaleString()}</li>`).join("");
+
+    lista.innerHTML += `
+    <div class="card">
+      <b>${d.titulo}</b> (${d.estado})<br>
+      <i>Gerencia:</i> ${d.gerencia} | <i>Usuario:</i> ${d.usuario}<br>
+      ${d.descripcion}<br>
+      ${d.documentos.map(u=>`<a href="${u}" target="_blank">📎 Documento</a>`).join(" ")}<br><br>
+
+      <select onchange="cambiarEstado('${doc.id}', this.value)">
+        ${ESTADOS.map(e=>`<option ${d.estado==e?"selected":""}>${e}</option>`).join("")}
+      </select>
+      <textarea placeholder="Comentario" id="c${doc.id}"></textarea>
+      <button onclick="comentar('${doc.id}')">Comentar</button>
+
+      <h4>Historial</h4><ul>${historialHtml}</ul>
+      <h4>Comentarios</h4><ul>${comentariosHtml}</ul>
+    </div>`;
+  });
+
+  generarGraficas(estadosGrafica, gerenciasGrafica);
+}
+
+// 🔹 Cambiar estado
+async function cambiarEstado(id, estado){
+  await db.collection("solicitudes").doc(id).update({
+    estado,
+    historial: firebase.firestore.FieldValue.arrayUnion({estado, fecha:new Date()})
+  });
+  cargarSolicitudes();
+}
+
+// 🔹 Comentar
+async function comentar(id){
+  let txt = document.getElementById("c"+id).value;
+  if(!txt) return;
+  await db.collection("solicitudes").doc(id).update({
+    comentarios: firebase.firestore.FieldValue.arrayUnion(txt)
+  });
+  document.getElementById("c"+id).value="";
+  cargarSolicitudes();
+}
+
+// 🔹 Generar gráficas
+function generarGraficas(estados, gerencias){
+  new Chart(document.getElementById("chartEstados"), {
+    type:"pie",
+    data:{
+      labels:Object.keys(estados),
+      datasets:[{data:Object.values(estados), backgroundColor:["#f87171","#fb923c","#facc15","#4ade80","#22d3ee","#818cf8","#a78bfa","#f472b6","#cbd5e1"]}]
+    }
+  });
+
+  new Chart(document.getElementById("chartGerencias"), {
+    type:"bar",
+    data:{
+      labels:Object.keys(gerencias),
+      datasets:[{label:"Solicitudes por Gerencia", data:Object.values(gerencias), backgroundColor:"#60a5fa"}]
+    }
+  });
+}
+
+// 🔹 Inicial
+cargarSolicitudes();
+</script>
+
+</body>
+</html>
