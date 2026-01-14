@@ -364,5 +364,23 @@ async function crearSolicitud() {
 // Inicializar
 initApp();
 </script>
+
+// --- CÓDIGO TEMPORAL PARA CREAR EL PRIMER ADMIN ---
+async function crearPrimerAdmin() {
+    await db.collection("Users").add({
+        nombre: "Admin",
+        pass: "123456",
+        correo: "admin@fci.com",
+        rol: "SuperAdmin",
+        fechaRegistro: new Date(),
+        permisos: {
+            solicitudes: true, // Puede crear
+            aprobar: true,     // Puede aprobar
+            gestionar: true    // ES ADMIN (Puede ver panel de usuarios)
+        }
+    });
+    alert("¡Usuario Admin creado! Usuario: Admin / Pass: 123456");
+}
+
 </body>
 </html>
