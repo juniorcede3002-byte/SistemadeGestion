@@ -1,199 +1,521 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FCI - Sistema de Gestión Documental</title>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://widget.cloudinary.com/v2.0/global/all.js" type="text/javascript"></script>
-
-<style>
-    /* ... (Mismos estilos anteriores) ... */
-    body{font-family:'Segoe UI', sans-serif; margin:0; padding:0; background:#f0f2f5; color:#333;}
-    .hidden { display: none !important; }
-    .app-container { max-width: 1200px; margin: 20px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.05); }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCI - Sistema de Gestión Documental Integral</title>
     
-    /* ESTILOS DEL BOTÓN DE NOTIFICACIONES */
-    .nav-actions { display: flex; align-items: center; gap: 20px; }
-    .notification-btn { position: relative; background: none; border: none; cursor: pointer; font-size: 24px; padding: 5px; }
-    .badge { position: absolute; top: 0; right: 0; background: red; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; font-weight: bold; }
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     
-    /* PANEL DE NOTIFICACIONES */
-    .notif-dropdown { position: absolute; top: 60px; right: 20px; width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; }
-    .notif-item { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; cursor: pointer; }
-    .notif-item:hover { background: #f8f9fa; }
-    .notif-item.unread { border-left: 4px solid #007bff; background: #ebf5ff; }
-    .notif-header { padding: 10px; background: #007bff; color: white; border-radius: 8px 8px 0 0; font-weight: bold; display: flex; justify-content: space-between; }
+    <style>
+        :root {
+            --primary: #2D336B;
+            --secondary: #5142E6;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --light: #f0f2f5;
+            --dark: #333;
+        }
 
-    /* ESTILOS MODAL Y TABLAS (Igual que antes) */
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000; }
-    .modal-content { background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; }
-    .btn-action { padding: 8px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .status-rechazado { background: #dc3545; color: white; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
-</style>
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: var(--light); color: var(--dark); }
+        .hidden { display: none !important; }
+
+        /* --- LOGIN --- */
+        .login-container { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); }
+        .login-card { background: white; padding: 40px; border-radius: 15px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+        .login-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-login { width: 100%; padding: 12px; background: var(--secondary); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* --- APP LAYOUT --- */
+        .app-container { max-width: 1200px; margin: 20px auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        
+        /* NOTIFICACIONES */
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+        .notif-wrapper { position: relative; cursor: pointer; font-size: 22px; }
+        .badge { position: absolute; top: -5px; right: -5px; background: var(--danger); color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; }
+        .notif-dropdown { position: absolute; top: 40px; right: 0; width: 300px; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); z-index: 1000; max-height: 400px; overflow-y: auto; }
+        .notif-item { padding: 12px; border-bottom: 1px solid #eee; font-size: 13px; }
+        .notif-item.unread { background: #edf2ff; border-left: 4px solid var(--secondary); }
+
+        /* DASHBOARD */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: white; padding: 20px; border-radius: 10px; text-align: center; border: 1px solid #e0e6ed; }
+        .stat-card p { font-size: 28px; font-weight: bold; margin: 5px 0; color: var(--secondary); }
+
+        /* TABLAS Y BOTONES */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; color: #666; }
+        .btn-action { padding: 8px 15px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-primary { background: var(--secondary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+
+        /* MODAL */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .modal-content { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 850px; max-height: 90vh; overflow-y: auto; position: relative; }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; }
+
+        /* BADGES ESTADO */
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; text-transform: uppercase; }
+        .status-pendiente { background: var(--warning); color: #000; }
+        .status-revision { background: var(--info); color: #fff; }
+        .status-aprobado { background: var(--success); color: #fff; }
+        .status-rechazado { background: var(--danger); color: #fff; }
+        
+        .historial-box { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 20px; border-left: 4px solid var(--secondary); }
+        .hist-item { margin-bottom: 10px; font-size: 13px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+    </style>
 </head>
 <body>
+
+<button onclick="crearPrimerAdmin()" style="position:fixed; bottom:10px; right:10px; z-index:9999; opacity:0.3">Setup Admin</button>
+
+<div id="view-login" class="login-container">
+    <div class="login-card">
+        <h1 style="color: var(--primary)">FCI Logistix</h1>
+        <p>Gestión Documental SGC</p>
+        <input type="text" id="loginUser" class="login-input" placeholder="Usuario">
+        <input type="password" id="loginPass" class="login-input" placeholder="Contraseña">
+        <button onclick="login()" class="btn-login">INGRESAR</button>
+        <p id="loginError" style="color:red; font-size:13px; display:none;">Credenciales no válidas</p>
+    </div>
+</div>
 
 <div id="view-app" class="app-container hidden">
     <header>
         <div>
-            <h1>Panel de Control</h1>
-            <small>Bienvenido, <span id="userNameDisplay"></span></small>
+            <h2 style="margin:0;">Panel de Control</h2>
+            <small id="userTag"></small>
         </div>
-        
-        <div class="nav-actions">
-            <button class="notification-btn" onclick="toggleNotificaciones()">
+        <div class="nav-right">
+            <div class="notif-wrapper" onclick="toggleNotifs()">
                 🔔 <span id="notif-count" class="badge hidden">0</span>
-            </button>
-            
-            <button onclick="logout()" class="btn-logout">Cerrar Sesión</button>
+                <div id="notif-dropdown" class="notif-dropdown hidden">
+                    <div style="padding:10px; background:var(--primary); color:white; font-weight:bold;">Notificaciones</div>
+                    <div id="notif-list"></div>
+                </div>
+            </div>
+            <button onclick="logout()" class="btn-action btn-danger">Salir</button>
         </div>
     </header>
 
-    <div id="notif-panel" class="notif-dropdown hidden">
-        <div class="notif-header">
-            <span>Notificaciones</span>
-            <button onclick="toggleNotificaciones()" style="background:none; border:none; color:white; cursor:pointer;">&times;</button>
+    <div class="stats-grid">
+        <div class="stat-card"><h3>Total</h3><p id="st-total">0</p></div>
+        <div class="stat-card"><h3>Pendientes</h3><p id="st-pendiente">0</p></div>
+        <div class="stat-card"><h3>En Revisión</h3><p id="st-revision">0</p></div>
+        <div class="stat-card"><h3>Finalizados</h3><p id="st-finalizado">0</p></div>
+    </div>
+
+    <div id="section-admin" class="hidden">
+        <h3 style="color:var(--secondary)">Gestión de Usuarios y Estructura</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1.5fr; gap:20px; background:#fff; border:1px solid #ddd; padding:20px; border-radius:10px;">
+            <div>
+                <h4>Configuración Org.</h4>
+                <input type="text" id="newGerencia" placeholder="Nueva Gerencia">
+                <button onclick="addOrg('gerencias', 'newGerencia')" class="btn-action btn-primary" style="width:100%; margin-bottom:10px;">+ Gerencia</button>
+                <select id="selGerenciaOrg" class="login-input"></select>
+                <input type="text" id="newDepto" placeholder="Nuevo Departamento">
+                <button onclick="addOrg('departamentos', 'newDepto', 'selGerenciaOrg')" class="btn-action btn-primary" style="width:100%;">+ Departamento</button>
+            </div>
+            <div>
+                <h4>Registrar Usuario</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <input type="text" id="uNom" placeholder="Nombre Login">
+                    <input type="text" id="uMail" placeholder="Correo">
+                    <input type="password" id="uPass" placeholder="Contraseña">
+                    <select id="uGer" class="login-input"></select>
+                </div>
+                <div style="margin:10px 0;">
+                    <label><input type="checkbox" id="p_ges"> Administrador</label>
+                    <label><input type="checkbox" id="p_apr"> Aprobador Gerente</label>
+                </div>
+                <button onclick="registrarUsuario()" class="btn-action btn-success" style="width:100%;">GUARDAR USUARIO</button>
+            </div>
         </div>
-        <div id="notif-list">
-            <p style="padding:15px; color:#888;">No tienes notificaciones nuevas.</p>
+        <h4>Usuarios en Base de Datos</h4>
+        <div class="table-responsive">
+            <table id="table-users">
+                <thead><tr><th>Nombre</th><th>Correo</th><th>Gerencia</th><th>Rol</th><th>Acción</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
-    <section>
-        <h2>Listado de Solicitudes</h2>
-        <table id="tablaSolicitudes">
-            <thead><tr><th>ID</th><th>Título</th><th>Estado</th><th>Solicitante</th><th>Acción</th></tr></thead>
-            <tbody></tbody>
-        </table>
+    <section style="margin-top:40px;">
+        <h3 style="color:var(--success)">Nueva Solicitud de Documento</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px; background:#f4f7f6; padding:20px; border-radius:10px;">
+            <input type="text" id="solTit" placeholder="Título del Documento">
+            <select id="solTipo" class="login-input">
+                <option>Procedimiento</option><option>Manual</option><option>Guía</option><option>Instructivo</option><option>Formato</option>
+            </select>
+            <select id="solAcc" class="login-input">
+                <option>Creación</option><option>Modificación</option><option>Inactivación</option>
+            </select>
+            <input type="text" id="solMot" placeholder="Motivo breve">
+            <textarea id="solDesc" placeholder="Descripción detallada de los cambios..." style="grid-column: span 2; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
+            <input type="file" id="solFiles" multiple>
+            <button onclick="crearSolicitud()" class="btn-action btn-success" style="grid-column: span 2; padding:15px;">ENVIAR A SISTEMA DE GESTIÓN</button>
+        </div>
+
+        <h3 style="margin-top:30px;">Historial de Solicitudes</h3>
+        <div class="table-responsive">
+            <table id="table-solicitudes">
+                <thead><tr><th>ID</th><th>Documento</th><th>Solicitante</th><th>Estado</th><th>Acción</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </section>
 </div>
 
-<div id="modalDetalle" class="modal hidden">
+<div id="modal-detalle" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <h2 id="md-id" style="margin:0; color:var(--secondary)">FCI-XXXX</h2>
+        <p id="md-tit" style="font-size:18px; font-weight:bold;"></p>
+        <hr>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            <div>
+                <p><strong>Tipo:</strong> <span id="md-tipo"></span></p>
+                <p><strong>Acción:</strong> <span id="md-acc"></span></p>
+                <p><strong>Solicitante:</strong> <span id="md-user"></span></p>
+                <p><strong>Ubicación:</strong> <span id="md-ub"></span></p>
+            </div>
+            <div>
+                <p><strong>Estado:</strong> <span id="md-est" class="status-pill"></span></p>
+                <p><strong>Motivo:</strong> <span id="md-mot"></span></p>
+                <div id="md-links"></div>
+            </div>
+        </div>
+        <div style="background:#eee; padding:15px; border-radius:8px; margin-top:10px;">
+            <strong>Descripción detallada:</strong><br><span id="md-desc"></span>
+        </div>
+
+        <div id="panel-interaccion" style="margin-top:20px; border:2px dashed var(--secondary); padding:20px; border-radius:10px;">
+            <h4 style="margin-top:0;">Interacción Técnica y Aprobaciones</h4>
+            <div id="btns-estado" style="display:flex; gap:10px; flex-wrap:wrap;"></div>
+            
+            <div id="form-accion" class="hidden" style="margin-top:15px; background: #fff3cd; padding:15px; border-radius:8px;">
+                <label id="lbl-acc" style="font-weight:bold;"></label>
+                <input type="text" id="txt-acc-motivo" class="login-input" placeholder="Escriba los detalles aquí...">
+                <input type="date" id="date-acc" class="hidden login-input">
+                <button id="btn-confirm-acc" class="btn-action btn-primary">Confirmar Movimiento</button>
+            </div>
+        </div>
+
+        <div class="historial-box">
+            <h4>Trazabilidad del Proceso</h4>
+            <div id="md-historial"></div>
+        </div>
     </div>
+</div>
 
 <script>
-// --- CONFIGURACIÓN FIREBASE (Usa tus credenciales) ---
-const firebaseConfig = { /* ... tus credenciales ... */ };
+// --- CONFIGURACIÓN FIREBASE ---
+const firebaseConfig = {
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.appspot.com",
+  messagingSenderId: "709030283072",
+  appId: "1:709030283072:web:5997837b36a448e9515ca5"
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// Cloudinary
+const cloudName = "df79cjklp";
+const uploadPreset = "fci_documentos";
+
 let currentUser = null;
-let notificacionesVisibles = false;
+let currentSolId = null;
 
-// --- SISTEMA DE NOTIFICACIONES ---
-
-function toggleNotificaciones() {
-    notificacionesVisibles = !notificacionesVisibles;
-    document.getElementById("notif-panel").classList.toggle("hidden", !notificacionesVisibles);
-    if(notificacionesVisibles) marcarNotificacionesComoLeidas();
+// --- SISTEMA DE SESIÓN ---
+function init() {
+    const session = sessionStorage.getItem("fci_session");
+    if(session) {
+        currentUser = JSON.parse(session);
+        showApp();
+    }
 }
 
-function escucharNotificaciones() {
-    // Escuchamos notificaciones dirigidas al usuario actual
-    db.collection("Notificaciones")
-      .where("destinatario", "==", currentUser.nombre)
-      .orderBy("fecha", "desc")
-      .limit(10)
-      .onSnapshot(snap => {
-          let count = 0;
-          let html = "";
-          
-          if(snap.empty) {
-              html = '<p style="padding:15px; color:#888;">No hay notificaciones.</p>';
-          }
-
-          snap.forEach(doc => {
-              const n = doc.data();
-              if(!n.leido) count++;
-              
-              html += `
-                <div class="notif-item ${!n.leido ? 'unread' : ''}" onclick="verDetalle('${n.solicitudId}')">
-                    <strong>${n.titulo}</strong><br>
-                    <small>${n.mensaje}</small><br>
-                    <span style="font-size:10px; color:#999;">${new Date(n.fecha.seconds*1000).toLocaleString()}</span>
-                </div>`;
-          });
-
-          document.getElementById("notif-list").innerHTML = html;
-          const badge = document.getElementById("notif-count");
-          if(count > 0) {
-              badge.innerText = count;
-              badge.classList.remove("hidden");
-          } else {
-              badge.classList.add("hidden");
-          }
-      });
-}
-
-async function marcarNotificacionesComoLeidas() {
-    const snap = await db.collection("Notificaciones")
-        .where("destinatario", "==", currentUser.nombre)
-        .where("leido", "==", false).get();
+async function login() {
+    const u = document.getElementById("loginUser").value;
+    const p = document.getElementById("loginPass").value;
+    const snap = await db.collection("Users").where("nombre","==",u).where("pass","==",p).get();
     
-    let batch = db.batch();
-    snap.forEach(doc => batch.update(doc.ref, { leido: true }));
-    await batch.commit();
+    if(!snap.empty) {
+        currentUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        sessionStorage.setItem("fci_session", JSON.stringify(currentUser));
+        showApp();
+    } else {
+        document.getElementById("loginError").style.display = "block";
+    }
 }
 
-// --- LÓGICA DE ENVÍO DE NOTIFICACIÓN ---
+function logout() { sessionStorage.clear(); location.reload(); }
 
-async function enviarNotificacion(destinatario, titulo, mensaje, solicitudId) {
+function showApp() {
+    document.getElementById("view-login").classList.add("hidden");
+    document.getElementById("view-app").classList.remove("hidden");
+    document.getElementById("userTag").innerText = `${currentUser.nombre} (${currentUser.gerencia})`;
+    
+    if(currentUser.permisos?.gestionar) document.getElementById("section-admin").classList.remove("hidden");
+    
+    loadData();
+    listenNotifs();
+}
+
+// --- CARGA DE DATOS REALTIME ---
+function loadData() {
+    // Organigrama
+    db.collection("gerencias").onSnapshot(s => {
+        let h = ""; s.forEach(d => h+=`<option value="${d.data().nombre}">${d.data().nombre}</option>`);
+        ["selGerenciaOrg","uGer"].forEach(id => document.getElementById(id).innerHTML = h);
+    });
+
+    // Usuarios
+    db.collection("Users").onSnapshot(s => {
+        let h = "";
+        s.forEach(doc => {
+            const u = doc.data();
+            h += `<tr><td>${u.nombre}</td><td>${u.correo}</td><td>${u.gerencia}</td>
+                  <td>${u.permisos.gestionar ? 'Admin':'Usuario'}</td>
+                  <td><button onclick="delDoc('Users','${doc.id}')" class="btn-action btn-danger">X</button></td></tr>`;
+        });
+        document.querySelector("#table-users tbody").innerHTML = h;
+    });
+
+    // Solicitudes & Stats
+    db.collection("solicitudes").orderBy("fecha","desc").onSnapshot(s => {
+        let h = "";
+        let st = {t:0, p:0, r:0, f:0};
+        s.forEach(doc => {
+            const d = doc.data();
+            st.t++;
+            if(d.estado == "Pendiente") st.p++;
+            else if(d.estado == "Finalizado") st.f++;
+            else st.r++;
+
+            h += `<tr>
+                <td><span class="status-pill" style="background:#333; color:white">${d.fciId}</span></td>
+                <td><strong>${d.titulo}</strong><br><small>${d.tipo}</small></td>
+                <td>${d.usuarioNom}</td>
+                <td><span class="status-pill status-${d.estado.toLowerCase()}">${d.estado}</span></td>
+                <td><button onclick="openDetalle('${doc.id}')" class="btn-action btn-primary">VER</button></td>
+            </tr>`;
+        });
+        document.querySelector("#table-solicitudes tbody").innerHTML = h;
+        document.getElementById("st-total").innerText = st.t;
+        document.getElementById("st-pendiente").innerText = st.p;
+        document.getElementById("st-revision").innerText = st.r;
+        document.getElementById("st-finalizado").innerText = st.f;
+    });
+}
+
+// --- CREACIÓN DE SOLICITUD ---
+async function crearSolicitud() {
+    const tit = document.getElementById("solTit").value;
+    if(!tit) return alert("El título es obligatorio");
+
+    const btn = event.target;
+    btn.disabled = true; btn.innerText = "Subiendo archivos...";
+
+    let urls = [];
+    const files = document.getElementById("solFiles").files;
+    for(let f of files) {
+        let fd = new FormData(); fd.append("file", f); fd.append("upload_preset", uploadPreset);
+        let res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/upload`, {method:"POST", body:fd});
+        let j = await res.json(); urls.push(j.secure_url);
+    }
+
+    const idFci = await getNextFCI();
+    const data = {
+        fciId: idFci, titulo: tit,
+        tipo: document.getElementById("solTipo").value,
+        accion: document.getElementById("solAcc").value,
+        motivo: document.getElementById("solMot").value,
+        descripcion: document.getElementById("solDesc").value,
+        documentos: urls,
+        estado: "Pendiente",
+        fecha: new Date(),
+        usuarioNom: currentUser.nombre,
+        usuarioGerencia: currentUser.gerencia,
+        historial: [{fecha: new Date(), accion: "CREACIÓN", msg: "Solicitud ingresada al sistema"}]
+    };
+
+    await db.collection("solicitudes").add(data);
+    alert("Solicitud creada con éxito: " + idFci);
+    location.reload();
+}
+
+// --- LÓGICA DE DETALLE Y ESTADOS ---
+async function openDetalle(id) {
+    currentSolId = id;
+    const doc = await db.collection("solicitudes").doc(id).get();
+    const d = doc.data();
+
+    document.getElementById("md-id").innerText = d.fciId;
+    document.getElementById("md-tit").innerText = d.titulo;
+    document.getElementById("md-tipo").innerText = d.tipo;
+    document.getElementById("md-acc").innerText = d.accion;
+    document.getElementById("md-user").innerText = d.usuarioNom;
+    document.getElementById("md-ub").innerText = d.usuarioGerencia;
+    document.getElementById("md-est").innerText = d.estado;
+    document.getElementById("md-est").className = "status-pill status-" + d.estado.toLowerCase();
+    document.getElementById("md-mot").innerText = d.motivo;
+    document.getElementById("md-desc").innerText = d.descripcion;
+
+    let l = ""; d.documentos.forEach((u,i) => l+=`<a href="${u}" target="_blank">Ver Adjunto ${i+1}</a> `);
+    document.getElementById("md-links").innerHTML = l;
+
+    let h = ""; d.historial.forEach(ev => {
+        let f = ev.fecha.seconds ? new Date(ev.fecha.seconds*1000).toLocaleString() : new Date().toLocaleString();
+        h += `<div class="hist-item"><strong>${f} - ${ev.accion}:</strong> ${ev.msg}</div>`;
+    });
+    document.getElementById("md-historial").innerHTML = h;
+
+    renderButtons(d.estado);
+    document.getElementById("modal-detalle").classList.remove("hidden");
+}
+
+function renderButtons(estado) {
+    const div = document.getElementById("btns-estado");
+    div.innerHTML = "";
+    document.getElementById("form-accion").classList.add("hidden");
+
+    if(!currentUser.permisos.gestionar) return;
+
+    if(estado == "Pendiente") {
+        div.innerHTML += `<button onclick="updateStatus('Revisión','Se inicia análisis técnico')" class="btn-action btn-primary">Pasar a Revisión</button>`;
+    }
+    if(estado == "Revisión") {
+        div.innerHTML += `<button onclick="prepAcc('Consulta','Motivo de la consulta técnica')" class="btn-action" style="background:#6f42c1; color:white">Realizar Consulta</button>`;
+        div.innerHTML += `<button onclick="prepAcc('Reunión','Asunto y Fecha propuesta', true)" class="btn-action" style="background:#fd7e14; color:white">Citar a Reunión</button>`;
+        div.innerHTML += `<button onclick="updateStatus('Aprobación SGC','Documento verificado y firmado por SGC')" class="btn-action btn-success">Aprobado por SGC</button>`;
+    }
+    if(estado == "Aprobación SGC") {
+        div.innerHTML += `<button onclick="updateStatus('Solicitud Gerencia','Esperando firma de Gerente de área')" class="btn-action btn-primary">Enviar a Gerente</button>`;
+    }
+    if(estado == "Solicitud Gerencia") {
+        div.innerHTML += `<button onclick="updateStatus('Finalizado','Proceso completado')" class="btn-action btn-success">FINALIZAR</button>`;
+        div.innerHTML += `<button onclick="prepAcc('Rechazado Gerencia','Motivo detallado del rechazo')" class="btn-action btn-danger">RECHAZAR</button>`;
+    }
+    if(estado == "Rechazado Gerencia") {
+        div.innerHTML += `<button onclick="updateStatus('Solicitud Gerencia','Re-enviado tras correcciones')" class="btn-action btn-primary">Re-enviar a Gerente</button>`;
+    }
+}
+
+function prepAcc(tipo, label, conFecha = false) {
+    document.getElementById("form-accion").classList.remove("hidden");
+    document.getElementById("lbl-acc").innerText = label;
+    document.getElementById("date-acc").classList.toggle("hidden", !conFecha);
+    document.getElementById("btn-confirm-acc").onclick = () => {
+        let m = document.getElementById("txt-acc-motivo").value;
+        let f = document.getElementById("date-acc").value;
+        if(!m) return alert("Debe ingresar un comentario");
+        updateStatus(tipo, m + (f ? " | Fecha: "+f : ""));
+    };
+}
+
+async function updateStatus(nuevo, msg) {
+    const snap = await db.collection("solicitudes").doc(currentSolId).get();
+    const d = snap.data();
+    let hist = d.historial;
+    hist.push({fecha: new Date(), accion: nuevo, msg: msg});
+
+    await db.collection("solicitudes").doc(currentSolId).update({ estado: nuevo, historial: hist });
+    
+    // Notificar
     await db.collection("Notificaciones").add({
-        destinatario: destinatario,
-        titulo: titulo,
-        mensaje: mensaje,
-        solicitudId: solicitudId,
+        destinatario: d.usuarioNom,
+        titulo: `Cambio en ${d.fciId}`,
+        mensaje: `Tu solicitud pasó a ${nuevo}: ${msg}`,
+        solId: currentSolId,
         leido: false,
         fecha: new Date()
     });
-    
-    // Aquí podrías integrar EmailJS para enviar el correo real
-    console.log(`Simulando envío de correo a ${destinatario}: ${mensaje}`);
+
+    closeModal();
 }
 
-// --- ACTUALIZACIÓN DE ESTADO CON NOTIFICACIÓN ---
+// --- NOTIFICACIONES ---
+function toggleNotifs() {
+    const d = document.getElementById("notif-dropdown");
+    d.classList.toggle("hidden");
+    if(!d.classList.contains("hidden")) markRead();
+}
 
-async function cambiarEstado(nuevoEstado, comentario) {
-    const snap = await db.collection("solicitudes").doc(currentSolId).get();
-    const d = snap.data();
-    let historial = d.historial || [];
-    
-    historial.push({ fecha: new Date(), accion: nuevoEstado, msg: comentario });
+function listenNotifs() {
+    db.collection("Notificaciones").where("destinatario","==",currentUser.nombre)
+      .orderBy("fecha","desc").limit(10).onSnapshot(s => {
+        let h = ""; let c = 0;
+        s.forEach(doc => {
+            const n = doc.data();
+            if(!n.leido) c++;
+            h += `<div class="notif-item ${!n.leido?'unread':''}" onclick="openDetalle('${n.solId}')">
+                    <strong>${n.titulo}</strong><br>${n.mensaje}</div>`;
+        });
+        document.getElementById("notif-list").innerHTML = h || "<p style='padding:10px'>Sin notificaciones</p>";
+        const b = document.getElementById("notif-count");
+        if(c > 0) { b.innerText = c; b.classList.remove("hidden"); } else { b.classList.add("hidden"); }
+      });
+}
 
-    await db.collection("solicitudes").doc(currentSolId).update({
-        estado: nuevoEstado,
-        historial: historial
+async function markRead() {
+    const s = await db.collection("Notificaciones").where("destinatario","==",currentUser.nombre).where("leido","==",false).get();
+    let batch = db.batch();
+    s.forEach(d => batch.update(d.ref, {leido:true}));
+    await batch.commit();
+}
+
+// --- UTILIDADES ---
+async function getNextFCI() {
+    const ref = db.collection("config").doc("correlativo");
+    return db.runTransaction(async (t) => {
+        const d = await t.get(ref);
+        const n = d.exists ? d.data().val + 1 : 1;
+        t.set(ref, {val: n});
+        return "FCI-SGD-" + n.toString().padStart(4, '0');
     });
-
-    // NOTIFICAR AL USUARIO
-    let tituloNotif = `Actualización de Solicitud ${d.fciId}`;
-    let msgNotif = `Tu solicitud ha cambiado a: ${nuevoEstado}. Comentario: ${comentario}`;
-    
-    if(nuevoEstado === "Rechazado Gerencia") {
-        tituloNotif = `🚨 Solicitud Rechazada: ${d.fciId}`;
-        msgNotif = `Gerencia ha rechazado la solicitud. Motivo: ${comentario}. Puedes corregirla y reenviarla.`;
-    }
-
-    await enviarNotificacion(d.usuarioNom, tituloNotif, msgNotif, currentSolId);
-
-    cerrarModal();
-    alert("Estado actualizado y usuario notificado.");
 }
 
-// --- INICIO ---
-function mostrarApp() {
-    document.getElementById("view-login").classList.add("hidden");
-    document.getElementById("view-app").classList.remove("hidden");
-    document.getElementById("userNameDisplay").innerText = currentUser.nombre;
-    
-    cargarDatos(); // Carga tablas
-    escucharNotificaciones(); // Inicia el listener de la campana
+async function registrarUsuario() {
+    await db.collection("Users").add({
+        nombre: document.getElementById("uNom").value,
+        correo: document.getElementById("uMail").value,
+        pass: document.getElementById("uPass").value,
+        gerencia: document.getElementById("uGer").value,
+        permisos: { gestionar: document.getElementById("p_ges").checked, aprobar: document.getElementById("p_apr").checked }
+    });
+    alert("Usuario registrado");
 }
 
-// ... Resto de funciones (crearSolicitud, login, etc.) ...
+function addOrg(col, inpId, parentId = null) {
+    const val = document.getElementById(inpId).value;
+    const data = { nombre: val };
+    if(parentId) data.padre = document.getElementById(parentId).value;
+    db.collection(col).add(data);
+    document.getElementById(inpId).value = "";
+}
+
+function delDoc(c, id) { if(confirm("¿Eliminar?")) db.collection(c).doc(id).delete(); }
+function closeModal() { document.getElementById("modal-detalle").classList.add("hidden"); }
+
+async function crearPrimerAdmin() {
+    await db.collection("Users").add({
+        nombre: "Admin", pass: "123456", correo: "admin@fci.com", gerencia: "SGC",
+        permisos: { gestionar: true, aprobar: true }
+    });
+    alert("Admin: Admin / 123456");
+}
+
+init();
 </script>
 </body>
 </html>
