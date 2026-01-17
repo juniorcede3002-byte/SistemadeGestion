@@ -1,355 +1,136 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SGD - Dashboard</title>
-
-  <style>
-    :root{
-      --primary:#1a237e;
-      --secondary:#3949ab;
-      --bg:#f4f7f9;
-      --card:#fff;
-      --text:#333;
-      --shadow:0 2px 10px rgba(0,0,0,0.1);
-    }
-    *{ box-sizing:border-box; }
-    body{
-      margin:0;
-      font-family: 'Segoe UI', sans-serif;
-      background:var(--bg);
-      color:var(--text);
-    }
-    .hidden{ display:none !important; }
-    .view{ height:100vh; display:flex; justify-content:center; align-items:center; background:linear-gradient(135deg,var(--primary),var(--secondary)); }
-
-    .login-card{
-      width:360px;
-      background:#fff;
-      padding:25px;
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      text-align:center;
-    }
-
-    .login-card input{
-      width:100%;
-      padding:12px;
-      margin:8px 0;
-      border:1px solid #ccc;
-      border-radius:8px;
-    }
-
-    .btn{
-      padding:12px 18px;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-      font-weight:bold;
-    }
-
-    .primary{ background:var(--primary); color:white; }
-    .secondary{ background:#f0f0f0; color:#333; }
-    .danger{ background:#c62828; color:white; }
-
-    header{
-      background:var(--primary);
-      color:white;
-      padding:12px 25px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-    }
-
-    .tabs{
-      display:flex;
-      background:#fff;
-      padding:10px 25px;
-      gap:10px;
-      border-bottom:1px solid #ddd;
-    }
-
-    .tab{
-      padding:10px 14px;
-      cursor:pointer;
-      border-radius:8px;
-      font-weight:bold;
-      color:#666;
-    }
-    .tab.active{
-      background:var(--primary);
-      color:white;
-    }
-
-    .content{
-      padding:25px;
-      max-width:1200px;
-      margin:0 auto;
-    }
-
-    .card{
-      background:var(--card);
-      padding:20px;
-      border-radius:12px;
-      box-shadow:var(--shadow);
-      margin-bottom:20px;
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(4,1fr);
-      gap:15px;
-    }
-
-    .stat{
-      text-align:center;
-    }
-    .statValue{
-      font-size:30px;
-      font-weight:bold;
-      margin-top:10px;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-    }
-    th,td{
-      padding:12px;
-      border-bottom:1px solid #eee;
-      text-align:left;
-    }
-
-    .form-grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:10px;
-    }
-    .form-grid input, .form-grid select, .form-grid textarea{
-      padding:10px;
-      border:1px solid #ccc;
-      border-radius:8px;
-    }
-    .form-grid textarea{ resize:none; grid-column:span 3; }
-
-    .row{
-      display:flex;
-      gap:10px;
-      margin-top:15px;
-    }
-
-    .modal{
-      position:fixed;
-      inset:0;
-      background:rgba(0,0,0,0.6);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      z-index:1000;
-    }
-
-    .modal-body{
-      background:#fff;
-      width:90%;
-      max-width:900px;
-      padding:25px;
-      border-radius:12px;
-    }
-  </style>
-
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Gestión</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<!-- LOGIN -->
-<div id="view-login" class="view">
-  <div class="login-card">
-    <h2>FCI | SGD</h2>
-    <input id="logUser" type="email" placeholder="Email">
-    <input id="logPass" type="password" placeholder="Contraseña">
-    <button class="btn primary" onclick="handleLogin()">INGRESAR</button>
-
-    <button class="btn secondary" id="btnCreateAdmin" onclick="crearAdmin()">CREAR ADMIN (solo 1 vez)</button>
-
-    <p id="loginMsg"></p>
-  </div>
-</div>
-
-<!-- APP -->
-<div id="view-app" class="hidden">
-  <header>
-    <div class="logo">FCI | SGD</div>
-    <div class="user-panel">
-      <span id="userDisplay"></span>
-      <button class="btn danger" onclick="logout()">Cerrar sesión</button>
+<div id="app">
+  <!-- LOGIN -->
+  <div id="loginScreen" class="screen">
+    <div class="card">
+      <h2>Iniciar Sesión</h2>
+      <input id="loginUser" placeholder="Usuario">
+      <input id="loginPass" placeholder="Contraseña" type="password">
+      <button id="btnLogin">Ingresar</button>
+      <button id="btnCrearAdmin">Crear Admin (solo 1 vez)</button>
+      <p id="loginMsg"></p>
     </div>
-  </header>
+  </div>
 
-  <nav class="tabs">
-    <div class="tab active" data-tab="dash" onclick="switchTab('dash')">Dashboard</div>
-    <div class="tab" data-tab="sol" onclick="switchTab('sol')">Solicitudes</div>
-    <div class="tab admin hidden" data-tab="users" onclick="switchTab('users')">Usuarios</div>
-    <div class="tab admin hidden" data-tab="org" onclick="switchTab('org')">Organización</div>
-  </nav>
-
-  <main class="content">
-
-    <!-- DASHBOARD -->
-    <section id="tab-dash" class="tab-content">
-      <div class="grid">
-        <div class="card stat">
-          <h3>Total Solicitudes</h3>
-          <div id="statTotal" class="statValue">0</div>
-        </div>
-        <div class="card stat">
-          <h3>Pendientes</h3>
-          <div id="statPend" class="statValue">0</div>
-        </div>
-        <div class="card stat">
-          <h3>Aprobadas</h3>
-          <div id="statApr" class="statValue">0</div>
-        </div>
-        <div class="card stat">
-          <h3>Finalizadas</h3>
-          <div id="statFin" class="statValue">0</div>
-        </div>
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="screen hide">
+    <header>
+      <h1>Sistema de Gestión</h1>
+      <div>
+        <span id="userLogged"></span>
+        <button id="btnLogout">Cerrar sesión</button>
       </div>
+    </header>
 
-      <div class="card">
-        <h2>Historial Completo</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Título</th>
-              <th>Estado</th>
-              <th>Usuario</th>
-              <th>Gerencia</th>
-            </tr>
-          </thead>
-          <tbody id="historial"></tbody>
-        </table>
-      </div>
-    </section>
+    <nav class="tabs">
+      <button class="tabBtn active" data-tab="tabDashboard">Dashboard</button>
+      <button class="tabBtn" data-tab="tabUsuarios">Usuarios</button>
+      <button class="tabBtn" data-tab="tabDepartamentos">Departamentos</button>
+      <button class="tabBtn" data-tab="tabGerencias">Gerencias</button>
+      <button class="tabBtn" data-tab="tabSolicitudes">Solicitudes</button>
+    </nav>
 
-    <!-- SOLICITUDES -->
-    <section id="tab-sol" class="tab-content hidden">
-      <div class="top">
-        <h2>Solicitudes</h2>
-        <button class="btn primary" onclick="openModal('modal-req')">+ Nueva Solicitud</button>
-      </div>
+    <main>
+      <!-- DASHBOARD -->
+      <section id="tabDashboard" class="tabContent active">
+        <div class="stats">
+          <div class="statCard">
+            <h3>Total Solicitudes</h3>
+            <p id="statTotal"></p>
+          </div>
+          <div class="statCard">
+            <h3>Pendientes</h3>
+            <p id="statPendientes"></p>
+          </div>
+          <div class="statCard">
+            <h3>En Reunión</h3>
+            <p id="statReunion"></p>
+          </div>
+          <div class="statCard">
+            <h3>Finalizadas</h3>
+            <p id="statFinalizadas"></p>
+          </div>
+        </div>
 
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Título</th>
-              <th>Estado</th>
-              <th>Gerencia</th>
-              <th>Acción</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-sol"></tbody>
-        </table>
-      </div>
-    </section>
+        <div class="historial">
+          <h2>Historial de Solicitudes</h2>
+          <div id="historialList"></div>
+        </div>
+      </section>
 
-    <!-- USUARIOS (ADMIN) -->
-    <section id="tab-users" class="tab-content hidden">
-      <div class="card">
+      <!-- USUARIOS -->
+      <section id="tabUsuarios" class="tabContent">
         <h2>Usuarios</h2>
-        <div class="form-grid">
-          <input id="u-nom" placeholder="Nombre">
-          <input id="u-email" placeholder="Email">
-          <input id="u-pass" placeholder="Contraseña">
-          <select id="u-rol">
-            <option value="Solicitante">Solicitante</option>
-            <option value="Gerente">Gerente</option>
-            <option value="Admin">Admin</option>
+        <div class="form">
+          <input id="userName" placeholder="Nombre de usuario">
+          <input id="userEmail" placeholder="Correo (notificaciones)">
+          <input id="userPass" placeholder="Contraseña">
+          <select id="userRole">
+            <option value="user">Usuario</option>
+            <option value="admin">Admin</option>
           </select>
-          <select id="u-ger"></select>
-          <button class="btn primary" onclick="saveUser()">Crear Usuario</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th>Gerencia</th>
-              <th>Eliminar</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-users"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ORGANIZACIÓN (ADMIN) -->
-    <section id="tab-org" class="tab-content hidden">
-      <div class="grid">
-        <div class="card">
-          <h3>Gerencias</h3>
-          <div class="row">
-            <input id="o-ger" placeholder="Nombre gerencia">
-            <button class="btn primary" onclick="addOrg('gerencias','o-ger')">Agregar</button>
+          <select id="userDept"></select>
+          <select id="userGer"></select>
+          <div class="checkboxes">
+            <label><input type="checkbox" id="perm1"> Realizar solicitudes</label>
+            <label><input type="checkbox" id="perm2"> Ver solicitudes propias</label>
+            <label><input type="checkbox" id="perm3"> Ver solicitudes de gerencia</label>
+            <label><input type="checkbox" id="perm4"> Aprobar/Rechazar</label>
+            <label><input type="checkbox" id="perm5"> Gestionar usuarios</label>
           </div>
-          <ul id="list-ger"></ul>
+          <button id="btnAddUser">Crear Usuario</button>
         </div>
 
-        <div class="card">
-          <h3>Departamentos</h3>
-          <select id="o-parent"></select>
-          <div class="row">
-            <input id="o-dep" placeholder="Nombre departamento">
-            <button class="btn primary" onclick="addOrg('departamentos','o-dep','o-parent')">Agregar</button>
-          </div>
-          <ul id="list-dep"></ul>
+        <div class="list" id="usersList"></div>
+      </section>
+
+      <!-- DEPARTAMENTOS -->
+      <section id="tabDepartamentos" class="tabContent">
+        <h2>Departamentos</h2>
+        <div class="form">
+          <input id="deptName" placeholder="Nombre departamento">
+          <button id="btnAddDept">Crear Departamento</button>
         </div>
-      </div>
-    </section>
+        <div class="list" id="deptList"></div>
+      </section>
 
-  </main>
-</div>
+      <!-- GERENCIAS -->
+      <section id="tabGerencias" class="tabContent">
+        <h2>Gerencias</h2>
+        <div class="form">
+          <input id="gerName" placeholder="Nombre gerencia">
+          <button id="btnAddGer">Crear Gerencia</button>
+        </div>
+        <div class="list" id="gerList"></div>
+      </section>
 
-<!-- MODAL -->
-<div id="modal-req" class="modal hidden">
-  <div class="modal-body">
-    <h2>Nueva Solicitud</h2>
-    <div class="form-grid">
-      <input id="s-tit" placeholder="Título">
-      <select id="s-tipo">
-        <option>Procedimiento</option>
-        <option>Manual</option>
-        <option>Instructivo</option>
-      </select>
-      <select id="s-acc">
-        <option>Creación</option>
-        <option>Modificación</option>
-      </select>
-      <input id="s-ver" placeholder="Versión">
-      <input id="s-fver" type="date">
-      <select id="s-ger" onchange="loadDepsForForm(this.value)"></select>
-      <select id="s-dep"></select>
-      <textarea id="s-just" placeholder="Justificación"></textarea>
-      <textarea id="s-desc" placeholder="Descripción"></textarea>
-      <input id="s-file" type="file">
-    </div>
+      <!-- SOLICITUDES -->
+      <section id="tabSolicitudes" class="tabContent">
+        <h2>Solicitudes</h2>
 
-    <div class="row">
-      <button class="btn primary" onclick="submitSol()">Enviar</button>
-      <button class="btn" onclick="closeModal()">Cerrar</button>
-    </div>
+        <div class="form">
+          <input id="solTitle" placeholder="Título solicitud">
+          <textarea id="solDesc" placeholder="Descripción"></textarea>
+          <select id="solDept"></select>
+          <select id="solGer"></select>
+          <input type="file" id="solFile">
+          <button id="btnAddSol">Crear Solicitud</button>
+        </div>
+
+        <div class="list" id="solList"></div>
+      </section>
+    </main>
   </div>
 </div>
 
-<script src="app.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
