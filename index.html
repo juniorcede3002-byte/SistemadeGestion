@@ -1,272 +1,201 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGD FCI - Sistema de Gestión Documental</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SGD - Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div id="view-login" class="login-view">
-    <div class="login-card">
-        <h2>FCI SGD</h2>
-        <input type="text" id="logUser" placeholder="Usuario">
-        <input type="password" id="logPass" placeholder="Contraseña">
-        <button class="btn btn-primary" onclick="handleLogin()">INGRESAR</button>
+<div id="view-login" class="view">
+  <div class="login-card">
+    <h2>FCI | SGD</h2>
+    <input id="logUser" type="email" placeholder="Email">
+    <input id="logPass" type="password" placeholder="Contraseña">
+    <button class="btn primary" onclick="handleLogin()">INGRESAR</button>
 
-        <div class="login-footer">
-            <button class="btn btn-secondary" onclick="createAdmin()">CREAR ADMIN</button>
-            <button class="btn btn-tertiary" onclick="setupDemoData()">INICIALIZAR DEMO</button>
-        </div>
-    </div>
+    <button class="btn secondary" id="btnCreateAdmin" onclick="crearAdmin()">CREAR ADMIN (solo 1 vez)</button>
+
+    <p id="loginMsg"></p>
+  </div>
 </div>
 
 <!-- APP -->
 <div id="view-app" class="hidden">
-    <header>
-        <div class="logo">FCI | SGD</div>
-        <div class="header-right">
-            <span id="userDisplay"></span>
-            <button class="btn btn-danger" onclick="logout()">Cerrar sesión</button>
+  <header>
+    <div class="logo">FCI | SGD</div>
+    <div class="user-panel">
+      <span id="userDisplay"></span>
+      <button class="btn danger" onclick="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <div class="tab active" data-tab="dash" onclick="switchTab('dash')">Dashboard</div>
+    <div class="tab" data-tab="sol" onclick="switchTab('sol')">Solicitudes</div>
+    <div class="tab admin hidden" data-tab="users" onclick="switchTab('users')">Usuarios</div>
+    <div class="tab admin hidden" data-tab="org" onclick="switchTab('org')">Organización</div>
+  </nav>
+
+  <main class="content">
+
+    <!-- DASHBOARD -->
+    <section id="tab-dash" class="tab-content">
+      <div class="grid">
+        <div class="card stat">
+          <h3>Total Solicitudes</h3>
+          <div id="statTotal" class="statValue">0</div>
         </div>
-    </header>
+        <div class="card stat">
+          <h3>Pendientes</h3>
+          <div id="statPend" class="statValue">0</div>
+        </div>
+        <div class="card stat">
+          <h3>Aprobadas</h3>
+          <div id="statApr" class="statValue">0</div>
+        </div>
+        <div class="card stat">
+          <h3>Finalizadas</h3>
+          <div id="statFin" class="statValue">0</div>
+        </div>
+      </div>
 
-    <nav class="tabs">
-        <div class="tab active" onclick="switchTab('dash')">Dashboard</div>
-        <div class="tab" onclick="switchTab('sol')">Solicitudes</div>
-        <div class="tab admin-only hidden" onclick="switchTab('users')">Usuarios</div>
-        <div class="tab admin-only hidden" onclick="switchTab('org')">Organización</div>
-    </nav>
+      <div class="card">
+        <h2>Historial Completo</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Estado</th>
+              <th>Usuario</th>
+              <th>Gerencia</th>
+            </tr>
+          </thead>
+          <tbody id="historial"></tbody>
+        </table>
+      </div>
+    </section>
 
-    <main class="content">
-        <!-- DASHBOARD -->
-        <section id="tab-dash" class="tab-content">
-            <div class="card">
-                <h2>Dashboard</h2>
-                <div class="grid-4">
-                    <div class="stat-card">
-                        <h3 id="count-users">0</h3>
-                        <p>Usuarios</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="count-ger">0</h3>
-                        <p>Gerencias</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="count-dep">0</h3>
-                        <p>Departamentos</p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 id="count-sol">0</h3>
-                        <p>Solicitudes</p>
-                    </div>
-                </div>
-            </div>
-        </section>
+    <!-- SOLICITUDES -->
+    <section id="tab-sol" class="tab-content hidden">
+      <div class="top">
+        <h2>Solicitudes</h2>
+        <button class="btn primary" onclick="openModal('modal-req')">+ Nueva Solicitud</button>
+      </div>
 
-        <!-- SOLICITUDES -->
-        <section id="tab-sol" class="tab-content hidden">
-            <div class="card">
-                <div class="top-actions">
-                    <h2>Solicitudes</h2>
-                    <button class="btn btn-primary" onclick="openModal('modal-new-sol')">+ Nueva Solicitud</button>
-                </div>
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Estado</th>
+              <th>Gerencia</th>
+              <th>Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-sol"></tbody>
+        </table>
+      </div>
+    </section>
 
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Título</th>
-                            <th>Tipo</th>
-                            <th>Acción</th>
-                            <th>Estado</th>
-                            <th>Gerencia</th>
-                            <th>Depto</th>
-                            <th>Solicitante</th>
-                            <th>Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-sol"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- USUARIOS -->
-        <section id="tab-users" class="tab-content hidden">
-            <div class="card">
-                <h2>Usuarios</h2>
-                <div class="form-grid">
-                    <div>
-                        <label>Nombre</label>
-                        <input type="text" id="u-nom">
-                    </div>
-                    <div>
-                        <label>Usuario</label>
-                        <input type="text" id="u-user">
-                    </div>
-                    <div>
-                        <label>Contraseña</label>
-                        <input type="password" id="u-pass">
-                    </div>
-                    <div>
-                        <label>Rol</label>
-                        <select id="u-rol">
-                            <option>Solicitante</option>
-                            <option>Gerente</option>
-                            <option>Admin</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label>Gerencia</label>
-                        <select id="u-ger"></select>
-                    </div>
-                    <div class="full">
-                        <button class="btn btn-primary" onclick="saveUser()">Guardar Usuario</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Usuario</th>
-                            <th>Rol</th>
-                            <th>Gerencia</th>
-                            <th>Eliminar</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-users"></tbody>
-                </table>
-            </div>
-        </section>
-
-        <!-- ORGANIZACIÓN -->
-        <section id="tab-org" class="tab-content hidden">
-            <div class="card">
-                <h2>Organización</h2>
-                <div class="form-grid">
-                    <div>
-                        <label>Gerencia</label>
-                        <input type="text" id="o-ger">
-                        <button class="btn btn-primary" onclick="addOrg('gerencias','o-ger')">Agregar Gerencia</button>
-                    </div>
-                    <div>
-                        <label>Departamento</label>
-                        <input type="text" id="o-dep">
-                        <label>Gerencia Padre</label>
-                        <select id="o-parent"></select>
-                        <button class="btn btn-primary" onclick="addOrg('departamentos','o-dep','o-parent')">Agregar Departamento</button>
-                    </div>
-                </div>
-
-                <div class="grid-2">
-                    <div class="card small">
-                        <h3>Gerencias</h3>
-                        <ul id="list-ger"></ul>
-                    </div>
-                    <div class="card small">
-                        <h3>Departamentos</h3>
-                        <ul id="list-dep"></ul>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-</div>
-
-<!-- MODAL NUEVA SOLICITUD -->
-<div id="modal-new-sol" class="modal hidden">
-    <div class="modal-body">
-        <h2>Nueva Solicitud</h2>
+    <!-- USUARIOS (ADMIN) -->
+    <section id="tab-users" class="tab-content hidden">
+      <div class="card">
+        <h2>Usuarios</h2>
         <div class="form-grid">
-            <div class="full">
-                <label>Nombre del Documento</label>
-                <input type="text" id="s-tit">
-            </div>
-            <div>
-                <label>Tipo</label>
-                <select id="s-tipo">
-                    <option>Procedimiento</option>
-                    <option>Guía</option>
-                    <option>Instructivo</option>
-                    <option>Manual</option>
-                    <option>Formato</option>
-                </select>
-            </div>
-            <div>
-                <label>Acción</label>
-                <select id="s-acc">
-                    <option>Creación</option>
-                    <option>Modificación</option>
-                    <option>Inactivación</option>
-                </select>
-            </div>
-            <div>
-                <label>Gerencia</label>
-                <select id="s-ger" onchange="loadDepsForForm(this.value)"></select>
-            </div>
-            <div>
-                <label>Departamento</label>
-                <select id="s-dep"></select>
-            </div>
-            <div class="full">
-                <label>Motivo</label>
-                <textarea id="s-just" rows="3"></textarea>
-            </div>
-            <div>
-                <label>Última versión (solo si aplica)</label>
-                <input type="text" id="s-ver">
-            </div>
-            <div>
-                <label>Fecha última versión (solo si aplica)</label>
-                <input type="date" id="s-fver">
-            </div>
-            <div class="full">
-                <label>Adjuntar archivo</label>
-                <input type="file" id="s-file">
-            </div>
+          <input id="u-nom" placeholder="Nombre">
+          <input id="u-email" placeholder="Email">
+          <input id="u-pass" placeholder="Contraseña">
+          <select id="u-rol">
+            <option value="Solicitante">Solicitante</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Admin">Admin</option>
+          </select>
+          <select id="u-ger"></select>
+          <button class="btn primary" onclick="saveUser()">Crear Usuario</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Email</th>
+              <th>Rol</th>
+              <th>Gerencia</th>
+              <th>Eliminar</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-users"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ORGANIZACIÓN (ADMIN) -->
+    <section id="tab-org" class="tab-content hidden">
+      <div class="grid">
+        <div class="card">
+          <h3>Gerencias</h3>
+          <div class="row">
+            <input id="o-ger" placeholder="Nombre gerencia">
+            <button class="btn primary" onclick="addOrg('gerencias','o-ger')">Agregar</button>
+          </div>
+          <ul id="list-ger"></ul>
         </div>
 
-        <div class="modal-actions">
-            <button class="btn btn-primary" onclick="submitSol()">Enviar</button>
-            <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+        <div class="card">
+          <h3>Departamentos</h3>
+          <select id="o-parent"></select>
+          <div class="row">
+            <input id="o-dep" placeholder="Nombre departamento">
+            <button class="btn primary" onclick="addOrg('departamentos','o-dep','o-parent')">Agregar</button>
+          </div>
+          <ul id="list-dep"></ul>
         </div>
-    </div>
+      </div>
+    </section>
+
+  </main>
 </div>
 
-<!-- MODAL VER SOLICITUD -->
-<div id="modal-view" class="modal hidden">
-    <div class="modal-body">
-        <h2 id="v-title">Detalles</h2>
-        <div id="v-details"></div>
-
-        <div id="v-admin-panel" class="hidden">
-            <h3>Cambiar estado</h3>
-            <select id="v-status">
-                <option>Pendiente</option>
-                <option>Solicitud de reunión</option>
-                <option>Consulta</option>
-                <option>Solicitud de 3 firmas</option>
-                <option>Solicitud aprobación gerente</option>
-                <option>Finalizado</option>
-                <option>Rechazado</option>
-            </select>
-            <label>Comentarios</label>
-            <textarea id="v-comment" rows="2"></textarea>
-            <button class="btn btn-primary" onclick="updateStatus()">Actualizar</button>
-        </div>
-
-        <button class="btn btn-danger" onclick="closeModal()">Cerrar</button>
+<!-- MODAL -->
+<div id="modal-req" class="modal hidden">
+  <div class="modal-body">
+    <h2>Nueva Solicitud</h2>
+    <div class="form-grid">
+      <input id="s-tit" placeholder="Título">
+      <select id="s-tipo">
+        <option>Procedimiento</option>
+        <option>Manual</option>
+        <option>Instructivo</option>
+      </select>
+      <select id="s-acc">
+        <option>Creación</option>
+        <option>Modificación</option>
+      </select>
+      <input id="s-ver" placeholder="Versión">
+      <input id="s-fver" type="date">
+      <select id="s-ger" onchange="loadDepsForForm(this.value)"></select>
+      <select id="s-dep"></select>
+      <textarea id="s-just" placeholder="Justificación"></textarea>
+      <textarea id="s-desc" placeholder="Descripción"></textarea>
+      <input id="s-file" type="file">
     </div>
-</div>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    <div class="row">
+      <button class="btn primary" onclick="submitSol()">Enviar</button>
+      <button class="btn" onclick="closeModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
 
 <script src="app.js"></script>
 </body>
