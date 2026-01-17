@@ -1,265 +1,318 @@
 // FIREBASE CONFIG
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  storageBucket: "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_MESSAGING_SENDER_ID",
-  appId: "TU_APP_ID"
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+  authDomain: "sistemadegestion-7400d.firebaseapp.com",
+  projectId: "sistemadegestion-7400d",
+  storageBucket: "sistemadegestion-7400d.appspot.com",
+  messagingSenderId: "709030283072",
+  appId: "1:709030283072:web:5997837b36a448e9515ca5"
 };
-firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
+// CLOUDINARY UPLOAD
+async function subirDocumentoCloudinary(file) {
+  const url = "https://api.cloudinary.com/v1_1/df79cjklp/upload";
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "fci_documentos");
+
+  const response = await fetch(url, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await response.json();
+  return data.secure_url;
+}
+
+// UI Elements
+const loginScreen = document.getElementById("loginScreen");
+const dashboard = document.getElementById("dashboard");
+const btnLogin = document.getElementById("btnLogin");
+const btnCrearAdmin = document.getElementById("btnCrearAdmin");
+const loginMsg = document.getElementById("loginMsg");
+const userLogged = document.getElementById("userLogged");
+const btnLogout = document.getElementById("btnLogout");
+
+const tabs = document.querySelectorAll(".tabBtn");
+const tabContents = document.querySelectorAll(".tabContent");
+
+const usersList = document.getElementById("usersList");
+const deptList = document.getElementById("deptList");
+const gerList = document.getElementById("gerList");
+const solList = document.getElementById("solList");
+const historialList = document.getElementById("historialList");
+
+const statTotal = document.getElementById("statTotal");
+const statPendientes = document.getElementById("statPendientes");
+const statReunion = document.getElementById("statReunion");
+const statFinalizadas = document.getElementById("statFinalizadas");
+
+// LOGIN FIXED (sin auth)
 let currentUser = null;
-let activeDocId = null;
 
-// LOGIN
-async function handleLogin() {
-  const email = document.getElementById("logUser").value;
-  const pass = document.getElementById("logPass").value;
+const hardcodedAdmin = { user: "Admin", pass: "1130" };
 
-  try {
-    const res = await auth.signInWithEmailAndPassword(email, pass);
-    currentUser = res.user;
-    await loadUserData();
-    showApp();
-  } catch (e) {
-    document.getElementById("loginMsg").innerText = "Error de acceso";
+btnLogin.onclick = () => {
+  const u = document.getElementById("loginUser").value;
+  const p = document.getElementById("loginPass").value;
+
+  // Login admin fijo
+  if (u === hardcodedAdmin.user && p === hardcodedAdmin.pass) {
+    currentUser = { name: "Admin", role: "admin" };
+    showDashboard();
+    return;
   }
-}
 
-// LOGOUT
-function logout(){
-  auth.signOut();
-  location.reload();
-}
+  // Login con usuarios creados
+  loginWithFirebaseUser(u, p);
+};
 
-// SHOW APP
-function showApp(){
-  document.getElementById("view-login").classList.add("hidden");
-  document.getElementById("view-app").classList.remove("hidden");
-  document.getElementById("userDisplay").innerText = currentUserData.nombre;
-}
+btnCrearAdmin.onclick = async () => {
+  await addDoc(collection(db, "Usuarios"), {
+    usuario: "Admin",
+    pass: "1130",
+    email: "admin@fcipty.com",
+    role: "admin",
+    permisos: {
+      perm1: true,
+      perm2: true,
+      perm3: true,
+      perm4: true,
+      perm5: true
+    }
+  });
+  loginMsg.innerText = "Admin creado en Firebase.";
+};
 
-// USER DATA
-let currentUserData = null;
-async function loadUserData(){
-  const doc = await db.collection("Users").doc(currentUser.uid).get();
-  currentUserData = doc.data();
-  if(currentUserData.rol === "Admin"){
-    document.querySelectorAll(".admin").forEach(e => e.classList.remove("hidden"));
+btnLogout.onclick = () => {
+  currentUser = null;
+  dashboard.classList.add("hide");
+  loginScreen.classList.remove("hide");
+};
+
+// TAB SWITCH
+tabs.forEach(tab => {
+  tab.onclick = () => {
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    tabContents.forEach(c => c.classList.remove("active"));
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  };
+});
+
+// LOGIN FIREBASE
+async function loginWithFirebaseUser(u, p) {
+  const snapshot = await getDocs(collection(db, "Usuarios"));
+  let found = false;
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.usuario === u && data.pass === p) {
+      found = true;
+      currentUser = { name: data.usuario, role: data.role, permisos: data.permisos };
+    }
+  });
+
+  if (!found) {
+    loginMsg.innerText = "Usuario o contraseña incorrectos.";
+    return;
   }
-  loadData();
+
+  showDashboard();
 }
 
-// CREATE ADMIN (button)
-async function crearAdmin(){
-  const email = "admin@fci.com";
-  const pass = "123456";
+// SHOW DASHBOARD
+function showDashboard() {
+  loginScreen.classList.add("hide");
+  dashboard.classList.remove("hide");
+  userLogged.innerText = `Conectado como: ${currentUser.name} (${currentUser.role})`;
 
-  try {
-    const res = await auth.createUserWithEmailAndPassword(email, pass);
-    await db.collection("Users").doc(res.user.uid).set({
-      nombre: "Admin Maestro",
-      user: "admin",
-      rol: "Admin",
-      gerencia: "SGC"
-    });
-    alert("Admin creado!");
-  } catch(e){
-    alert("Admin ya existe o error.");
-  }
+  loadAll();
 }
 
-// SWITCH TAB
-function switchTab(id){
-  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-  document.querySelector(`[data-tab="${id}"]`).classList.add("active");
-  document.querySelectorAll(".tab-content").forEach(c=>c.classList.add("hidden"));
-  document.getElementById("tab-"+id).classList.remove("hidden");
+// LOAD ALL DATA
+async function loadAll() {
+  await loadUsers();
+  await loadDepartamentos();
+  await loadGerencias();
+  await loadSolicitudes();
+  await loadDashboardStats();
 }
 
-// LOAD DATA
-function loadData(){
-  loadGerencias();
-  loadSolicitudes();
-  loadUsers();
-  loadStats();
+// USERS
+document.getElementById("btnAddUser").onclick = async () => {
+  const usuario = document.getElementById("userName").value;
+  const email = document.getElementById("userEmail").value;
+  const pass = document.getElementById("userPass").value;
+  const role = document.getElementById("userRole").value;
+  const dept = document.getElementById("userDept").value;
+  const ger = document.getElementById("userGer").value;
+
+  const permisos = {
+    perm1: document.getElementById("perm1").checked,
+    perm2: document.getElementById("perm2").checked,
+    perm3: document.getElementById("perm3").checked,
+    perm4: document.getElementById("perm4").checked,
+    perm5: document.getElementById("perm5").checked
+  };
+
+  await addDoc(collection(db, "Usuarios"), { usuario, email, pass, role, dept, ger, permisos });
+  await loadUsers();
+};
+
+async function loadUsers() {
+  usersList.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "Usuarios"));
+  snapshot.forEach(docu => {
+    const data = docu.data();
+    usersList.innerHTML += `
+      <div class="item">
+        <b>${data.usuario}</b> (${data.role}) - ${data.email}
+        <button class="delete" onclick="deleteUser('${docu.id}')">Eliminar</button>
+      </div>
+    `;
+  });
+}
+
+window.deleteUser = async (id) => {
+  await deleteDoc(doc(db, "Usuarios", id));
+  await loadUsers();
+};
+
+// DEPARTAMENTOS
+document.getElementById("btnAddDept").onclick = async () => {
+  const name = document.getElementById("deptName").value;
+  await addDoc(collection(db, "Departamentos"), { nombre: name });
+  await loadDepartamentos();
+};
+
+async function loadDepartamentos() {
+  deptList.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "Departamentos"));
+
+  document.getElementById("userDept").innerHTML = "";
+  document.getElementById("solDept").innerHTML = "";
+
+  snapshot.forEach(docu => {
+    const data = docu.data();
+    deptList.innerHTML += `<div class="item">${data.nombre}</div>`;
+    document.getElementById("userDept").innerHTML += `<option value="${data.nombre}">${data.nombre}</option>`;
+    document.getElementById("solDept").innerHTML += `<option value="${data.nombre}">${data.nombre}</option>`;
+  });
 }
 
 // GERENCIAS
-function loadGerencias(){
-  db.collection("gerencias").onSnapshot(s=>{
-    let opt = '<option value="">Seleccione...</option>';
-    let list = "";
-    s.forEach(doc=>{
-      const d = doc.data();
-      opt += `<option value="${d.nombre}">${d.nombre}</option>`;
-      list += `<li>${d.nombre} <button onclick="delDoc('gerencias','${doc.id}')">x</button></li>`;
-    });
-    document.getElementById("u-ger").innerHTML = opt;
-    document.getElementById("o-parent").innerHTML = opt;
-    document.getElementById("s-ger").innerHTML = opt;
-    document.getElementById("list-ger").innerHTML = list;
-  });
-}
+document.getElementById("btnAddGer").onclick = async () => {
+  const name = document.getElementById("gerName").value;
+  await addDoc(collection(db, "Gerencias"), { nombre: name });
+  await loadGerencias();
+};
 
-// DEPARTAMENTOS
-function loadDepsForForm(ger){
-  db.collection("departamentos").where("parent","==",ger).get().then(s=>{
-    let html="";
-    s.forEach(doc=> html += `<option>${doc.data().nombre}</option>`);
-    document.getElementById("s-dep").innerHTML = html || "<option>N/A</option>";
-  });
-}
-function loadDepartamentos(){
-  db.collection("departamentos").onSnapshot(s=>{
-    let list="";
-    s.forEach(doc=>{
-      const d=doc.data();
-      list += `<li>${d.nombre} (${d.parent}) <button onclick="delDoc('departamentos','${doc.id}')">x</button></li>`;
-    });
-    document.getElementById("list-dep").innerHTML = list;
+async function loadGerencias() {
+  gerList.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "Gerencias"));
+
+  document.getElementById("userGer").innerHTML = "";
+  document.getElementById("solGer").innerHTML = "";
+
+  snapshot.forEach(docu => {
+    const data = docu.data();
+    gerList.innerHTML += `<div class="item">${data.nombre}</div>`;
+    document.getElementById("userGer").innerHTML += `<option value="${data.nombre}">${data.nombre}</option>`;
+    document.getElementById("solGer").innerHTML += `<option value="${data.nombre}">${data.nombre}</option>`;
   });
 }
 
 // SOLICITUDES
-function loadSolicitudes(){
-  db.collection("Solicitudes").orderBy("fecha","desc").onSnapshot(s=>{
-    let html="";
-    s.forEach(doc=>{
-      const d=doc.data();
-      html += `
-        <tr>
-          <td>${d.fciId}</td>
-          <td>${d.titulo}</td>
-          <td>${d.estado}</td>
-          <td>${d.gerencia}</td>
-          <td><button onclick="viewDoc('${doc.id}')">Ver</button></td>
-        </tr>`;
-    });
-    document.getElementById("tbody-sol").innerHTML = html;
+document.getElementById("btnAddSol").onclick = async () => {
+  const title = document.getElementById("solTitle").value;
+  const desc = document.getElementById("solDesc").value;
+  const dept = document.getElementById("solDept").value;
+  const ger = document.getElementById("solGer").value;
+  const file = document.getElementById("solFile").files[0];
 
-    // HISTORIAL
-    document.getElementById("historial").innerHTML = html;
-  });
-}
-
-// STATS
-function loadStats(){
-  db.collection("Solicitudes").onSnapshot(s=>{
-    let total=0, pend=0, apr=0, fin=0;
-    s.forEach(doc=>{
-      total++;
-      const st = doc.data().estado;
-      if(st=="Pendiente") pend++;
-      if(st=="Aprobado") apr++;
-      if(st=="Finalizado") fin++;
-    });
-    document.getElementById("statTotal").innerText = total;
-    document.getElementById("statPend").innerText = pend;
-    document.getElementById("statApr").innerText = apr;
-    document.getElementById("statFin").innerText = fin;
-  });
-}
-
-// MODAL
-function openModal(id){ document.getElementById(id).classList.remove("hidden"); }
-function closeModal(){ document.getElementById("modal-req").classList.add("hidden"); }
-
-// CREATE SOLICITUD (upload file)
-async function submitSol(){
-  const file = document.getElementById("s-file").files[0];
   let fileUrl = "";
+  if (file) fileUrl = await subirDocumentoCloudinary(file);
 
-  // SUBIR A CLOUDINARY (DEBES CONFIGURARLO)
-  // Aquí usarías Cloudinary upload API (recomendado)
-  // Pero como tu pediste completo, te dejo un placeholder:
-  // fileUrl = await uploadToCloudinary(file);
-
-  fileUrl = "https://via.placeholder.com/150"; // temporal
-
-  const idFci = await getNextID();
-  await db.collection("Solicitudes").add({
-    fciId: idFci,
-    titulo: document.getElementById("s-tit").value,
-    tipo: document.getElementById("s-tipo").value,
-    accion: document.getElementById("s-acc").value,
-    version: document.getElementById("s-ver").value,
-    fechaVersion: document.getElementById("s-fver").value,
-    gerencia: document.getElementById("s-ger").value,
-    departamento: document.getElementById("s-dep").value,
-    justificacion: document.getElementById("s-just").value,
-    descripcion: document.getElementById("s-desc").value,
-    file: fileUrl,
+  await addDoc(collection(db, "Solicitudes"), {
+    title,
+    desc,
+    dept,
+    ger,
+    fileUrl,
     estado: "Pendiente",
-    uid: currentUser.uid,
-    userName: currentUserData.nombre,
-    fecha: new Date()
+    historial: [{ estado: "Pendiente", fecha: new Date().toISOString(), comentario: "Creado" }],
+    createdBy: currentUser.name
   });
 
-  closeModal();
-}
+  await loadSolicitudes();
+  await loadDashboardStats();
+};
 
-// USERS
-function loadUsers(){
-  db.collection("Users").onSnapshot(s=>{
-    let html="";
-    s.forEach(doc=>{
-      const u=doc.data();
-      html += `
-        <tr>
-          <td>${u.nombre}</td>
-          <td>${u.user}</td>
-          <td>${u.rol}</td>
-          <td>${u.gerencia}</td>
-          <td><button onclick="delDoc('Users','${doc.id}')">Eliminar</button></td>
-        </tr>`;
-    });
-    document.getElementById("tbody-users").innerHTML = html;
+async function loadSolicitudes() {
+  solList.innerHTML = "";
+  historialList.innerHTML = "";
+
+  const snapshot = await getDocs(collection(db, "Solicitudes"));
+
+  snapshot.forEach(docu => {
+    const data = docu.data();
+
+    solList.innerHTML += `
+      <div class="item">
+        <b>${data.title}</b> - Estado: ${data.estado}
+        <button class="details" onclick="verSolicitud('${docu.id}')">Detalles</button>
+        <button class="delete" onclick="deleteSolicitud('${docu.id}')">Eliminar</button>
+      </div>
+    `;
+
+    historialList.innerHTML += `
+      <div class="item">
+        <b>${data.title}</b> - ${data.estado} - Creado por ${data.createdBy}
+      </div>
+    `;
   });
 }
 
-async function saveUser(){
-  const nombre = document.getElementById("u-nom").value;
-  const email = document.getElementById("u-email").value;
-  const pass = document.getElementById("u-pass").value;
-  const rol = document.getElementById("u-rol").value;
-  const ger = document.getElementById("u-ger").value;
+window.deleteSolicitud = async (id) => {
+  await deleteDoc(doc(db, "Solicitudes", id));
+  await loadSolicitudes();
+  await loadDashboardStats();
+};
 
-  const res = await auth.createUserWithEmailAndPassword(email, pass);
-  await db.collection("Users").doc(res.user.uid).set({
-    nombre,
-    user: email,
-    rol,
-    gerencia: ger
+window.verSolicitud = async (id) => {
+  const docu = await getDocs(collection(db, "Solicitudes"));
+  docu.forEach(async (d) => {
+    if (d.id === id) {
+      const data = d.data();
+      alert(`Solicitud: ${data.title}\nDescripción: ${data.desc}\nEstado: ${data.estado}\nArchivo: ${data.fileUrl}`);
+    }
   });
-  alert("Usuario creado!");
-}
+};
 
-// ORGANIZACIÓN
-function addOrg(col, inpId, pId=null){
-  const val = document.getElementById(inpId).value;
-  const data = { nombre: val };
-  if(pId) data.parent = document.getElementById(pId).value;
-  db.collection(col).add(data);
-  if(col==="departamentos") loadDepartamentos();
-}
+// DASHBOARD STATS
+async function loadDashboardStats() {
+  const snapshot = await getDocs(collection(db, "Solicitudes"));
+  let total = 0, pend = 0, reu = 0, fin = 0;
 
-// DELETE DOC
-function delDoc(col,id){
-  if(confirm("Eliminar?")){
-    db.collection(col).doc(id).delete();
-  }
-}
+  snapshot.forEach(docu => {
+    const data = docu.data();
+    total++;
 
-// ID COUNTER
-async function getNextID(){
-  const ref = db.collection("Config").doc("counts");
-  const doc = await ref.get();
-  const n = doc.exists ? doc.data().val + 1 : 1;
-  await ref.set({ val: n });
-  return "FCI-SGD-" + String(n).padStart(4,"0");
+    if (data.estado === "Pendiente") pend++;
+    if (data.estado === "Solicitud de reunión") reu++;
+    if (data.estado === "Finalizado") fin++;
+  });
+
+  statTotal.innerText = total;
+  statPendientes.innerText = pend;
+  statReunion.innerText = reu;
+  statFinalizadas.innerText = fin;
 }
