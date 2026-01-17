@@ -1,297 +1,242 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FCI LOGISTIX - SGD Maestro</title>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <style>
-        :root { --primary: #1a237e; --secondary: #3949ab; --success: #2e7d32; --danger: #c62828; --bg: #f4f7f9; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: #333; }
-        .hidden { display: none !important; }
-        header { background: var(--primary); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
-        .tabs-nav { background: white; display: flex; border-bottom: 1px solid #ddd; padding: 0 20px; }
-        .tab-link { padding: 15px 20px; cursor: pointer; font-weight: 600; color: #666; border-bottom: 3px solid transparent; }
-        .tab-link.active { color: var(--primary); border-bottom-color: var(--primary); background: #f0f2ff; }
-        .content { padding: 25px; max-width: 1200px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; }
-        .full { grid-column: span 2; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; font-size: 12px; color: #555; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-        .btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        .btn-p { background: var(--primary); color: white; }
-        .btn-s { background: var(--success); color: white; }
-        .btn-d { background: var(--danger); color: white; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-        .modal-body { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 750px; max-height: 90vh; overflow-y: auto; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: left; }
-        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-        .st-pendiente { background: #fff3e0; color: #ef6c00; }
-        .st-finalizado { background: #e8f5e9; color: #2e7d32; }
-    </style>
+<meta charset="UTF-8">
+<title>Sistema de Gestión Documental</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<!-- Chart -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{font-family:Arial;background:#f4f6f8;margin:0}
+header{background:#1e293b;color:white;padding:15px}
+section{padding:15px}
+.card{background:white;padding:15px;border-radius:8px;margin-bottom:15px}
+input,select,textarea,button{width:100%;padding:8px;margin:5px 0}
+button{background:#2563eb;color:white;border:none;border-radius:5px;cursor:pointer}
+button.delete{background:#dc2626}
+.list{border-top:1px solid #ddd;margin-top:10px}
+.item{padding:8px;border-bottom:1px solid #ddd}
+.flex{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+small{color:#555}
+</style>
 </head>
+
 <body>
 
-<div id="view-login" style="height:100vh; display:flex; align-items:center; justify-content:center; background: linear-gradient(135deg, var(--primary), var(--secondary));">
-    <div class="card" style="width:350px; text-align:center;">
-        <h2 style="color:var(--primary)">FCI LOGISTIX</h2>
-        <input type="text" id="logUser" placeholder="Usuario" style="margin-bottom:10px;">
-        <input type="password" id="logPass" placeholder="Contraseña" style="margin-bottom:20px;">
-        <button class="btn btn-p" style="width:100%" onclick="handleLogin()">INGRESAR</button>
-        <button onclick="setupSystem()" style="margin-top:20px; background:none; border:none; color:#bbb; font-size:10px; cursor:pointer;">⚡ Inicializar Base de Datos</button>
-    </div>
+<header>
+<h2>Sistema de Gestión Documental</h2>
+</header>
+
+<section class="flex">
+
+<!-- USUARIOS -->
+<div class="card">
+<h3>Crear Usuario</h3>
+<input id="u_nombre" placeholder="Nombre completo">
+<input id="u_correo" placeholder="Correo">
+<button onclick="crearUsuario()">Crear</button>
+<div id="listaUsuarios" class="list"></div>
 </div>
 
-<div id="view-app" class="hidden">
-    <header>
-        <div><h3 style="margin:0;">FCI | SGD</h3><small id="userDisplay"></small></div>
-        <button onclick="location.reload()" class="btn btn-d" style="padding:5px 10px;">Salir</button>
-    </header>
-
-    <nav class="tabs-nav">
-        <div class="tab-link active" onclick="switchTab(event, 'dash')">Dashboard</div>
-        <div class="tab-link" onclick="switchTab(event, 'sol')">Solicitudes</div>
-        <div class="tab-link admin-only hidden" onclick="switchTab(event, 'users')">Usuarios</div>
-        <div class="tab-link admin-only hidden" onclick="switchTab(event, 'org')">Organización</div>
-    </nav>
-
-    <main class="content">
-        <div id="tab-sol" class="tab-content hidden">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h2>Gestión de Solicitudes</h2>
-                <button class="btn btn-s" onclick="openModal('modal-req')">+ Nueva Solicitud</button>
-            </div>
-            <div class="card">
-                <table>
-                    <thead><tr><th>ID</th><th>Título</th><th>Tipo</th><th>Estado</th><th>Acción</th></tr></thead>
-                    <tbody id="tbody-sol"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-users" class="tab-content hidden">
-            <h2>Usuarios del Sistema</h2>
-            <div class="card">
-                <div class="form-grid">
-                    <div><label>Nombre Completo</label><input type="text" id="u-nom"></div>
-                    <div><label>Login</label><input type="text" id="u-user"></div>
-                    <div><label>Pass</label><input type="password" id="u-pass"></div>
-                    <div><label>Rol</label><select id="u-rol"><option>Solicitante</option><option>Gerente</option><option>Admin</option></select></div>
-                    <div class="full"><label>Gerencia</label><select id="u-ger"></select></div>
-                    <button class="btn btn-p full" onclick="saveUser()">Guardar Usuario</button>
-                </div>
-            </div>
-            <div class="card">
-                <table id="table-u">
-                    <thead><tr><th>Nombre</th><th>Rol</th><th>Gerencia</th><th>Borrar</th></tr></thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="tab-org" class="tab-content hidden">
-            <div class="form-grid">
-                <div class="card">
-                    <h3>Gerencias</h3>
-                    <div style="display:flex; gap:10px;"><input type="text" id="o-ger"><button class="btn btn-p" onclick="addOrg('gerencias', 'o-ger')">+</button></div>
-                    <ul id="list-ger" style="margin-top:15px; list-style:none; padding:0;"></ul>
-                </div>
-                <div class="card">
-                    <h3>Departamentos</h3>
-                    <label>Gerencia Padre</label><select id="o-parent" style="margin-bottom:10px;"></select>
-                    <div style="display:flex; gap:10px;"><input type="text" id="o-dep"><button class="btn btn-p" onclick="addOrg('departamentos', 'o-dep', 'o-parent')">+</button></div>
-                    <ul id="list-dep" style="margin-top:15px; list-style:none; padding:0;"></ul>
-                </div>
-            </div>
-        </div>
-    </main>
+<!-- DEPARTAMENTOS -->
+<div class="card">
+<h3>Departamentos</h3>
+<input id="d_nombre" placeholder="Nombre">
+<button onclick="crearDepartamento()">Crear</button>
+<div id="listaDepartamentos" class="list"></div>
 </div>
 
-<div id="modal-req" class="modal hidden">
-    <div class="modal-body">
-        <h2 style="color:var(--primary); margin-top:0;">Nueva Solicitud Documental</h2>
-        <div class="form-grid">
-            <div class="full"><label>Título del Documento</label><input type="text" id="s-tit"></div>
-            <div><label>Tipo</label><select id="s-tipo"><option>Procedimiento</option><option>Manual</option><option>Instructivo</option></select></div>
-            <div><label>Acción</label><select id="s-acc"><option>Creación</option><option>Modificación</option></select></div>
-            <div><label>Última Versión</label><input type="text" id="s-ver"></div>
-            <div><label>Fecha Última Versión</label><input type="date" id="s-fver"></div>
-            <div><label>Gerencia Destino</label><select id="s-ger" onchange="loadDepsForForm(this.value)"></select></div>
-            <div><label>Departamento</label><select id="s-dep"></select></div>
-            <div class="full"><label>Justificación</label><textarea id="s-just" rows="2"></textarea></div>
-            <div class="full"><label>Descripción</label><textarea id="s-desc" rows="3"></textarea></div>
-            <div class="full"><label>Adjuntar Documento (URL/Ref)</label><input type="text" id="s-file" placeholder="Enlace al borrador o archivo"></div>
-        </div>
-        <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn btn-s" onclick="submitSol()">Enviar Solicitud</button>
-            <button class="btn" onclick="closeModal()" style="background:#eee;">Cerrar</button>
-        </div>
-    </div>
+<!-- GERENCIAS -->
+<div class="card">
+<h3>Gerencias</h3>
+<input id="g_nombre" placeholder="Nombre">
+<button onclick="crearGerencia()">Crear</button>
+<div id="listaGerencias" class="list"></div>
 </div>
 
-<div id="modal-view" class="modal hidden">
-    <div class="modal-body">
-        <h2 id="v-title" style="margin-top:0;">Detalles de Solicitud</h2>
-        <div id="v-details" style="font-size:14px; line-height:1.6; background:#f9f9f9; padding:15px; border-radius:8px;"></div>
-        <hr>
-        <div id="v-admin-panel" class="hidden">
-            <label>Cambiar Estado:</label>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <button class="btn btn-s" onclick="updateStatus('Aprobado')">Aprobar</button>
-                <button class="btn btn-p" onclick="updateStatus('Finalizado')">Finalizar</button>
-                <button class="btn btn-d" onclick="updateStatus('Rechazado')">Rechazar</button>
-            </div>
-        </div>
-        <button class="btn" onclick="closeModal()" style="margin-top:20px; width:100%; background:#666; color:white;">Cerrar</button>
-    </div>
+<!-- SOLICITUDES -->
+<div class="card">
+<h3>Nueva Solicitud</h3>
+<select id="s_usuario"></select>
+<select id="s_departamento"></select>
+<select id="s_gerencia"></select>
+<textarea id="s_motivo" placeholder="Motivo"></textarea>
+<input type="file" id="s_archivo">
+<button onclick="crearSolicitud()">Enviar</button>
 </div>
+
+</section>
+
+<section class="card">
+<h3>Historial de Solicitudes</h3>
+<div id="listaSolicitudes"></div>
+</section>
+
+<section class="card">
+<h3>Dashboard</h3>
+<canvas id="grafica"></canvas>
+</section>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
-    authDomain: "sistemadegestion-7400d.firebaseapp.com",
-    projectId: "sistemadegestion-7400d",
-    storageBucket: "sistemadegestion-7400d.appspot.com",
-    messagingSenderId: "709030283072",
-    appId: "1:709030283072:web:5997837b36a448e9515ca5"
-};
-firebase.initializeApp(firebaseConfig);
+/* ================= FIREBASE ================= */
+firebase.initializeApp({
+ apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+ authDomain: "sistemadegestion-7400d.firebaseapp.com",
+ projectId: "sistemadegestion-7400d",
+ storageBucket: "sistemadegestion-7400d.firebasestorage.app",
+ messagingSenderId: "709030283072",
+ appId: "1:709030283072:web:5997837b36a448e9515ca5"
+});
 const db = firebase.firestore();
-let currentUser = null;
-let activeDocId = null;
 
-async function setupSystem() {
-    await db.collection("Users").doc("admin").set({ nombre: "Administrador Maestro", user: "admin", pass: "123456", rol: "Admin", gerencia: "SGC" });
-    await db.collection("Config").doc("counts").set({ val: 0 });
-    alert("Inicializado: admin / 123456");
+/* ============== CLOUDINARY ============== */
+const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload";
+const CLOUDINARY_PRESET = "fci_documentos";
+
+/* ============== USUARIOS ============== */
+function crearUsuario(){
+ db.collection("Usuarios").add({
+  nombre:u_nombre.value,
+  correo:u_correo.value,
+  fecha:new Date()
+ });
 }
 
-async function handleLogin() {
-    const u = document.getElementById("logUser").value;
-    const p = document.getElementById("logPass").value;
-    const snap = await db.collection("Users").where("user","==",u).where("pass","==",p).get();
-    if(!snap.empty) {
-        currentUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
-        document.getElementById("view-login").classList.add("hidden");
-        document.getElementById("view-app").classList.remove("hidden");
-        document.getElementById("userDisplay").innerText = currentUser.nombre;
-        if(currentUser.rol === "Admin") document.querySelectorAll(".admin-only").forEach(e => e.classList.remove("hidden"));
-        loadData();
-    } else alert("Error de acceso");
+function cargarUsuarios(){
+ listaUsuarios.innerHTML="";
+ s_usuario.innerHTML="";
+ db.collection("Usuarios").onSnapshot(s=>{
+  s.forEach(d=>{
+   let u=d.data();
+   listaUsuarios.innerHTML+=`
+    <div class="item">
+     <b>${u.nombre}</b><br><small>${u.correo}</small>
+     <button class="delete" onclick="eliminar('Usuarios','${d.id}')">Eliminar</button>
+    </div>`;
+   s_usuario.innerHTML+=`<option value="${d.id}">${u.nombre}</option>`;
+  });
+ });
 }
 
-function loadData() {
-    db.collection("gerencias").onSnapshot(s => {
-        let opt = '<option value="">Seleccione...</option>';
-        const list = document.getElementById("list-ger"); list.innerHTML = "";
-        s.forEach(doc => {
-            opt += `<option value="${doc.data().nombre}">${doc.data().nombre}</option>`;
-            list.innerHTML += `<li>${doc.data().nombre} <button onclick="delDoc('gerencias','${doc.id}')">x</button></li>`;
-        });
-        ["u-ger", "o-parent", "s-ger"].forEach(id => document.getElementById(id).innerHTML = opt);
-    });
-
-    db.collection("departamentos").onSnapshot(s => {
-        const list = document.getElementById("list-dep"); list.innerHTML = "";
-        s.forEach(doc => list.innerHTML += `<li>${doc.data().nombre} (${doc.data().parent}) <button onclick="delDoc('departamentos','${doc.id}')">x</button></li>`);
-    });
-
-    db.collection("Solicitudes").orderBy("fecha", "desc").onSnapshot(s => {
-        const tbody = document.getElementById("tbody-sol"); tbody.innerHTML = "";
-        s.forEach(doc => {
-            const d = doc.data();
-            tbody.innerHTML += `<tr><td>${d.fciId}</td><td>${d.titulo}</td><td>${d.tipo}</td><td><span class="badge st-${d.estado.toLowerCase()}">${d.estado}</span></td><td><button onclick="viewDoc('${doc.id}')">Ver</button></td></tr>`;
-        });
-    });
-
-    db.collection("Users").onSnapshot(s => {
-        const tb = document.querySelector("#table-u tbody"); tb.innerHTML = "";
-        s.forEach(doc => {
-            const u = doc.data();
-            tb.innerHTML += `<tr><td>${u.nombre || u.name}</td><td>${u.rol}</td><td>${u.gerencia}</td><td><button onclick="delDoc('Users','${doc.id}')">x</button></td></tr>`;
-        });
-    });
+/* ============== DEPARTAMENTOS ============== */
+function crearDepartamento(){
+ db.collection("Departamentos").add({nombre:d_nombre.value});
+}
+function cargarDepartamentos(){
+ listaDepartamentos.innerHTML="";
+ s_departamento.innerHTML="";
+ db.collection("Departamentos").onSnapshot(s=>{
+  s.forEach(d=>{
+   listaDepartamentos.innerHTML+=`
+    <div class="item">${d.data().nombre}
+    <button class="delete" onclick="eliminar('Departamentos','${d.id}')">Eliminar</button></div>`;
+   s_departamento.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
+  });
+ });
 }
 
-async function submitSol() {
-    const idFci = await getNextID();
-    await db.collection("Solicitudes").add({
-        fciId: idFci, titulo: document.getElementById("s-tit").value, tipo: document.getElementById("s-tipo").value,
-        accion: document.getElementById("s-acc").value, version: document.getElementById("s-ver").value,
-        fechaVersion: document.getElementById("s-fver").value, gerencia: document.getElementById("s-ger").value,
-        departamento: document.getElementById("s-dep").value, justificacion: document.getElementById("s-just").value,
-        descripcion: document.getElementById("s-desc").value, file: document.getElementById("s-file").value,
-        estado: "Pendiente", uid: currentUser.id, userName: currentUser.nombre, fecha: new Date()
-    });
-    closeModal();
+/* ============== GERENCIAS ============== */
+function crearGerencia(){
+ db.collection("Gerencias").add({nombre:g_nombre.value});
+}
+function cargarGerencias(){
+ listaGerencias.innerHTML="";
+ s_gerencia.innerHTML="";
+ db.collection("Gerencias").onSnapshot(s=>{
+  s.forEach(d=>{
+   listaGerencias.innerHTML+=`
+    <div class="item">${d.data().nombre}
+    <button class="delete" onclick="eliminar('Gerencias','${d.id}')">Eliminar</button></div>`;
+   s_gerencia.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
+  });
+ });
 }
 
-async function viewDoc(id) {
-    activeDocId = id;
-    const doc = await db.collection("Solicitudes").doc(id).get();
-    const d = doc.data();
-    document.getElementById("v-title").innerText = d.fciId + " - " + d.titulo;
-    document.getElementById("v-details").innerHTML = `
-        <p><strong>Tipo:</strong> ${d.tipo} | <strong>Acción:</strong> ${d.accion}</p>
-        <p><strong>Versión Actual:</strong> ${d.version} (${d.fechaVersion})</p>
-        <p><strong>Área:</strong> ${d.gerencia} / ${d.departamento}</p>
-        <p><strong>Justificación:</strong> ${d.justificacion}</p>
-        <p><strong>Descripción:</strong> ${d.descripcion}</p>
-        <p><strong>Archivo:</strong> <a href="${d.file}" target="_blank">Ver Adjunto</a></p>
-    `;
-    if(currentUser.rol !== "Solicitante") document.getElementById("v-admin-panel").classList.remove("hidden");
-    openModal("modal-view");
+/* ============== SOLICITUDES ============== */
+async function crearSolicitud(){
+ let file=s_archivo.files[0];
+ let url="";
+ if(file){
+  let fd=new FormData();
+  fd.append("file",file);
+  fd.append("upload_preset",CLOUDINARY_PRESET);
+  let r=await fetch(CLOUDINARY_URL,{method:"POST",body:fd});
+  let j=await r.json();
+  url=j.secure_url;
+ }
+ db.collection("Solicitudes").add({
+  usuario:s_usuario.value,
+  departamento:s_departamento.value,
+  gerencia:s_gerencia.value,
+  motivo:s_motivo.value,
+  archivo:url,
+  fecha:new Date()
+ });
 }
 
-async function updateStatus(st) {
-    await db.collection("Solicitudes").doc(activeDocId).update({ estado: st });
-    closeModal();
+/* ============== HISTORIAL + PDF ============== */
+function cargarSolicitudes(){
+ listaSolicitudes.innerHTML="";
+ db.collection("Solicitudes").onSnapshot(s=>{
+  let total=0;
+  s.forEach(d=>{
+   total++;
+   let sol=d.data();
+   listaSolicitudes.innerHTML+=`
+    <div class="item">
+     <b>Motivo:</b> ${sol.motivo}<br>
+     <small>${sol.fecha.toDate()}</small><br>
+     <button onclick="pdfSolicitud('${d.id}')">PDF</button>
+     <button class="delete" onclick="eliminar('Solicitudes','${d.id}')">Eliminar</button>
+    </div>`;
+  });
+  grafica(total);
+ });
 }
 
-async function loadDepsForForm(ger) {
-    const s = await db.collection("departamentos").where("parent", "==", ger).get();
-    let h = ""; s.forEach(doc => h += `<option>${doc.data().nombre}</option>`);
-    document.getElementById("s-dep").innerHTML = h || '<option>N/A</option>';
+function pdfSolicitud(id){
+ db.collection("Solicitudes").doc(id).get().then(d=>{
+  let s=d.data();
+  const {jsPDF}=window.jspdf;
+  let pdf=new jsPDF();
+  pdf.text("Reporte de Solicitud",20,20);
+  pdf.text("Motivo: "+s.motivo,20,40);
+  pdf.text("Fecha: "+s.fecha.toDate(),20,60);
+  if(s.archivo) pdf.text("Archivo: "+s.archivo,20,80);
+  pdf.save("solicitud.pdf");
+ });
 }
 
-function saveUser() {
-    db.collection("Users").add({
-        nombre: document.getElementById("u-nom").value,
-        user: document.getElementById("u-user").value,
-        pass: document.getElementById("u-pass").value,
-        rol: document.getElementById("u-rol").value,
-        gerencia: document.getElementById("u-ger").value
-    });
-    alert("Usuario Creado");
+/* ============== GRAFICA ============== */
+let chart;
+function grafica(total){
+ if(chart) chart.destroy();
+ chart=new Chart(document.getElementById("grafica"),{
+  type:"bar",
+  data:{labels:["Solicitudes"],datasets:[{data:[total]}]}
+ });
 }
 
-async function getNextID() {
-    const ref = db.collection("Config").doc("counts");
-    const d = await ref.get();
-    const n = d.data().val + 1;
-    await ref.update({ val: n });
-    return "FCI-SGD-" + n.toString().padStart(4, '0');
+/* ============== UTIL ============== */
+function eliminar(col,id){
+ if(confirm("¿Eliminar?")) db.collection(col).doc(id).delete();
 }
 
-function addOrg(col, inpId, pId=null) {
-    const val = document.getElementById(inpId).value;
-    const data = { nombre: val };
-    if(pId) data.parent = document.getElementById(pId).value;
-    db.collection(col).add(data);
-}
-
-function switchTab(e, id) {
-    document.querySelectorAll(".tab-link").forEach(l => l.classList.remove("active"));
-    document.querySelectorAll(".tab-content").forEach(c => c.classList.add("hidden"));
-    e.target.classList.add("active");
-    document.getElementById("tab-"+id).classList.remove("hidden");
-}
-function openModal(id) { document.getElementById(id).classList.remove("hidden"); }
-function closeModal() { document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden")); }
-function delDoc(c,i) { if(confirm("¿Eliminar?")) db.collection(c).doc(i).delete(); }
+/* ============== INIT ============== */
+cargarUsuarios();
+cargarDepartamentos();
+cargarGerencias();
+cargarSolicitudes();
 </script>
+
 </body>
 </html>
