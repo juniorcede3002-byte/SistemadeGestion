@@ -2,241 +2,221 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Sistema de Gestión Documental</title>
+<title>FCI LOGISTIX | Sistema de Gestión Documental</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- Chart -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- PDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <style>
-body{font-family:Arial;background:#f4f6f8;margin:0}
-header{background:#1e293b;color:white;padding:15px}
-section{padding:15px}
-.card{background:white;padding:15px;border-radius:8px;margin-bottom:15px}
-input,select,textarea,button{width:100%;padding:8px;margin:5px 0}
-button{background:#2563eb;color:white;border:none;border-radius:5px;cursor:pointer}
-button.delete{background:#dc2626}
-.list{border-top:1px solid #ddd;margin-top:10px}
-.item{padding:8px;border-bottom:1px solid #ddd}
-.flex{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
-small{color:#555}
+:root{
+  --p:#1a237e;--s:#3949ab;--ok:#2e7d32;--bad:#c62828;--bg:#f4f7f9;
+}
+body{margin:0;font-family:Segoe UI;background:var(--bg)}
+.hidden{display:none}
+header{background:var(--p);color:#fff;padding:12px 20px;display:flex;justify-content:space-between}
+.tabs{background:#fff;display:flex;border-bottom:1px solid #ddd}
+.tab{padding:14px 18px;cursor:pointer;font-weight:600}
+.tab.active{color:var(--p);border-bottom:3px solid var(--p);background:#eef}
+.content{padding:20px;max-width:1200px;margin:auto}
+.card{background:#fff;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+input,select,textarea{width:100%;padding:10px;margin-top:5px;border:1px solid #ccc;border-radius:6px}
+button{padding:10px 16px;border:none;border-radius:6px;font-weight:600;cursor:pointer}
+.btn-p{background:var(--p);color:#fff}
+.btn-s{background:var(--ok);color:#fff}
+.btn-d{background:var(--bad);color:#fff}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #eee}
+.badge{padding:4px 10px;border-radius:20px;font-size:11px}
+.Pendiente{background:#fff3e0;color:#ef6c00}
+.Finalizado{background:#e8f5e9;color:#2e7d32}
+.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:2000}
+.modal-body{background:#fff;padding:25px;border-radius:12px;width:90%;max-width:700px;max-height:90vh;overflow:auto}
 </style>
 </head>
 
 <body>
 
+<!-- LOGIN -->
+<div id="login" style="height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a237e,#3949ab)">
+<div class="card" style="width:340px;text-align:center">
+<h2 style="color:#1a237e">FCI LOGISTIX</h2>
+<input id="l-user" placeholder="Usuario">
+<input id="l-pass" type="password" placeholder="Contraseña" style="margin-top:10px">
+<button class="btn-p" style="width:100%;margin-top:15px" onclick="login()">INGRESAR</button>
+
+<!-- BOTÓN ADMIN EMERGENCIA -->
+<button onclick="crearAdminInicial()" style="margin-top:15px;background:none;border:none;color:#aaa;font-size:11px">
+⚡ Crear usuario admin (uso único)
+</button>
+</div>
+</div>
+
+<!-- APP -->
+<div id="app" class="hidden">
 <header>
-<h2>Sistema de Gestión Documental</h2>
+<div>
+<strong>FCI | SGD</strong><br>
+<small id="userInfo"></small>
+</div>
+<button class="btn-d" onclick="location.reload()">Salir</button>
 </header>
 
-<section class="flex">
-
-<!-- USUARIOS -->
-<div class="card">
-<h3>Crear Usuario</h3>
-<input id="u_nombre" placeholder="Nombre completo">
-<input id="u_correo" placeholder="Correo">
-<button onclick="crearUsuario()">Crear</button>
-<div id="listaUsuarios" class="list"></div>
+<div class="tabs">
+<div class="tab active" onclick="tab(this,'sol')">Solicitudes</div>
+<div class="tab admin" onclick="tab(this,'users')">Usuarios</div>
+<div class="tab admin" onclick="tab(this,'org')">Organización</div>
 </div>
 
-<!-- DEPARTAMENTOS -->
-<div class="card">
-<h3>Departamentos</h3>
-<input id="d_nombre" placeholder="Nombre">
-<button onclick="crearDepartamento()">Crear</button>
-<div id="listaDepartamentos" class="list"></div>
-</div>
-
-<!-- GERENCIAS -->
-<div class="card">
-<h3>Gerencias</h3>
-<input id="g_nombre" placeholder="Nombre">
-<button onclick="crearGerencia()">Crear</button>
-<div id="listaGerencias" class="list"></div>
-</div>
+<div class="content">
 
 <!-- SOLICITUDES -->
+<div id="t-sol">
+<button class="btn-s" onclick="openModal('m-sol')">+ Nueva Solicitud</button>
 <div class="card">
-<h3>Nueva Solicitud</h3>
-<select id="s_usuario"></select>
-<select id="s_departamento"></select>
-<select id="s_gerencia"></select>
-<textarea id="s_motivo" placeholder="Motivo"></textarea>
-<input type="file" id="s_archivo">
-<button onclick="crearSolicitud()">Enviar</button>
+<table>
+<thead><tr><th>ID</th><th>Documento</th><th>Estado</th><th>Acción</th></tr></thead>
+<tbody id="listSol"></tbody>
+</table>
+</div>
 </div>
 
-</section>
+<!-- USUARIOS -->
+<div id="t-users" class="hidden">
+<div class="card">
+<h3>Crear Usuario</h3>
+<input id="u-name" placeholder="Nombre">
+<input id="u-user" placeholder="Usuario">
+<input id="u-pass" placeholder="Contraseña">
+<select id="u-rol">
+<option>Usuario</option><option>Gerente</option><option>Admin</option>
+</select>
+<select id="u-ger"></select>
+<button class="btn-p" onclick="crearUsuario()">Guardar</button>
+</div>
 
-<section class="card">
-<h3>Historial de Solicitudes</h3>
-<div id="listaSolicitudes"></div>
-</section>
+<div class="card">
+<table>
+<thead><tr><th>Nombre</th><th>Rol</th><th>Gerencia</th><th>Eliminar</th></tr></thead>
+<tbody id="listUsers"></tbody>
+</table>
+</div>
+</div>
 
-<section class="card">
-<h3>Dashboard</h3>
-<canvas id="grafica"></canvas>
-</section>
+<!-- ORG -->
+<div id="t-org" class="hidden">
+<div class="card">
+<h3>Gerencias</h3>
+<input id="g-name"><button onclick="addGer()">+</button>
+<ul id="gerList"></ul>
+</div>
+<div class="card">
+<h3>Departamentos</h3>
+<select id="d-parent"></select>
+<input id="d-name"><button onclick="addDep()">+</button>
+<ul id="depList"></ul>
+</div>
+</div>
+
+</div>
+</div>
+
+<!-- MODAL SOL -->
+<div id="m-sol" class="modal hidden">
+<div class="modal-body">
+<h3>Nueva Solicitud</h3>
+<input id="s-doc" placeholder="Nombre Documento">
+<select id="s-tipo">
+<option>Procedimiento</option><option>Manual</option><option>Guía</option><option>Formato</option>
+</select>
+<textarea id="s-motivo" placeholder="Motivo"></textarea>
+<input id="s-file" placeholder="URL Documento (Cloudinary)">
+<button class="btn-s" onclick="crearSolicitud()">Enviar</button>
+<button onclick="closeModal()">Cerrar</button>
+</div>
+</div>
 
 <script>
-/* ================= FIREBASE ================= */
-firebase.initializeApp({
- apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
- authDomain: "sistemadegestion-7400d.firebaseapp.com",
- projectId: "sistemadegestion-7400d",
- storageBucket: "sistemadegestion-7400d.firebasestorage.app",
- messagingSenderId: "709030283072",
- appId: "1:709030283072:web:5997837b36a448e9515ca5"
+const firebaseConfig={
+apiKey:"AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
+authDomain:"sistemadegestion-7400d.firebaseapp.com",
+projectId:"sistemadegestion-7400d"
+};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+let user=null;
+
+async function crearAdminInicial(){
+const q=await db.collection("Users").where("user","==","admin").get();
+if(!q.empty){alert("Admin ya existe");return;}
+await db.collection("Users").add({nombre:"Administrador",user:"admin",pass:"123456",rol:"Admin",gerencia:"SGC"});
+alert("Admin creado: admin / 123456");
+}
+
+async function login(){
+const u=l-user.value,p=l-pass.value;
+const q=await db.collection("Users").where("user","==",u).where("pass","==",p).get();
+if(q.empty){alert("Credenciales incorrectas");return;}
+user={id:q.docs[0].id,...q.docs[0].data()};
+login.classList.add("hidden");app.classList.remove("hidden");
+userInfo.innerText=user.nombre+" | "+user.rol;
+if(user.rol!=="Admin")document.querySelectorAll(".admin").forEach(e=>e.remove());
+load();
+}
+
+function tab(el,id){
+document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+document.querySelectorAll("[id^='t-']").forEach(d=>d.classList.add("hidden"));
+el.classList.add("active");document.getElementById("t-"+id).classList.remove("hidden");
+}
+
+function openModal(id){document.getElementById(id).classList.remove("hidden")}
+function closeModal(){document.querySelectorAll(".modal").forEach(m=>m.classList.add("hidden"))}
+
+async function crearUsuario(){
+await db.collection("Users").add({
+nombre:u-name.value,user:u-user.value,pass:u-pass.value,rol:u-rol.value,gerencia:u-ger.value
 });
-const db = firebase.firestore();
-
-/* ============== CLOUDINARY ============== */
-const CLOUDINARY_URL = "https://api.cloudinary.com/v1_1/df79cjklp/auto/upload";
-const CLOUDINARY_PRESET = "fci_documentos";
-
-/* ============== USUARIOS ============== */
-function crearUsuario(){
- db.collection("Usuarios").add({
-  nombre:u_nombre.value,
-  correo:u_correo.value,
-  fecha:new Date()
- });
+alert("Usuario creado");
 }
 
-function cargarUsuarios(){
- listaUsuarios.innerHTML="";
- s_usuario.innerHTML="";
- db.collection("Usuarios").onSnapshot(s=>{
-  s.forEach(d=>{
-   let u=d.data();
-   listaUsuarios.innerHTML+=`
-    <div class="item">
-     <b>${u.nombre}</b><br><small>${u.correo}</small>
-     <button class="delete" onclick="eliminar('Usuarios','${d.id}')">Eliminar</button>
-    </div>`;
-   s_usuario.innerHTML+=`<option value="${d.id}">${u.nombre}</option>`;
-  });
- });
-}
-
-/* ============== DEPARTAMENTOS ============== */
-function crearDepartamento(){
- db.collection("Departamentos").add({nombre:d_nombre.value});
-}
-function cargarDepartamentos(){
- listaDepartamentos.innerHTML="";
- s_departamento.innerHTML="";
- db.collection("Departamentos").onSnapshot(s=>{
-  s.forEach(d=>{
-   listaDepartamentos.innerHTML+=`
-    <div class="item">${d.data().nombre}
-    <button class="delete" onclick="eliminar('Departamentos','${d.id}')">Eliminar</button></div>`;
-   s_departamento.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
-  });
- });
-}
-
-/* ============== GERENCIAS ============== */
-function crearGerencia(){
- db.collection("Gerencias").add({nombre:g_nombre.value});
-}
-function cargarGerencias(){
- listaGerencias.innerHTML="";
- s_gerencia.innerHTML="";
- db.collection("Gerencias").onSnapshot(s=>{
-  s.forEach(d=>{
-   listaGerencias.innerHTML+=`
-    <div class="item">${d.data().nombre}
-    <button class="delete" onclick="eliminar('Gerencias','${d.id}')">Eliminar</button></div>`;
-   s_gerencia.innerHTML+=`<option value="${d.id}">${d.data().nombre}</option>`;
-  });
- });
-}
-
-/* ============== SOLICITUDES ============== */
 async function crearSolicitud(){
- let file=s_archivo.files[0];
- let url="";
- if(file){
-  let fd=new FormData();
-  fd.append("file",file);
-  fd.append("upload_preset",CLOUDINARY_PRESET);
-  let r=await fetch(CLOUDINARY_URL,{method:"POST",body:fd});
-  let j=await r.json();
-  url=j.secure_url;
- }
- db.collection("Solicitudes").add({
-  usuario:s_usuario.value,
-  departamento:s_departamento.value,
-  gerencia:s_gerencia.value,
-  motivo:s_motivo.value,
-  archivo:url,
-  fecha:new Date()
- });
+await db.collection("Solicitudes").add({
+doc:s-doc.value,tipo:s-tipo.value,motivo:s-motivo.value,
+file:s-file.value,estado:"Pendiente",
+user:user.nombre,uid:user.id,fecha:new Date()
+});
+closeModal();
 }
 
-/* ============== HISTORIAL + PDF ============== */
-function cargarSolicitudes(){
- listaSolicitudes.innerHTML="";
- db.collection("Solicitudes").onSnapshot(s=>{
-  let total=0;
-  s.forEach(d=>{
-   total++;
-   let sol=d.data();
-   listaSolicitudes.innerHTML+=`
-    <div class="item">
-     <b>Motivo:</b> ${sol.motivo}<br>
-     <small>${sol.fecha.toDate()}</small><br>
-     <button onclick="pdfSolicitud('${d.id}')">PDF</button>
-     <button class="delete" onclick="eliminar('Solicitudes','${d.id}')">Eliminar</button>
-    </div>`;
-  });
-  grafica(total);
- });
+function load(){
+db.collection("Users").onSnapshot(s=>{
+listUsers.innerHTML="";
+s.forEach(d=>listUsers.innerHTML+=`<tr><td>${d.data().nombre}</td><td>${d.data().rol}</td><td>${d.data().gerencia}</td><td><button onclick="db.collection('Users').doc('${d.id}').delete()">X</button></td></tr>`);
+});
+db.collection("Solicitudes").onSnapshot(s=>{
+listSol.innerHTML="";
+s.forEach(d=>listSol.innerHTML+=`<tr><td>${d.id}</td><td>${d.data().doc}</td><td><span class="badge ${d.data().estado}">${d.data().estado}</span></td><td>Ver</td></tr>`);
+});
+db.collection("gerencias").onSnapshot(s=>{
+u-ger.innerHTML=d-parent.innerHTML="";
+gerList.innerHTML="";
+s.forEach(d=>{
+u-ger.innerHTML+=`<option>${d.data().nombre}</option>`;
+d-parent.innerHTML+=`<option>${d.data().nombre}</option>`;
+gerList.innerHTML+=`<li>${d.data().nombre}</li>`;
+});
+});
+db.collection("departamentos").onSnapshot(s=>{
+depList.innerHTML="";
+s.forEach(d=>depList.innerHTML+=`<li>${d.data().nombre} (${d.data().parent})</li>`);
+});
 }
 
-function pdfSolicitud(id){
- db.collection("Solicitudes").doc(id).get().then(d=>{
-  let s=d.data();
-  const {jsPDF}=window.jspdf;
-  let pdf=new jsPDF();
-  pdf.text("Reporte de Solicitud",20,20);
-  pdf.text("Motivo: "+s.motivo,20,40);
-  pdf.text("Fecha: "+s.fecha.toDate(),20,60);
-  if(s.archivo) pdf.text("Archivo: "+s.archivo,20,80);
-  pdf.save("solicitud.pdf");
- });
-}
-
-/* ============== GRAFICA ============== */
-let chart;
-function grafica(total){
- if(chart) chart.destroy();
- chart=new Chart(document.getElementById("grafica"),{
-  type:"bar",
-  data:{labels:["Solicitudes"],datasets:[{data:[total]}]}
- });
-}
-
-/* ============== UTIL ============== */
-function eliminar(col,id){
- if(confirm("¿Eliminar?")) db.collection(col).doc(id).delete();
-}
-
-/* ============== INIT ============== */
-cargarUsuarios();
-cargarDepartamentos();
-cargarGerencias();
-cargarSolicitudes();
+function addGer(){db.collection("gerencias").add({nombre:g-name.value})}
+function addDep(){db.collection("departamentos").add({nombre:d-name.value,parent:d-parent.value})}
 </script>
-
 </body>
 </html>
