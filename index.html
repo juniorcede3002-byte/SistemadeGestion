@@ -3,221 +3,100 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGC | Sistema de Gestión ISO</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>SGC Pro | Gestión ISO</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <div id="loader" class="loader-overlay hide">
-        <div class="spinner"></div>
-        <p>Procesando...</p>
-    </div>
-
-    <div id="loginSection" class="full-screen-center">
-        <div class="login-card">
-            <div class="login-header">
-                <span class="material-icons-round logo-icon">verified_user</span>
-                <h2>Acceso Corporativo</h2>
-                <p>Gestión Documental ISO 9001</p>
-            </div>
-            <form id="loginForm" onsubmit="return false;">
-                <div class="input-group">
-                    <span class="material-icons-round">person</span>
-                    <input type="text" id="loginUser" placeholder="Usuario" required>
-                </div>
-                <div class="input-group">
-                    <span class="material-icons-round">lock</span>
-                    <input type="password" id="loginPass" placeholder="Contraseña" required>
-                </div>
-                <button id="btnLogin" class="btn-primary full-width">Iniciar Sesión</button>
-            </form>
-            <div class="login-footer">
-                <button id="btnInitAdmin" class="btn-link">Inicializar Admin (Primer uso)</button>
-            </div>
+    <div id="login-screen" class="full-center">
+        <div class="login-box">
+            <span class="material-icons-round logo-icon">shield</span>
+            <h2>Control de Acceso</h2>
+            <input type="text" id="user" placeholder="Usuario">
+            <input type="password" id="pass" placeholder="Contraseña">
+            <button onclick="login()" class="btn-main">Entrar</button>
         </div>
     </div>
 
-    <div id="appSection" class="app-layout hide">
+    <div id="main-app" class="app-container" style="display: none;">
         
         <aside class="sidebar">
-            <div class="brand">
-                <span class="material-icons-round">dashboard</span>
-                <span>SGC <strong>Pro</strong></span>
+            <div class="sidebar-header">
+                <h3>SGC <span>PRO</span></h3>
             </div>
-
             <nav class="nav-menu">
-                <button class="nav-item active" onclick="navigate('viewDashboard')">
-                    <span class="material-icons-round">analytics</span> Dashboard
+                <button onclick="showView('view-dash')" class="nav-link active">
+                    <span class="material-icons-round">dashboard</span> Dashboard
                 </button>
-                <button class="nav-item" onclick="navigate('viewSolicitudes')">
-                    <span class="material-icons-round">description</span> Documentos
+                <button onclick="showView('view-stock')" class="nav-link">
+                    <span class="material-icons-round">inventory_2</span> Stock Actual
                 </button>
-                
-                <div id="adminMenu" class="hide">
-                    <div class="nav-divider">ADMINISTRACIÓN</div>
-                    <button class="nav-item" onclick="navigate('viewUsuarios')">
-                        <span class="material-icons-round">people</span> Usuarios
+                <button onclick="showView('view-requests')" class="nav-link">
+                    <span class="material-icons-round">assignment</span> Solicitudes
+                </button>
+                <div id="admin-links" class="admin-only">
+                    <p class="nav-label">Administración</p>
+                    <button onclick="showView('view-users')" class="nav-link">
+                        <span class="material-icons-round">group</span> Usuarios
                     </button>
-                    <button class="nav-item" onclick="navigate('viewConfig')">
-                        <span class="material-icons-round">settings</span> Configuración
+                    <button onclick="showView('view-history')" class="nav-link">
+                        <span class="material-icons-round">history</span> Historial
                     </button>
                 </div>
             </nav>
-
-            <div class="user-profile">
-                <div class="avatar" id="userAvatar">U</div>
-                <div class="info">
-                    <strong id="displayUser">Usuario</strong>
-                    <small id="displayRole">Rol</small>
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <p id="display-name">Usuario</p>
+                    <small id="display-role">Rol</small>
                 </div>
-                <button id="btnLogout" class="btn-icon" title="Salir">
-                    <span class="material-icons-round">logout</span>
-                </button>
+                <button onclick="logout()" class="logout-btn"><span class="material-icons-round">logout</span></button>
             </div>
         </aside>
 
-        <main class="main-content">
-            <header class="top-bar">
-                <h2 id="pageTitle">Resumen General</h2>
-                <div class="actions">
-                    <button class="btn-icon relative">
-                        <span class="material-icons-round">notifications</span>
-                        <span class="badge-dot"></span>
-                    </button>
-                </div>
-            </header>
-
-            <section id="viewDashboard" class="view-section active">
+        <main class="content">
+            
+            <section id="view-dash" class="app-view active">
+                <h1>Resumen Operativo</h1>
                 <div class="stats-grid">
-                    <div class="card stat-card">
-                        <div class="icon blue"><span class="material-icons-round">folder</span></div>
-                        <div><h3>Total</h3><span id="statTotal" class="num">0</span></div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="icon orange"><span class="material-icons-round">pending</span></div>
-                        <div><h3>Pendientes</h3><span id="statPendientes" class="num">0</span></div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="icon green"><span class="material-icons-round">check_circle</span></div>
-                        <div><h3>Aprobados</h3><span id="statAprobados" class="num">0</span></div>
-                    </div>
+                    <div class="stat-card"><h3>Suministros</h3><p id="count-stock">0</p></div>
+                    <div class="stat-card"><h3>Pendientes</h3><p id="count-pending">0</p></div>
+                    <div class="stat-card"><h3>Aprobados</h3><p id="count-approved">0</p></div>
                 </div>
-
-                <div class="charts-grid">
-                    <div class="card">
-                        <h3>Estado de Solicitudes</h3>
-                        <div class="chart-box"><canvas id="statusChart"></canvas></div>
-                    </div>
-                    <div class="card">
-                        <h3>Historial Reciente</h3>
-                        <div id="recentHistory" class="timeline-list"></div>
-                    </div>
+                <div class="chart-container">
+                    <canvas id="mainChart"></canvas>
                 </div>
             </section>
 
-            <section id="viewSolicitudes" class="view-section">
-                <div class="toolbar">
-                    <input type="text" id="searchDocs" placeholder="Buscar documento..." class="search-input">
-                    <button onclick="openModal('modalNewSol')" class="btn-primary">
-                        <span class="material-icons-round">add</span> Nueva Solicitud
-                    </button>
+            <section id="view-stock" class="app-view">
+                <div class="header-row">
+                    <h1>Suministros en Stock</h1>
+                    <button id="add-supply-btn" class="btn-add admin-only" onclick="openAddSupply()">+ Agregar</button>
                 </div>
-
-                <div class="card no-pad">
-                    <div class="table-responsive">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>Documento</th>
-                                    <th>Tipo</th>
-                                    <th>Versión</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="docsTableBody">
-                                </tbody>
-                        </table>
-                    </div>
+                <div class="table-card">
+                    <table id="table-stock">
+                        <thead>
+                            <tr><th>Item</th><th>Cantidad</th><th>Estado</th><th>Acciones</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </section>
 
-            <section id="viewUsuarios" class="view-section">
-                <div class="card">
-                    <h3>Gestión de Usuarios</h3>
-                    <div class="form-row">
-                        <input id="uName" placeholder="Usuario">
-                        <input id="uPass" placeholder="Contraseña">
-                        <select id="uRole">
-                            <option value="user">Usuario</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                        <button id="btnCreateUser" class="btn-primary">Crear</button>
-                    </div>
-                    <div id="usersList" class="list-simple"></div>
-                </div>
+            <section id="view-requests" class="app-view">
+                <h1>Gestión de Solicitudes</h1>
+                <div id="requests-list"></div>
             </section>
+
+             <section id="view-users" class="app-view">
+                <h1>Control de Usuarios</h1>
+                <div id="users-list"></div>
+            </section>
+
         </main>
-    </div>
-
-    <div id="modalNewSol" class="modal-overlay hide">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3>Nueva Solicitud ISO</h3>
-                <button onclick="closeModal('modalNewSol')" class="close-btn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="grid-2">
-                    <input id="solTitle" placeholder="Título / Código" class="input-std">
-                    <select id="solTipo" class="input-std">
-                        <option value="Manual">Manual</option>
-                        <option value="Procedimiento">Procedimiento</option>
-                        <option value="Formato">Formato</option>
-                    </select>
-                </div>
-                <div class="grid-2">
-                    <select id="solAccion" class="input-std" onchange="toggleDate()">
-                        <option value="Creación">Creación</option>
-                        <option value="Modificación">Modificación</option>
-                        <option value="Inactivación">Inactivación</option>
-                    </select>
-                    <input id="solVersion" placeholder="Versión (Ej: 1.0)" class="input-std">
-                </div>
-                <input id="solLastDate" type="date" class="input-std" disabled title="Solo para modificaciones">
-                <textarea id="solDesc" placeholder="Justificación..." rows="3" class="input-std"></textarea>
-                <div class="file-area">
-                    <label>Adjuntar Evidencia</label>
-                    <input type="file" id="solFile">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button onclick="crearSolicitud()" class="btn-primary full-width">Enviar Solicitud</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalSign" class="modal-overlay hide">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3>Firma de Aprobación</h3>
-            </div>
-            <div class="modal-body center-content">
-                <canvas id="signaturePad" width="400" height="200"></canvas>
-                <small>Dibuje su firma en el recuadro</small>
-            </div>
-            <div class="modal-footer row">
-                <button id="btnClearSign" class="btn-outline">Limpiar</button>
-                <button id="btnConfirmSign" class="btn-success">Aprobar Documento</button>
-                <button onclick="closeModal('modalSign')" class="btn-link">Cancelar</button>
-            </div>
-        </div>
     </div>
 
     <script type="module" src="app.js"></script>
