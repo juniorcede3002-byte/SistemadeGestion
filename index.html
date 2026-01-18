@@ -3,114 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGC Pro | Control Total</title>
+    <title>SGC Pro | Gestión Integral ISO</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <style>
-        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --border: #e2e8f0; --red: #ef4444; }
+        :root { --primary: #2563eb; --dark: #0f172a; --bg: #f8fafc; --border: #e2e8f0; --red: #ef4444; --green: #10b981; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); height: 100vh; display: flex; overflow: hidden; }
 
-        /* Navegación */
+        /* Estructura Principal */
         #login-view { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         #app-view { display: none; width: 100%; height: 100vh; display: flex; }
-        .sidebar { width: 280px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
-        .nav-link { display: flex; align-items: center; padding: 12px; border: none; background: none; color: #64748b; cursor: pointer; border-radius: 8px; width: 100%; margin-bottom: 5px; }
+        .sidebar { width: 260px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
+        .nav-link { display: flex; align-items: center; padding: 12px; border: none; background: none; color: #64748b; cursor: pointer; border-radius: 8px; width: 100%; margin-bottom: 5px; transition: 0.3s; }
         .nav-link.active { background: #eff6ff; color: var(--primary); font-weight: 600; }
         .nav-link span { margin-right: 12px; }
 
-        /* Contenido */
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
         .section { display: none; }
         .section.active { display: block; }
-        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 
-        /* Tablas y Formularios */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 14px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; color: #475569; }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
-        .btn-main { padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        .btn-del { padding: 6px; color: var(--red); background: none; border: none; cursor: pointer; }
+        /* Tablas e Inputs */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+        th { text-align: left; padding: 12px; background: #f1f5f9; color: #475569; border-bottom: 2px solid var(--border); }
+        td { padding: 12px; border-bottom: 1px solid var(--border); color: #1e293b; }
         
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; outline: none; }
+        input:focus { border-color: var(--primary); }
+
+        .btn-main { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-approve { background: var(--green); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+        .btn-del { color: var(--red); cursor: pointer; background: none; border: none; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .status-pendiente { background: #fef3c7; color: #92400e; }
-        .status-sgd { background: #dcfce7; color: #166534; }
+        .status-aprobado { background: #dcfce7; color: #166534; }
     </style>
 </head>
 <body>
 
     <div id="login-view">
-        <div style="background: white; padding: 40px; border-radius: 16px; width: 360px; text-align: center;">
-            <h2>SGC Acceso</h2>
+        <div style="background: white; padding: 40px; border-radius: 16px; width: 350px; text-align: center;">
+            <h2 style="color: var(--dark);">SGC Acceso</h2>
             <input type="text" id="userInput" placeholder="Usuario" style="margin-top:20px;">
             <input type="password" id="passInput" placeholder="Contraseña" style="margin-top:10px;">
-            <button id="btnLogin" class="btn-main" style="width: 100%; margin-top:20px;">Entrar</button>
-            <button id="btnInit" style="background:none; border:none; color:#64748b; margin-top:15px; cursor:pointer; font-size: 11px; text-decoration: underline;">Inicializar Admin</button>
+            <button id="btnLogin" class="btn-main" style="width: 100%; margin-top:20px;">Entrar al Sistema</button>
+            <button id="btnInit" style="background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-size: 11px; text-decoration: underline;">Inicializar Admin (Primer uso)</button>
         </div>
     </div>
 
     <div id="app-view">
         <aside class="sidebar">
-            <h3 style="color: var(--primary); margin-bottom: 30px;">SGC PRO</h3>
+            <h3 style="color: var(--primary); margin-bottom: 30px; display: flex; align-items: center;"><span class="material-icons-round">verified</span> SGC ISO</h3>
             <nav style="flex: 1;">
                 <button class="nav-link active" data-view="dash"><span class="material-icons-round">dashboard</span> Dashboard</button>
                 <button class="nav-link" data-view="nueva-solicitud"><span class="material-icons-round">add_circle</span> Nueva Solicitud</button>
-                <button class="nav-link" data-view="mis-solicitudes"><span class="material-icons-round">description</span> Mis Solicitudes</button>
+                <button class="nav-link" data-view="mis-solicitudes"><span class="material-icons-round">list_alt</span> Historial Completo</button>
                 
                 <div id="admin-only" style="display: none;">
-                    <p style="font-size: 11px; color: #94a3b8; margin: 20px 0 10px 10px; font-weight: 700;">ADMINISTRACIÓN</p>
-                    <button class="nav-link" data-view="revision"><span class="material-icons-round">fact_check</span> Revisión SGD</button>
+                    <p style="font-size: 10px; color: #94a3b8; margin: 25px 0 10px 10px; font-weight: 800;">ADMINISTRACIÓN</p>
+                    <button class="nav-link" data-view="revision"><span class="material-icons-round">task_alt</span> Revisión SGD</button>
                     <button class="nav-link" data-view="adm-usuarios"><span class="material-icons-round">people</span> Usuarios</button>
                     <button class="nav-link" data-view="adm-estructura"><span class="material-icons-round">account_tree</span> Estructura</button>
                 </div>
             </nav>
-            <button id="btnLogout" class="btn-main" style="background: var(--red);">Cerrar Sesión</button>
+            <button id="btnLogout" class="btn-main" style="background: var(--red); font-size: 12px;">Cerrar Sesión</button>
         </aside>
 
         <main class="main-content">
             <section id="dash" class="section active">
-                <h1>Resumen General</h1>
+                <h1>Estado del Sistema</h1>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px;">
-                    <div class="card"><h3>Pendientes</h3><p id="c-pend" style="font-size: 24px;">0</p></div>
-                    <div class="card"><h3>Usuarios</h3><p id="c-user" style="font-size: 24px;">0</p></div>
-                    <div class="card"><h3>Gerencias</h3><p id="c-ger" style="font-size: 24px;">0</p></div>
+                    <div class="card"><h4>Pendientes</h4><p id="c-pend" style="font-size: 28px; font-weight: 700;">0</p></div>
+                    <div class="card"><h4>Usuarios</h4><p id="c-user" style="font-size: 28px; font-weight: 700;">0</p></div>
+                    <div class="card"><h4>Estructura</h4><p id="c-ger" style="font-size: 28px; font-weight: 700;">0</p></div>
                 </div>
             </section>
 
             <section id="nueva-solicitud" class="section">
-                <h1>Nueva Solicitud</h1>
+                <h1>Nueva Solicitud Documental</h1>
                 <div class="card">
-                    <div class="form-group">
-                        <label>Acción</label>
-                        <select id="sol-accion">
-                            <option value="creacion">Creación</option>
-                            <option value="modificacion">Modificación</option>
-                            <option value="inactivacion">Inactivación</option>
-                        </select>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label>Acción Requerida</label>
+                            <select id="sol-accion">
+                                <option value="creacion">Creación</option>
+                                <option value="modificacion">Modificación</option>
+                                <option value="inactivacion">Inactivación</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Documento</label>
+                            <select id="sol-tipo-doc">
+                                <option value="Formato">Formato</option>
+                                <option value="Guia">Guía</option>
+                                <option value="Instructivo">Instructivo</option>
+                                <option value="Manual">Manual</option>
+                                <option value="Procedimiento">Procedimiento</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="extra-sol" style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
-                        <label>Código</label><input type="text" id="sol-codigo">
-                        <label style="margin-top:10px;">Versión Anterior</label><input type="number" id="sol-version">
-                        <label style="margin-top:10px;">Fecha Última Versión</label><input type="date" id="sol-fecha-u">
+
+                    <div id="extra-sol" style="display: none; background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--primary);">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <div><label>Código Doc.</label><input type="text" id="sol-codigo"></div>
+                            <div><label>Versión Ant.</label><input type="number" id="sol-version"></div>
+                            <div><label>Fecha Últ. Ver.</label><input type="date" id="sol-fecha-u"></div>
+                        </div>
                     </div>
-                    <div class="form-group"><label>Título</label><input type="text" id="sol-titulo"></div>
-                    <div class="form-group">
-                        <label>Gerencia Destino</label>
-                        <select id="sol-gerencia-dest"></select>
+
+                    <div class="form-group"><label>Título del Documento</label><input type="text" id="sol-titulo" placeholder="Ej: Manual de Calidad V2"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group"><label>Gerencia Destino</label><select id="sol-gerencia-dest"></select></div>
+                        <div class="form-group"><label>Adjunto (PDF/Word)</label><input type="file" id="sol-file"></div>
                     </div>
-                    <div class="form-group"><label>Adjunto</label><input type="file" id="sol-file"></div>
-                    <div class="form-group"><label>Justificación</label><textarea id="sol-just"></textarea></div>
-                    <button id="btnSendSol" class="btn-main">Enviar Solicitud</button>
+                    <div class="form-group"><label>Justificación de la Solicitud</label><textarea id="sol-just" rows="3"></textarea></div>
+                    <button id="btnSendSol" class="btn-main">Enviar a Gestión de Calidad</button>
                 </div>
             </section>
 
             <section id="mis-solicitudes" class="section">
-                <h1>Historial de Solicitudes</h1>
-                <div class="card">
+                <h1>Historial Detallado de Solicitudes</h1>
+                <div class="card" style="padding: 0; overflow-x: auto;">
                     <table id="table-sol">
-                        <thead><tr><th>Título</th><th>Gerencia</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th><th>Título</th><th>Tipo</th><th>Código</th><th>Ver.</th><th>Gerencia</th><th>Solicitante</th><th>Estado</th>
+                            </tr>
+                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
@@ -118,48 +141,59 @@
 
             <section id="revision" class="section">
                 <h1>Panel de Aprobación SGD</h1>
-                <div class="card">
+                <div class="card" style="padding: 0;">
                     <table id="table-rev">
-                        <thead><tr><th>Solicitante</th><th>Documento</th><th>Acción</th></tr></thead>
+                        <thead>
+                            <tr>
+                                <th>Solicitante</th><th>Documento</th><th>Acción</th><th>Justificación</th><th>Operación</th>
+                            </tr>
+                        </thead>
                         <tbody></tbody>
                     </table>
                 </div>
             </section>
 
             <section id="adm-usuarios" class="section">
-                <h1>Control de Usuarios</h1>
+                <h1>Administración de Usuarios</h1>
                 <div class="card">
-                    <h3>Nuevo Usuario</h3>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top:10px;">
-                        <input type="text" id="u-nom" placeholder="Nombre">
-                        <input type="text" id="u-user" placeholder="User">
-                        <input type="password" id="u-pass" placeholder="Pass">
-                        <select id="u-role"><option value="applicant">Solicitante</option><option value="gerente">Gerente</option><option value="admin">Admin</option></select>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px;">
+                        <input type="text" id="u-nom" placeholder="Nombre Real">
+                        <input type="text" id="u-user" placeholder="Usuario">
+                        <input type="password" id="u-pass" placeholder="Password">
+                        <select id="u-role">
+                            <option value="applicant">Solicitante</option>
+                            <option value="gerente">Gerente</option>
+                            <option value="admin">Administrador SGC</option>
+                        </select>
                         <select id="u-gerencia"></select>
                     </div>
-                    <button id="btnCreateU" class="btn-main" style="margin-top:10px;">Crear Usuario</button>
+                    <button id="btnCreateU" class="btn-main" style="margin-top:15px;">+ Crear Usuario</button>
                 </div>
-                <div class="card">
+                <div class="card" style="padding: 0;">
                     <table id="table-users">
-                        <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Eliminar</th></tr></thead>
+                        <thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>Acciones</th></tr></thead>
                         <tbody></tbody>
                     </table>
                 </div>
             </section>
 
             <section id="adm-estructura" class="section">
-                <h1>Gerencias y Departamentos</h1>
+                <h1>Estructura de la Organización</h1>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div class="card">
                         <h3>Gerencias</h3>
-                        <input type="text" id="new-ger" placeholder="Nombre Gerencia">
-                        <button id="btnAddGer" class="btn-main" style="margin-top:10px;">Añadir</button>
+                        <div style="display: flex; gap: 5px; margin: 10px 0;">
+                            <input type="text" id="new-ger" placeholder="Nombre Gerencia">
+                            <button id="btnAddGer" class="btn-main">Añadir</button>
+                        </div>
                         <table id="table-ger"><tbody></tbody></table>
                     </div>
                     <div class="card">
                         <h3>Departamentos</h3>
-                        <input type="text" id="new-dep" placeholder="Nombre Departamento">
-                        <button id="btnAddDep" class="btn-main" style="margin-top:10px;">Añadir</button>
+                        <div style="display: flex; gap: 5px; margin: 10px 0;">
+                            <input type="text" id="new-dep" placeholder="Nombre Departamento">
+                            <button id="btnAddDep" class="btn-main">Añadir</button>
+                        </div>
                         <table id="table-dep"><tbody></tbody></table>
                     </div>
                 </div>
@@ -169,7 +203,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
@@ -184,12 +218,11 @@
         const db = getFirestore(app);
         let userActual = null;
 
-        // --- NAVEGACIÓN CORREGIDA ---
+        // --- NAVEGACIÓN ROBUSTA (Fix classList error) ---
         document.querySelectorAll('.nav-link').forEach(link => {
             link.onclick = () => {
                 const targetId = link.getAttribute('data-view');
                 const targetSection = document.getElementById(targetId);
-                
                 if (targetSection) {
                     document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
                     document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -199,7 +232,6 @@
             };
         });
 
-        // --- DINAMISMO FORMULARIO ---
         document.getElementById('sol-accion').onchange = (e) => {
             document.getElementById('extra-sol').style.display = e.target.value === 'creacion' ? 'none' : 'block';
         };
@@ -217,21 +249,10 @@
                 document.getElementById('app-view').style.display = 'flex';
                 if(userActual.role === 'admin') document.getElementById('admin-only').style.display = 'block';
                 iniciarListeners();
-            } else { alert("Error de acceso"); }
+            } else { alert("Credenciales incorrectas."); }
         };
 
-        // --- OPERACIONES CRUD ---
-        const syncSelects = (data, id) => {
-            const select = document.getElementById(id);
-            if(select) {
-                select.innerHTML = data.map(d => `<option value="${d.nombre}">${d.nombre}</option>`).join('');
-            }
-        };
-
-        const deleteItem = async (col, id) => {
-            if(confirm("¿Seguro de eliminar?")) await deleteDoc(doc(db, col, id));
-        };
-
+        // --- FUNCIONES DE SINCRONIZACIÓN ---
         function iniciarListeners() {
             // Usuarios
             onSnapshot(collection(db, "Usuarios"), (snap) => {
@@ -241,52 +262,70 @@
                 snap.forEach(d => {
                     const u = d.data();
                     tbody.innerHTML += `<tr><td>${u.nombre}</td><td>${u.usuario}</td><td>${u.role}</td><td>${u.gerencia || 'N/A'}</td>
-                    <td><button class="btn-del" onclick="window.delU('${d.id}')"><span class="material-icons-round">delete</span></button></td></tr>`;
+                    <td><button class="btn-del" onclick="window.delItem('Usuarios','${d.id}')"><span class="material-icons-round">delete</span></button></td></tr>`;
                 });
             });
 
-            // Gerencias
+            // Gerencias (Sync Selects)
             onSnapshot(collection(db, "Gerencias"), (snap) => {
-                const data = [];
                 const tbody = document.querySelector('#table-ger tbody');
+                const gerSelects = ['u-gerencia', 'sol-gerencia-dest'];
+                tbody.innerHTML = "";
+                let options = "";
+                snap.forEach(d => {
+                    options += `<option value="${d.data().nombre}">${d.data().nombre}</option>`;
+                    tbody.innerHTML += `<tr><td>${d.data().nombre}</td><td><button class="btn-del" onclick="window.delItem('Gerencias','${d.id}')">Eliminar</button></td></tr>`;
+                });
+                gerSelects.forEach(id => document.getElementById(id).innerHTML = options);
+                document.getElementById('c-ger').innerText = snap.size;
+            });
+
+            // Departamentos
+            onSnapshot(collection(db, "Departamentos"), (snap) => {
+                const tbody = document.querySelector('#table-dep tbody');
                 tbody.innerHTML = "";
                 snap.forEach(d => {
-                    data.push(d.data());
-                    tbody.innerHTML += `<tr><td>${d.data().nombre}</td><td><button class="btn-del" onclick="window.delGer('${d.id}')">Eliminar</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${d.data().nombre}</td><td><button class="btn-del" onclick="window.delItem('Departamentos','${d.id}')">Eliminar</button></td></tr>`;
                 });
-                document.getElementById('c-ger').innerText = data.length;
-                syncSelects(data, 'u-gerencia');
-                syncSelects(data, 'sol-gerencia-dest');
             });
 
-            // Solicitudes (Filtro por Rol)
-            let solQuery = collection(db, "Solicitudes");
-            if(userActual.role === 'gerente') solQuery = query(collection(db, "Solicitudes"), where("gerencia", "==", userActual.gerencia));
-            if(userActual.role === 'applicant') solQuery = query(collection(db, "Solicitudes"), where("solicitante", "==", userActual.usuario));
+            // Solicitudes con Filtros ISO
+            let qSol = collection(db, "Solicitudes");
+            if(userActual.role === 'gerente') qSol = query(collection(db, "Solicitudes"), where("gerencia", "==", userActual.gerencia));
+            if(userActual.role === 'applicant') qSol = query(collection(db, "Solicitudes"), where("solicitante", "==", userActual.usuario));
 
-            onSnapshot(solQuery, (snap) => {
-                const tbody = document.querySelector('#table-sol tbody');
-                const revBody = document.querySelector('#table-rev tbody');
-                tbody.innerHTML = "";
-                revBody.innerHTML = "";
+            onSnapshot(qSol, (snap) => {
+                const tSol = document.querySelector('#table-sol tbody');
+                const tRev = document.querySelector('#table-rev tbody');
+                tSol.innerHTML = ""; tRev.innerHTML = "";
                 let p = 0;
 
                 snap.forEach(d => {
                     const s = d.data();
-                    if(s.estado === 'Pendiente') p++;
+                    const badge = `<span class="badge status-${s.estado.toLowerCase().split(' ')[0]}">${s.estado}</span>`;
                     
-                    tbody.innerHTML += `<tr><td><b>${s.titulo}</b></td><td>${s.gerencia}</td><td><span class="badge status-${s.estado.toLowerCase()}">${s.estado}</span></td>
-                    <td><button onclick="alert('Justificación: ${s.justificacion}')">Ver</button></td></tr>`;
+                    // Llenar Historial Completo (Viendo todos los detalles en lista)
+                    tSol.innerHTML += `<tr>
+                        <td>${s.fecha}</td><td><b>${s.titulo}</b></td><td>${s.tipoDoc}</td>
+                        <td>${s.codigo || '-'}</td><td>${s.version || '1'}</td><td>${s.gerencia}</td>
+                        <td>${s.solicitante}</td><td>${badge}</td>
+                    </tr>`;
 
+                    // Llenar Panel de Revisión (Solo admin y solo Pendientes)
                     if(userActual.role === 'admin' && s.estado === 'Pendiente') {
-                        revBody.innerHTML += `<tr><td>${s.solicitante}</td><td>${s.titulo}</td><td><button class="btn-main">Firmar SGD</button></td></tr>`;
+                        p++;
+                        tRev.innerHTML += `<tr>
+                            <td>${s.solicitante}</td><td><b>${s.titulo}</b></td><td>${s.accion}</td>
+                            <td><small>${s.justificacion}</small></td>
+                            <td><button class="btn-approve" onclick="window.aprobarSolicitud('${d.id}')">Firmar SGD</button></td>
+                        </tr>`;
                     }
                 });
                 document.getElementById('c-pend').innerText = p;
             });
         }
 
-        // --- BOTONES CREACIÓN ---
+        // --- ACCIONES DE CREACIÓN ---
         document.getElementById('btnCreateU').onclick = async () => {
             await addDoc(collection(db, "Usuarios"), {
                 nombre: document.getElementById('u-nom').value,
@@ -295,35 +334,52 @@
                 role: document.getElementById('u-role').value,
                 gerencia: document.getElementById('u-gerencia').value
             });
-            alert("Usuario Creado");
+            alert("Usuario registrado.");
         };
 
         document.getElementById('btnAddGer').onclick = async () => {
-            await addDoc(collection(db, "Gerencias"), { nombre: document.getElementById('new-ger').value });
+            const val = document.getElementById('new-ger').value;
+            if(val) await addDoc(collection(db, "Gerencias"), { nombre: val });
+        };
+
+        document.getElementById('btnAddDep').onclick = async () => {
+            const val = document.getElementById('new-dep').value;
+            if(val) await addDoc(collection(db, "Departamentos"), { nombre: val });
         };
 
         document.getElementById('btnSendSol').onclick = async () => {
             await addDoc(collection(db, "Solicitudes"), {
                 titulo: document.getElementById('sol-titulo').value,
-                gerencia: document.getElementById('sol-gerencia-dest').value,
+                tipoDoc: document.getElementById('sol-tipo-doc').value,
                 accion: document.getElementById('sol-accion').value,
+                codigo: document.getElementById('sol-codigo').value || 'N/A',
+                version: document.getElementById('sol-version').value || 1,
+                gerencia: document.getElementById('sol-gerencia-dest').value,
                 justificacion: document.getElementById('sol-just').value,
                 estado: 'Pendiente',
                 solicitante: userActual.usuario,
-                fecha: new Date().toISOString()
+                fecha: new Date().toLocaleDateString()
             });
-            alert("Enviado");
+            alert("Solicitud enviada a revisión.");
         };
 
-        // Globales para los botones de las tablas
-        window.delU = (id) => deleteItem("Usuarios", id);
-        window.delGer = (id) => deleteItem("Gerencias", id);
+        // --- ACCIONES GLOBALES (Aprobación y Borrado) ---
+        window.aprobarSolicitud = async (id) => {
+            if(confirm("¿Desea aprobar y firmar este documento como SGD?")) {
+                await updateDoc(doc(db, "Solicitudes", id), { estado: "Aprobado SGD" });
+                alert("Documento aprobado y registrado en el historial.");
+            }
+        };
+
+        window.delItem = async (col, id) => {
+            if(confirm("¿Eliminar este registro permanentemente?")) await deleteDoc(doc(db, col, id));
+        };
 
         document.getElementById('btnInit').onclick = async () => {
-            await addDoc(collection(db, "Usuarios"), { usuario: "admin", pass: "admin123", role: "admin", nombre: "Administrador SGC" });
-            alert("Admin Creado");
+            await addDoc(collection(db, "Usuarios"), { usuario: "admin", pass: "admin123", role: "admin", nombre: "Admin Maestro" });
+            alert("Usuario admin/admin123 creado.");
         };
-        
+
         document.getElementById('btnLogout').onclick = () => location.reload();
     </script>
 </body>
