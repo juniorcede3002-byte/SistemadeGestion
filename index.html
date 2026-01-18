@@ -3,22 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGC Pro | Sistema de Gestión de Calidad</title>
+    <title>SGC Pro | Sistema de Calidad</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <style>
         :root { 
-            --primary: #2563eb; 
-            --bg: #f8fafc; 
-            --sidebar: #0f172a; 
-            --text: #334155;
-            --border: #e2e8f0;
-            --success: #10b981; 
-            --warning: #f59e0b; 
-            --danger: #ef4444; 
+            --primary: #2563eb; --bg: #f8fafc; --sidebar: #0f172a; --text: #334155;
+            --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; 
         }
-        
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
 
@@ -26,45 +19,36 @@
         #login-screen { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 3000; }
         .login-box { background: white; padding: 40px; border-radius: 20px; width: 380px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         
-        /* Layout Principal */
+        /* Layout */
         .sidebar { width: 260px; background: var(--sidebar); color: white; display: none; flex-direction: column; padding: 25px; transition: 0.3s; }
         .main { flex: 1; padding: 40px; overflow-y: auto; display: none; background: #f1f5f9; }
 
-        /* Navegación */
-        .nav-link { 
-            display: flex; align-items: center; padding: 14px; 
-            color: #94a3b8; border: none; background: none; 
-            cursor: pointer; border-radius: 12px; width: 100%; 
-            margin-bottom: 8px; font-weight: 500; font-size: 14px;
-            text-align: left;
-            transition: all 0.2s;
-        }
+        /* Nav */
+        .nav-link { display: flex; align-items: center; padding: 14px; color: #94a3b8; border: none; background: none; cursor: pointer; border-radius: 12px; width: 100%; margin-bottom: 8px; font-weight: 500; font-size: 14px; text-align: left; transition: all 0.2s; }
         .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
         .nav-link.active { background: var(--primary); color: white; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4); }
         .nav-link span { margin-right: 12px; font-size: 20px; }
 
-        /* Secciones */
+        /* General UI */
         .section { display: none; animation: fadeIn 0.3s ease; }
         .section.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Tarjetas y Inputs */
+        
         .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
         label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #fff; transition: 0.2s; }
         input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; ring: 2px var(--primary); }
 
-        /* Dashboard Stats */
+        /* Stats & Tables */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
         .stat-card { background: white; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         .stat-value { font-size: 28px; font-weight: 800; margin-top: 5px; color: #0f172a; }
-
-        /* Tablas */
+        
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 15px; font-size: 11px; color: #64748b; border-bottom: 2px solid #f1f5f9; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 
-        /* Botones y Estados */
+        /* Buttons & Status */
         .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
         .btn:hover { transform: translateY(-1px); opacity: 0.9; }
         .btn-primary { background: var(--primary); color: white; }
@@ -83,6 +67,10 @@
         .modal-content { background: white; width: 800px; border-radius: 20px; padding: 40px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
         .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f1f5f9; align-items: center; }
         .detail-label { width: 200px; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        
+        .chat-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
+        .chat-msg { font-size: 13px; margin-bottom: 5px; }
+        .chat-role { font-weight: 800; font-size: 10px; text-transform: uppercase; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -91,13 +79,11 @@
         <div class="login-box">
             <h1 style="color:var(--primary); margin-bottom: 10px;">SGC PRO</h1>
             <p style="color:#64748b; font-size:12px; margin-bottom:30px;">Acceso al Sistema de Gestión ISO 9001</p>
-            
             <input type="text" id="userInput" placeholder="Usuario">
             <input type="password" id="passInput" placeholder="Contraseña">
             <button class="btn btn-primary" id="btnLogin" style="width: 100%; justify-content: center; padding: 14px;">INICIAR SESIÓN</button>
-            
             <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
-                <button id="btnInit" style="background:none; border:none; color:#cbd5e1; font-size:11px; cursor:pointer;">Restablecer / Crear Admin</button>
+                <button id="btnInit" style="background:none; border:none; color:#cbd5e1; font-size:11px; cursor:pointer;">Reset Admin</button>
             </div>
         </div>
     </div>
@@ -115,19 +101,19 @@
                 <button class="nav-link" onclick="cambiarVista('sec-estructura', this)"><span class="material-icons-round">account_tree</span> Estructura</button>
             </div>
         </nav>
-        <div style="font-size: 11px; color: #475569; text-align: center; margin-bottom: 10px;" id="user-display-info"></div>
+        <div style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 5px;" id="user-display-info"></div>
+        <div style="font-size: 10px; color: #64748b; text-align: center; margin-bottom: 20px;" id="user-gerencia-info"></div>
         <button class="btn btn-danger" onclick="location.reload()" style="width:100%; justify-content: center;">Cerrar Sesión</button>
     </aside>
 
     <main class="main" id="main-content">
-        
         <section id="sec-dash" class="section active">
             <h1 style="margin-bottom: 30px;">Panel General</h1>
             <div class="stats-grid">
-                <div class="stat-card"><h3>Total Solicitudes</h3><p id="c-total" class="stat-value">0</p></div>
+                <div class="stat-card"><h3>Total Mis Solicitudes</h3><p id="c-total" class="stat-value">0</p></div>
                 <div class="stat-card" style="border-color:var(--warning)"><h3>Pendientes</h3><p id="c-pen" class="stat-value">0</p></div>
-                <div class="stat-card" style="border-color:var(--primary)"><h3>En Reunión</h3><p id="c-reu" class="stat-value">0</p></div>
-                <div class="stat-card" style="border-color:var(--success)"><h3>Aprobados</h3><p id="c-ok" class="stat-value">0</p></div>
+                <div class="stat-card" style="border-color:var(--primary)"><h3>En Gestión</h3><p id="c-reu" class="stat-value">0</p></div>
+                <div class="stat-card" style="border-color:var(--success)"><h3>Finalizados</h3><p id="c-ok" class="stat-value">0</p></div>
             </div>
         </section>
 
@@ -138,25 +124,24 @@
                     <div><label>Acción</label><select id="sol-accion"><option value="creacion">Creación</option><option value="modificacion">Modificación</option><option value="inactivacion">Inactivación</option></select></div>
                     <div><label>Tipo Documento</label><select id="sol-tipo"><option>Procedimiento</option><option>Manual</option><option>Formato</option><option>Instructivo</option></select></div>
                 </div>
-                <label>Título del Documento</label><input type="text" id="sol-tit" placeholder="Ej: Procedimiento de Ventas">
+                <label>Título del Documento</label><input type="text" id="sol-tit">
                 
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
                     <div><label>Gerencia</label><select id="sol-ger"></select></div>
                     <div><label>Departamento</label><select id="sol-dep"></select></div>
                 </div>
                 
-                <label>Adjuntar Referencia (Borrador)</label><input type="file" id="sol-file" style="border:none;">
-                <label>Justificación</label><textarea id="sol-jus" rows="4" placeholder="Describa por qué es necesario este cambio..."></textarea>
-                
+                <label>Adjuntar Archivo (PDF/Word)</label><input type="file" id="sol-file" style="border:none;">
+                <label>Justificación</label><textarea id="sol-jus" rows="4"></textarea>
                 <button class="btn btn-primary" id="btnSend" style="width:100%; justify-content:center; padding: 15px;">Enviar Solicitud</button>
             </div>
         </section>
 
         <section id="sec-historial" class="section">
-            <h1>Historial y Gestión</h1>
+            <h1>Bandeja de Entrada</h1>
             <div class="card" style="padding:0; overflow:hidden;">
                 <table id="table-sol">
-                    <thead><tr><th>Fecha</th><th>Título</th><th>Estado</th><th>Gestión</th></tr></thead>
+                    <thead><tr><th>Fecha</th><th>Título / Gerencia</th><th>Estado</th><th>Gestión</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
@@ -165,17 +150,17 @@
         <section id="sec-usuarios" class="section">
             <h1>Gestión de Usuarios</h1>
             <div class="card">
-                <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:15px;">
+                <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:15px;">
                     <input type="text" id="u-nom" placeholder="Nombre Completo">
                     <input type="text" id="u-usr" placeholder="Usuario ID">
                     <input type="text" id="u-pas" placeholder="Contraseña">
                     <select id="u-rol"><option value="applicant">Solicitante</option><option value="gerente">Gerente</option><option value="admin">Administrador</option></select>
                 </div>
-                <button class="btn btn-primary" id="btnUser" style="margin-top:10px;">Registrar Usuario</button>
+                <label>Asignar Gerencia (Para Gerentes/Solicitantes)</label>
+                <select id="u-ger-assign"></select>
+                <button class="btn btn-primary" id="btnUser" style="margin-top:15px; width:100%">Registrar Usuario</button>
             </div>
-            <div class="card" style="padding:0">
-                <table id="table-u"><thead><tr><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Eliminar</th></tr></thead><tbody></tbody></table>
-            </div>
+            <div class="card" style="padding:0"><table id="table-u"><thead><tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>X</th></tr></thead><tbody></tbody></table></div>
         </section>
 
         <section id="sec-estructura" class="section">
@@ -193,7 +178,6 @@
                 </div>
             </div>
         </section>
-
     </main>
 
     <div class="modal-overlay" id="modal">
@@ -205,6 +189,15 @@
             
             <div id="m-body"></div>
 
+            <div id="m-chat-area" style="display:none; margin-top:20px;">
+                <h4 style="color:var(--warning); margin-bottom:10px;">💬 Consultas Activas</h4>
+                <div id="m-chat-history" class="chat-box"></div>
+                <div id="m-chat-input" style="display:none; margin-top:10px; display:flex; gap:10px;">
+                    <input type="text" id="chat-response-text" placeholder="Escriba su respuesta aquí..." style="margin:0;">
+                    <button class="btn btn-primary" id="btn-reply-chat">Responder</button>
+                </div>
+            </div>
+
             <div id="m-actions" style="margin-top:30px; display:none;">
                 <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
                     <h4 style="margin-bottom:10px; color:#64748b; font-size:11px; text-transform:uppercase;">Flujo de Firmas</h4>
@@ -212,33 +205,29 @@
                 </div>
 
                 <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                    <button class="btn btn-primary" id="btn-firma-next">✍️ Firmar Etapa</button>
-                    <button class="btn btn-warning" id="btn-open-con">❓ Consulta</button>
-                    <button class="btn btn-warning" id="btn-open-reu">📅 Reunión</button>
+                    <button class="btn btn-primary" id="btn-firma-next">✍️ Firmar</button>
+                    <button class="btn btn-warning" id="btn-open-con">❓ Hacer Consulta</button>
+                    <button class="btn btn-warning" id="btn-open-reu">📅 Agendar Reunión</button>
                     <button class="btn btn-danger" id="btn-rechazar" style="display:none;">⛔ Rechazar</button>
                 </div>
 
-                <div id="pane-reu" style="display:none; margin-top:15px; background:#fffbeb; padding:20px; border-radius:10px; border:1px solid #fcd34d;">
-                    <h4 style="margin-bottom:10px;">Programar Reunión</h4>
+                <div id="pane-reu" style="display:none; margin-top:15px; background:#fffbeb; padding:20px; border-radius:10px;">
                     <label>Fecha</label><input type="date" id="reu-fec">
                     <label>Motivo</label><textarea id="reu-mot"></textarea>
                     <button class="btn btn-success" id="btn-reu-save">Confirmar Reunión</button>
                 </div>
 
-                <div id="pane-con" style="display:none; margin-top:15px; background:#eff6ff; padding:20px; border-radius:10px; border:1px solid #bfdbfe;">
-                    <h4 style="margin-bottom:10px;">Enviar Consulta</h4>
-                    <label>Pregunta</label><textarea id="con-mot"></textarea>
-                    <button class="btn btn-success" id="btn-con-save">Enviar</button>
+                <div id="pane-con" style="display:none; margin-top:15px; background:#eff6ff; padding:20px; border-radius:10px;">
+                    <label>Escriba su pregunta para el solicitante/gerente:</label><textarea id="con-mot"></textarea>
+                    <button class="btn btn-success" id="btn-con-save">Enviar Consulta</button>
                 </div>
 
-                <div id="pane-file" style="display:none; margin-top:15px; background:#f0fdf4; padding:20px; border-radius:10px; border:1px solid #86efac;">
-                    <h4 style="margin-bottom:10px;">Subir Documento Final</h4>
-                    <label>Archivo corregido (PDF/Word)</label><input type="file" id="file-final">
+                <div id="pane-file" style="display:none; margin-top:15px; background:#f0fdf4; padding:20px; border-radius:10px;">
+                    <label>Subir Documento Final (PDF/Word)</label><input type="file" id="file-final">
                 </div>
 
-                <div id="pane-rechazo" style="display:none; margin-top:15px; background:#fef2f2; padding:20px; border-radius:10px; border:1px solid #fecaca;">
-                    <h4 style="margin-bottom:10px; color:var(--danger)">Motivo de Rechazo</h4>
-                    <textarea id="rechazo-mot" placeholder="Explique por qué se devuelve la solicitud..."></textarea>
+                <div id="pane-rechazo" style="display:none; margin-top:15px; background:#fef2f2; padding:20px; border-radius:10px;">
+                    <label>Motivo de Rechazo</label><textarea id="rechazo-mot"></textarea>
                     <button class="btn btn-danger" id="btn-rechazo-save">Confirmar Devolución</button>
                 </div>
             </div>
@@ -249,7 +238,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // CONFIGURACIÓN FIREBASE
         const firebaseConfig = {
             apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
             authDomain: "sistemadegestion-7400d.firebaseapp.com",
@@ -264,280 +252,238 @@
         let user = null;
         let selectedId = null;
 
-        // 1. SISTEMA DE NAVEGACIÓN (FUNCIÓN GLOBAL)
-        window.cambiarVista = (vistaId, btnElement) => {
-            // Ocultar todas las secciones
-            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
-            
-            // Mostrar la seleccionada
-            const seccion = document.getElementById(vistaId);
-            if(seccion) {
-                seccion.classList.add('active');
-                if(btnElement) btnElement.classList.add('active');
-            } else {
-                console.error("No se encontró la sección:", vistaId);
-            }
+        // VISTA
+        window.cambiarVista = (vistaId, btn) => {
+            document.querySelectorAll('.section, .nav-link').forEach(el => el.classList.remove('active'));
+            document.getElementById(vistaId).classList.add('active');
+            if(btn) btn.classList.add('active');
         };
 
-        // 2. LOGIN
+        // LOGIN
         document.getElementById('btnLogin').onclick = async () => {
             const uInput = document.getElementById('userInput').value;
             const pInput = document.getElementById('passInput').value;
-
-            try {
-                const q = query(collection(db, "Usuarios"), where("usuario", "==", uInput), where("pass", "==", pInput));
-                const snap = await getDocs(q);
+            const q = query(collection(db, "Usuarios"), where("usuario", "==", uInput), where("pass", "==", pInput));
+            const snap = await getDocs(q);
+            
+            if(!snap.empty) {
+                user = snap.docs[0].data();
+                document.getElementById('login-screen').style.display='none';
+                document.getElementById('sidebar').style.display='flex';
+                document.getElementById('main-content').style.display='block';
                 
-                if(!snap.empty) {
-                    user = snap.docs[0].data();
-                    
-                    // Mostrar Interfaz
-                    document.getElementById('login-screen').style.display='none';
-                    document.getElementById('sidebar').style.display='flex';
-                    document.getElementById('main-content').style.display='block';
-                    document.getElementById('user-display-info').innerText = `${user.nombre} (${user.role})`;
+                document.getElementById('user-display-info').innerText = `${user.nombre} (${user.role})`;
+                document.getElementById('user-gerencia-info').innerText = user.gerencia ? `Gerencia: ${user.gerencia}` : 'Acceso Global';
 
-                    // Control de Roles
-                    if(user.role === 'admin') {
-                        document.getElementById('admin-menu').style.display='block';
-                    } else {
-                        document.getElementById('admin-menu').style.display='none';
-                    }
-
-                    iniciarSistema();
-                } else {
-                    alert("Usuario o contraseña incorrectos.");
-                }
-            } catch (error) {
-                console.error(error);
-                alert("Error de conexión. Revisa la consola.");
-            }
+                // Mostrar menú admin
+                if(user.role === 'admin') document.getElementById('admin-menu').style.display='block';
+                iniciarSistema();
+            } else alert("Datos incorrectos");
         };
 
-        // 3. INICIALIZACIÓN DE DATOS (SNAPSHOTS)
+        // CORE LOGIC
         function iniciarSistema() {
-            // Cargar Selects de Gerencias
+            // Cargar Gerencias en Selects (incluyendo el de usuarios)
             onSnapshot(collection(db, "Gerencias"), snap => {
-                let htmlList = ""; let htmlOpt = "";
+                let list="", opt="";
                 snap.forEach(d => {
-                    const data = d.data();
-                    htmlList += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${data.nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Gerencias','${d.id}')">X</button></div>`;
-                    htmlOpt += `<option>${data.nombre}</option>`;
+                    list += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${d.data().nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Gerencias','${d.id}')">X</button></div>`;
+                    opt += `<option>${d.data().nombre}</option>`;
                 });
-                document.getElementById('list-ger').innerHTML = htmlList;
-                document.getElementById('sol-ger').innerHTML = htmlOpt;
+                document.getElementById('list-ger').innerHTML = list;
+                document.getElementById('sol-ger').innerHTML = opt;
+                document.getElementById('u-ger-assign').innerHTML = opt; // Asignación de gerencia al crear usuario
             });
 
-            // Cargar Selects de Departamentos
             onSnapshot(collection(db, "Departamentos"), snap => {
-                let htmlList = ""; let htmlOpt = "";
+                let list="", opt="";
                 snap.forEach(d => {
-                    const data = d.data();
-                    htmlList += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${data.nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Departamentos','${d.id}')">X</button></div>`;
-                    htmlOpt += `<option>${data.nombre}</option>`;
+                    list += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${d.data().nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Departamentos','${d.id}')">X</button></div>`;
+                    opt += `<option>${d.data().nombre}</option>`;
                 });
-                document.getElementById('list-dep').innerHTML = htmlList;
-                document.getElementById('sol-dep').innerHTML = htmlOpt;
+                document.getElementById('list-dep').innerHTML = list;
+                document.getElementById('sol-dep').innerHTML = opt;
             });
 
-            // Cargar Solicitudes y Tabla
+            // CARGA DE SOLICITUDES CON FILTRO
             onSnapshot(collection(db, "Solicitudes"), snap => {
-                const tbody = document.querySelector('#table-sol tbody'); 
-                tbody.innerHTML = "";
-                let total=0, pend=0, reu=0, ok=0;
+                const tbody = document.querySelector('#table-sol tbody'); tbody.innerHTML = "";
+                let total=0, pen=0, reu=0, ok=0;
 
                 snap.forEach(d => {
                     const s = d.data();
-                    total++;
-                    if(s.estado === 'Pendiente') pend++;
-                    if(s.estado === 'En Reunión') reu++;
-                    if(s.estado === 'Aprobado') ok++;
+                    
+                    // --- FILTRO DE VISTA ---
+                    let ver = false;
+                    if(user.role === 'admin') ver = true;
+                    else if(user.role === 'gerente' && s.gerencia === user.gerencia) ver = true;
+                    else if(user.role === 'applicant' && s.solicitante === user.usuario) ver = true;
 
-                    tbody.innerHTML += `
-                        <tr>
+                    if(ver) {
+                        total++;
+                        if(s.estado === 'Pendiente') pen++;
+                        if(s.estado === 'En Reunión') reu++;
+                        if(s.estado === 'Aprobado') ok++;
+
+                        tbody.innerHTML += `<tr>
                             <td>${s.fecha}</td>
-                            <td>
-                                <b>${s.titulo}</b><br>
-                                <span style="font-size:10px; color:#64748b">${s.gerencia}</span>
-                            </td>
+                            <td><b>${s.titulo}</b><br><small style="color:#64748b">${s.gerencia}</small></td>
                             <td><span class="status st-${s.estado.toLowerCase().replace(/\s/g, '-')}">${s.estado}</span></td>
-                            <td><button class="btn btn-primary" style="padding:6px 12px;" onclick="window.openPanel('${d.id}')">Gestionar</button></td>
-                        </tr>
-                    `;
+                            <td><button class="btn btn-primary" onclick="window.openPanel('${d.id}')">Ver/Gestionar</button></td>
+                        </tr>`;
+                    }
                 });
-                // Actualizar Contadores
-                document.getElementById('c-total').innerText = total;
-                document.getElementById('c-pen').innerText = pend;
-                document.getElementById('c-reu').innerText = reu;
-                document.getElementById('c-ok').innerText = ok;
+                // Actualizar stats
+                document.getElementById('c-total').innerText = total; document.getElementById('c-pen').innerText = pen; document.getElementById('c-reu').innerText = reu; document.getElementById('c-ok').innerText = ok;
             });
 
-            // Cargar Usuarios (Solo si es admin se mostrará la sección, pero los datos se cargan igual para la tabla)
+            // Cargar Usuarios solo si es admin
             if(user.role === 'admin') {
                 onSnapshot(collection(db, "Usuarios"), snap => {
-                    const tbody = document.querySelector('#table-u tbody'); tbody.innerHTML = "";
+                    const tb = document.querySelector('#table-u tbody'); tb.innerHTML = "";
                     snap.forEach(d => {
                         const u = d.data();
-                        tbody.innerHTML += `<tr><td>${u.nombre}</td><td>${u.usuario}</td><td>${u.role}</td><td><button class="btn-danger" style="padding:4px 8px" onclick="window.delDoc('Usuarios','${d.id}')">X</button></td></tr>`;
+                        tb.innerHTML += `<tr><td>${u.usuario}</td><td>${u.role}</td><td>${u.gerencia || '-'}</td><td><button class="btn-danger" onclick="window.delDoc('Usuarios','${d.id}')">X</button></td></tr>`;
                     });
                 });
             }
         }
 
-        // 4. LÓGICA DEL PANEL (MODAL)
+        // PANEL DE GESTIÓN & CHAT
         window.openPanel = async (id) => {
             selectedId = id;
-            try {
-                const docSnap = await getDoc(doc(db, "Solicitudes", id));
-                if (!docSnap.exists()) return alert("El documento no existe");
-                
-                const s = docSnap.data();
-                const f = s.firmas || { doc: false, ver: false, apr: false, gerente: false };
-                
-                // Renderizar Detalles
-                document.getElementById('m-tit').innerText = s.titulo;
-                document.getElementById('m-body').innerHTML = `
-                    <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-value"><span class="status st-${s.estado.toLowerCase().replace(' ','-')}">${s.estado}</span></div></div>
-                    <div class="detail-row"><div class="detail-label">Solicitante</div><div class="detail-value">${s.solicitante}</div></div>
-                    <div class="detail-row"><div class="detail-label">Gerencia / Dpto</div><div class="detail-value">${s.gerencia} - ${s.departamento}</div></div>
-                    <div class="detail-row"><div class="detail-label">Justificación</div><div class="detail-value">${s.justificacion}</div></div>
-                    
-                    <div class="detail-row" style="background:#f1f5f9; padding:10px; border-radius:8px; margin-top:10px;">
-                        <div class="detail-label">📂 Adjunto Inicial</div>
-                        <div class="detail-value">
-                            ${s.file !== 'Sin adjunto' ? `<a href="https://www.google.com/search?q=${s.file}" target="_blank" style="color:var(--primary); font-weight:bold;">📄 ${s.file}</a>` : 'N/A'}
-                        </div>
+            const docRef = await getDoc(doc(db, "Solicitudes", id));
+            if (!docRef.exists()) return;
+            const s = docRef.data();
+            const f = s.firmas || { doc: false, ver: false, apr: false, gerente: false };
+
+            document.getElementById('m-tit').innerText = s.titulo;
+            document.getElementById('m-body').innerHTML = `
+                <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-value"><span class="status st-${s.estado.toLowerCase().replace(' ','-')}">${s.estado}</span></div></div>
+                <div class="detail-row"><div class="detail-label">Solicitante</div><div class="detail-value">${s.solicitante}</div></div>
+                <div class="detail-row"><div class="detail-label">Gerencia</div><div class="detail-value">${s.gerencia} / ${s.departamento}</div></div>
+                <div class="detail-row"><div class="detail-label">Justificación</div><div class="detail-value">${s.justificacion}</div></div>
+                <div class="detail-row" style="background:#f0f9ff; margin-top:10px; border-radius:8px; padding:10px;">
+                    <div class="detail-label">📂 Adjunto Inicial</div>
+                    <div class="detail-value">
+                        ${s.file !== 'Sin adjunto' 
+                            ? `<a href="https://www.google.com/search?q=${s.file}" target="_blank" style="color:var(--primary); font-weight:bold; text-decoration:none;">📥 Descargar/Ver: ${s.file}</a>` 
+                            : 'N/A'}
                     </div>
+                </div>
+                ${s.fileFinal ? `<div class="detail-row" style="background:#dcfce7; margin-top:5px; border-radius:8px; padding:10px;">
+                    <div class="detail-label">✅ Doc Final</div>
+                    <div class="detail-value"><a href="#" target="_blank" style="color:green; font-weight:bold;">📥 Descargar Final: ${s.fileFinal}</a></div>
+                </div>` : ''}
+            `;
 
-                    ${s.fileFinal ? `
-                    <div class="detail-row" style="background:#dcfce7; padding:10px; border-radius:8px; margin-top:5px;">
-                        <div class="detail-label">✅ Doc. Oficial SGC</div>
-                        <div class="detail-value"><a href="#" style="color:green; font-weight:bold;">📥 Descargar: ${s.fileFinal}</a></div>
-                    </div>` : ''}
+            // Flujo Visual
+            document.getElementById('firma-status-visual').innerHTML = `
+                <span style="color:${f.doc?'green':'#cbd5e1'}">● Doc</span> ➔ 
+                <span style="color:${f.ver?'green':'#cbd5e1'}">● Verif</span> ➔ 
+                <span style="color:${f.apr?'green':'#cbd5e1'}">● Aprob</span> ➔ 
+                <span style="color:${f.gerente?'green':'#cbd5e1'}">● Gerencia</span>
+            `;
 
-                    ${s.reunionFecha ? `<div style="margin-top:15px; background:#fffbeb; padding:15px; border-radius:8px;"><p><b>📅 Reunión:</b> ${s.reunionFecha}</p><p>${s.reunionMotivo}</p></div>` : ''}
-                    ${s.consulta ? `<div style="margin-top:15px; background:#eff6ff; padding:15px; border-radius:8px;"><p><b>❓ Consulta Activa:</b> ${s.consulta}</p></div>` : ''}
-                    ${s.motivoRechazo ? `<div style="margin-top:15px; background:#fef2f2; color:red; padding:15px; border-radius:8px;"><p><b>⛔ Motivo Rechazo:</b> ${s.motivoRechazo}</p></div>` : ''}
-                `;
+            // Lógica CHAT / CONSULTAS
+            const chatArea = document.getElementById('m-chat-area');
+            const chatHistory = document.getElementById('m-chat-history');
+            const chatInput = document.getElementById('m-chat-input');
+            
+            chatArea.style.display = 'none';
+            chatHistory.innerHTML = "";
+            chatInput.style.display = 'none';
 
-                // Renderizar Flujo Visual
-                document.getElementById('firma-status-visual').innerHTML = `
-                    <span style="color:${f.doc?'green':'#cbd5e1'}">● Documentado</span> ➔ 
-                    <span style="color:${f.ver?'green':'#cbd5e1'}">● Verificado</span> ➔ 
-                    <span style="color:${f.apr?'green':'#cbd5e1'}">● Aprobado SGC</span> ➔ 
-                    <span style="color:${f.gerente?'green':'#cbd5e1'}">● Gerencia</span>
-                `;
-
-                // Lógica de Permisos para Botones
-                const isAdmin = user.role === 'admin';
-                const isManager = user.role === 'gerente' && s.gerencia === user.gerencia;
-                const canManage = isAdmin || isManager;
-
-                // Resetear vistas de sub-paneles
-                document.querySelectorAll('#pane-reu, #pane-con, #pane-file, #pane-rechazo').forEach(e => e.style.display = 'none');
+            if(s.consulta) {
+                chatArea.style.display = 'block';
+                chatHistory.innerHTML += `<div class="chat-msg"><div class="chat-role">Pregunta SGC:</div>${s.consulta}</div>`;
                 
-                document.getElementById('m-actions').style.display = canManage ? 'block' : 'none';
-                
-                // Botón Firmar: Admin siempre puede (si faltan sus firmas), Gerente solo si todo lo demás está listo
-                let showSign = false;
-                if (isAdmin && (!f.doc || !f.ver || !f.apr)) showSign = true;
-                if (isManager && f.apr && !f.gerente) showSign = true;
-                
-                document.getElementById('btn-firma-next').style.display = showSign ? 'inline-flex' : 'none';
-                
-                // Botón Rechazar: Solo Gerente al final
-                document.getElementById('btn-rechazar').style.display = (isManager && f.apr && !f.gerente) ? 'inline-flex' : 'none';
-                
-                // Panel Subida Archivo: Solo Admin en etapa 1
-                document.getElementById('pane-file').style.display = (isAdmin && !f.doc && showSign) ? 'block' : 'none';
+                if(s.respuestaConsulta) {
+                    chatHistory.innerHTML += `<div class="chat-msg" style="text-align:right; margin-top:10px;"><div class="chat-role">Respuesta Usuario:</div>${s.respuestaConsulta}</div>`;
+                } else {
+                    // Si no hay respuesta, mostrar input para responder (cualquiera con acceso al panel puede responder si no es admin)
+                    if(user.role !== 'admin') {
+                        chatInput.style.display = 'flex';
+                    }
+                }
+            }
 
-                document.getElementById('modal').style.display = 'flex';
+            // Permisos de Botones
+            const isAdmin = user.role === 'admin';
+            const isManager = user.role === 'gerente' && s.gerencia === user.gerencia;
+            
+            document.querySelectorAll('#pane-reu, #pane-con, #pane-file, #pane-rechazo').forEach(e => e.style.display='none');
+            document.getElementById('m-actions').style.display = (isAdmin || isManager) ? 'block' : 'none';
 
-            } catch (e) { console.error(e); }
+            // Botón Firmar
+            let showSign = false;
+            if(isAdmin && (!f.doc || !f.ver || !f.apr)) showSign = true;
+            if(isManager && f.apr && !f.gerente) showSign = true;
+            document.getElementById('btn-firma-next').style.display = showSign ? 'inline-flex' : 'none';
+            document.getElementById('pane-file').style.display = (isAdmin && !f.doc && showSign) ? 'block' : 'none'; // Solo muestra carga de archivo en paso 1
+            
+            // Botón Rechazar (Solo gerente al final)
+            document.getElementById('btn-rechazar').style.display = (isManager && f.apr && !f.gerente) ? 'inline-flex' : 'none';
+
+            document.getElementById('modal').style.display = 'flex';
         };
 
         window.closeModal = () => document.getElementById('modal').style.display = 'none';
 
-        // 5. ACCIONES DE GESTIÓN (FIRMAS, REUNIONES, ETC)
-        
-        // Toggle Paneles
-        document.getElementById('btn-open-reu').onclick = () => document.getElementById('pane-reu').style.display = 'block';
-        document.getElementById('btn-open-con').onclick = () => document.getElementById('pane-con').style.display = 'block';
-        document.getElementById('btn-rechazar').onclick = () => document.getElementById('pane-rechazo').style.display = 'block';
+        // ACTIONS
+        document.getElementById('btn-open-reu').onclick = () => document.getElementById('pane-reu').style.display='block';
+        document.getElementById('btn-open-con').onclick = () => document.getElementById('pane-con').style.display='block';
+        document.getElementById('btn-rechazar').onclick = () => document.getElementById('pane-rechazo').style.display='block';
 
-        // Firmar Etapa
+        // Firmar
         document.getElementById('btn-firma-next').onclick = async () => {
-            const docRef = doc(db, "Solicitudes", selectedId);
-            const s = (await getDoc(docRef)).data();
+            const ref = doc(db, "Solicitudes", selectedId);
+            const s = (await getDoc(ref)).data();
             let f = s.firmas || { doc: false, ver: false, apr: false, gerente: false };
-            let updates = {};
+            let up = {};
 
             if(user.role === 'admin') {
                 if(!f.doc) {
-                    // Validar archivo subido
-                    const fileInput = document.getElementById('file-final');
-                    if(fileInput.files.length === 0) return alert("⚠️ Debe subir el documento elaborado para firmar esta etapa.");
-                    f.doc = true;
-                    updates.fileFinal = fileInput.files[0].name;
-                } 
-                else if(!f.ver) f.ver = true;
+                    if(document.getElementById('file-final').files.length === 0) return alert("Debe subir documento elaborado");
+                    f.doc = true; up.fileFinal = document.getElementById('file-final').files[0].name;
+                } else if(!f.ver) f.ver = true;
                 else if(!f.apr) f.apr = true;
-            } 
-            else if(user.role === 'gerente') {
-                f.gerente = true;
-                updates.estado = 'Aprobado';
+            } else if(user.role === 'gerente') {
+                f.gerente = true; up.estado = 'Aprobado';
             }
-
-            updates.firmas = f;
-            updates.consulta = ""; // Limpiar consultas activas al avanzar
-            updates.reunionFecha = ""; 
-
-            await updateDoc(docRef, updates);
-            window.closeModal();
+            up.firmas = f;
+            await updateDoc(ref, up); closeModal();
         };
 
-        // Guardar Reunión
-        document.getElementById('btn-reu-save').onclick = async () => {
-            const f = document.getElementById('reu-fec').value;
-            const m = document.getElementById('reu-mot').value;
-            if(!f || !m) return alert("Complete los datos");
-            await updateDoc(doc(db, "Solicitudes", selectedId), { estado: 'En Reunión', reunionFecha: f, reunionMotivo: m });
-            window.closeModal();
+        // Responder Chat
+        document.getElementById('btn-reply-chat').onclick = async () => {
+            const txt = document.getElementById('chat-response-text').value;
+            if(!txt) return;
+            await updateDoc(doc(db, "Solicitudes", selectedId), { respuestaConsulta: txt });
+            alert("Respuesta enviada");
+            closeModal();
         };
 
-        // Guardar Consulta
+        // Guardar Consulta (Admin hace pregunta)
         document.getElementById('btn-con-save').onclick = async () => {
-            const c = document.getElementById('con-mot').value;
-            if(!c) return alert("Escriba la consulta");
-            await updateDoc(doc(db, "Solicitudes", selectedId), { consulta: c });
-            window.closeModal();
+            await updateDoc(doc(db, "Solicitudes", selectedId), { consulta: document.getElementById('con-mot').value, respuestaConsulta: "" }); // Reset respuesta anterior
+            closeModal();
         };
 
-        // Guardar Rechazo
+        document.getElementById('btn-reu-save').onclick = async () => {
+            await updateDoc(doc(db, "Solicitudes", selectedId), { estado: 'En Reunión', reunionFecha: document.getElementById('reu-fec').value, reunionMotivo: document.getElementById('reu-mot').value });
+            closeModal();
+        };
+
         document.getElementById('btn-rechazo-save').onclick = async () => {
-            const m = document.getElementById('rechazo-mot').value;
-            if(!m) return alert("Debe dar un motivo");
-            // Resetear firmas para corrección
-            await updateDoc(doc(db, "Solicitudes", selectedId), { 
-                estado: 'Pendiente', 
-                motivoRechazo: m,
-                firmas: { doc: false, ver: false, apr: false, gerente: false }
-            });
-            window.closeModal();
+            await updateDoc(doc(db, "Solicitudes", selectedId), { estado: 'Pendiente', firmas: {doc:false, ver:false, apr:false, gerente:false}, motivoRechazo: document.getElementById('rechazo-mot').value });
+            closeModal();
         };
 
-
-        // 6. FUNCIONES CRUD GLOBALES
-        window.delDoc = async (col, id) => { if(confirm("¿Seguro de eliminar?")) await deleteDoc(doc(db, col, id)); };
-
-        // 7. EVENTOS DE FORMULARIOS CREACIÓN
+        // CRUD
         document.getElementById('btnSend').onclick = async () => {
-            const tit = document.getElementById('sol-tit').value;
-            if(!tit) return alert("El título es obligatorio");
-
             await addDoc(collection(db, "Solicitudes"), {
-                titulo: tit,
+                titulo: document.getElementById('sol-tit').value,
                 accion: document.getElementById('sol-accion').value,
                 tipo: document.getElementById('sol-tipo').value,
                 gerencia: document.getElementById('sol-ger').value,
@@ -549,10 +495,7 @@
                 estado: 'Pendiente',
                 firmas: { doc: false, ver: false, apr: false, gerente: false }
             });
-            alert("Solicitud enviada exitosamente");
-            // Limpiar formulario y volver al historial
-            document.getElementById('sol-tit').value = "";
-            window.cambiarVista('sec-historial', document.querySelectorAll('.nav-link')[2]);
+            alert("Enviado"); document.getElementById('sol-tit').value=""; cambiarVista('sec-historial');
         };
 
         document.getElementById('btnUser').onclick = async () => {
@@ -560,20 +503,17 @@
                 nombre: document.getElementById('u-nom').value,
                 usuario: document.getElementById('u-usr').value,
                 pass: document.getElementById('u-pas').value,
-                role: document.getElementById('u-rol').value
+                role: document.getElementById('u-rol').value,
+                gerencia: document.getElementById('u-ger-assign').value // Asigna la gerencia seleccionada
             });
-            alert("Usuario Registrado");
+            alert("Usuario Creado");
         };
 
         document.getElementById('add-ger').onclick = async () => { await addDoc(collection(db, "Gerencias"), { nombre: document.getElementById('in-ger').value }); document.getElementById('in-ger').value=""; };
         document.getElementById('add-dep').onclick = async () => { await addDoc(collection(db, "Departamentos"), { nombre: document.getElementById('in-dep').value }); document.getElementById('in-dep').value=""; };
-        
-        // SETUP INICIAL (Boton secreto)
-        document.getElementById('btnInit').onclick = async () => {
-            await addDoc(collection(db, "Usuarios"), { usuario: "admin", pass: "123", role: "admin", nombre: "Administrador SGC" });
-            alert("Admin creado: usuario 'admin', clave '123'");
-        };
+        window.delDoc = async (c, id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, c, id)); };
 
+        document.getElementById('btnInit').onclick = async () => { await addDoc(collection(db, "Usuarios"), { usuario: "admin", pass: "123", role: "admin", nombre: "Admin SGC", gerencia: "SGC" }); alert("admin / 123"); };
     </script>
 </body>
 </html>
