@@ -1,9 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, arrayUnion, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// --- CONFIGURACIÓN FIREBASE ---
+// --- CONFIGURACIÓN FIREBASE (REEMPLAZA ESTO CON TUS DATOS REALES) ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM", // Tu API Key
+  apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
   authDomain: "sistemadegestion-7400d.firebaseapp.com",
   projectId: "sistemadegestion-7400d",
   storageBucket: "sistemadegestion-7400d.appspot.com",
@@ -14,214 +14,209 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- ESTADO Y UI HELPERS ---
+// --- ESTADO GLOBAL ---
 let currentUser = null;
 let currentSignId = null;
-let allDocs = []; // Para búsqueda local
 
-const showLoader = (show) => document.getElementById("globalLoader").classList.toggle("hide", !show);
-const notify = (msg, type = 'info') => {
-    let color = type === 'success' ? '#10b981' : (type === 'error' ? '#ef4444' : '#2563eb');
-    Toastify({ text: msg, duration: 3000, backgroundColor: color, gravity: "bottom", position: "right" }).showToast();
+// --- UTILIDADES DE UI ---
+const loader = (show) => document.getElementById("loader").classList.toggle("hide", !show);
+
+// Navegación estilo SPA (Sin recargar)
+window.navigate = (viewId) => {
+    // 1. Ocultar todas las secciones
+    document.querySelectorAll(".view-section").forEach(sec => sec.classList.remove("active"));
+    document.querySelectorAll(".nav-item").forEach(nav => nav.classList.remove("active"));
+    
+    // 2. Mostrar la seleccionada
+    document.getElementById(viewId).classList.add("active");
+    
+    // 3. Activar botón del menú (buscar por onclick)
+    const activeBtn = Array.from(document.querySelectorAll(".nav-item"))
+        .find(btn => btn.getAttribute("onclick").includes(viewId));
+    if(activeBtn) activeBtn.classList.add("active");
+
+    // 4. Cambiar título superior
+    const titles = { viewDashboard: "Dashboard General", viewSolicitudes: "Gestión Documental", viewUsuarios: "Usuarios del Sistema", viewConfig: "Configuración" };
+    document.getElementById("pageTitle").innerText = titles[viewId] || "SGC";
 };
 
-// --- AUTHENTICATION ---
+// Modales
+window.openModal = (id) => document.getElementById(id).classList.remove("hide");
+window.closeModal = (id) => document.getElementById(id).classList.add("hide");
+
+// --- AUTENTICACIÓN ---
 document.getElementById("btnLogin").onclick = async () => {
     const u = document.getElementById("loginUser").value;
     const p = document.getElementById("loginPass").value;
     
-    if(!u || !p) return notify("Ingrese credenciales", "error");
-    showLoader(true);
-
+    loader(true);
+    
     try {
-        let userFound = null;
-        // Check Hardcoded Admin first
-        if(u === "Admin" && p === "1130") userFound = { usuario: "Admin", role: "admin" };
+        let user = null;
+        // Backdoor Admin
+        if (u === "Admin" && p === "1130") user = { usuario: "Admin", role: "admin" };
         else {
             const q = query(collection(db, "Usuarios"), where("usuario", "==", u), where("pass", "==", p));
             const snap = await getDocs(q);
-            if(!snap.empty) userFound = snap.docs[0].data();
+            if(!snap.empty) user = snap.docs[0].data();
         }
 
-        if(userFound) {
-            currentUser = userFound;
-            initDashboard();
+        if (user) {
+            initSession(user);
         } else {
-            notify("Credenciales incorrectas", "error");
+            Swal.fire("Error", "Credenciales incorrectas", "error");
         }
     } catch (e) {
         console.error(e);
-        notify("Error de conexión", "error");
+        Swal.fire("Error", "Fallo de conexión", "error");
     } finally {
-        showLoader(false);
+        loader(false);
     }
 };
 
-document.getElementById("btnLogout").onclick = () => window.location.reload();
+document.getElementById("btnLogout").onclick = () => location.reload();
 
-function initDashboard() {
-    document.getElementById("loginScreen").classList.add("hide");
-    document.getElementById("dashboard").classList.remove("hide");
+function initSession(user) {
+    currentUser = user;
+    document.getElementById("loginSection").classList.add("hide");
+    document.getElementById("appSection").classList.remove("hide");
     
-    // Set UI User Info
-    document.getElementById("userLogged").innerText = currentUser.usuario;
-    document.getElementById("userAvatar").innerText = currentUser.usuario.charAt(0).toUpperCase();
-    document.getElementById("userRoleDisplay").innerText = currentUser.role === 'admin' ? 'ADMINISTRADOR' : 'USUARIO';
+    document.getElementById("displayUser").innerText = user.usuario;
+    document.getElementById("displayRole").innerText = user.role.toUpperCase();
+    document.getElementById("userAvatar").innerText = user.usuario.charAt(0).toUpperCase();
 
-    // Show/Hide Admin Tabs
-    document.querySelectorAll(".admin-only").forEach(el => el.style.display = currentUser.role === 'admin' ? 'block' : 'none');
+    // Mostrar menú admin si aplica
+    if(user.role === 'admin') document.getElementById("adminMenu").classList.remove("hide");
 
-    // Load Data
-    loadDataRealtime();
+    loadRealtimeData();
 }
 
-// --- DATA & REALTIME DASHBOARD ---
-function loadDataRealtime() {
+// --- DATOS EN TIEMPO REAL (DASHBOARD & TABLAS) ---
+let myChart = null;
+
+function loadRealtimeData() {
     const q = query(collection(db, "Solicitudes"), orderBy("createdAt", "desc"));
-    
-    // Listener en tiempo real (Snapshot)
+
     onSnapshot(q, (snapshot) => {
-        allDocs = [];
-        let stats = { total: 0, pending: 0, approved: 0 };
-        const tbody = document.getElementById("solTableBody");
-        const timeline = document.getElementById("historialList");
-        
+        const tbody = document.getElementById("docsTableBody");
+        const timeline = document.getElementById("recentHistory");
         tbody.innerHTML = "";
         timeline.innerHTML = "";
+
+        let stats = { total: 0, pend: 0, ok: 0 };
 
         snapshot.forEach(docSnap => {
             const data = docSnap.data();
             const id = docSnap.id;
-            
-            // Filtro de seguridad por Rol
+
+            // Filtro de seguridad visual
             if(currentUser.role !== 'admin' && data.createdBy !== currentUser.usuario) return;
 
-            allDocs.push({ id, ...data });
-
-            // Stats
+            // Contadores
             stats.total++;
-            if(data.estado === "Pendiente") stats.pending++;
-            if(data.estado === "Aprobado") stats.approved++;
+            if(data.estado === "Pendiente") stats.pend++;
+            if(data.estado === "Aprobado") stats.ok++;
 
             // Render Tabla
             const tr = document.createElement("tr");
             tr.innerHTML = `
                 <td>
-                    <b>${data.title}</b><br>
-                    <small class="text-muted">${data.createdAt.substring(0,10)}</small>
+                    <strong>${data.title}</strong><br>
+                    <small style="color:#94a3b8">${new Date(data.createdAt).toLocaleDateString()}</small>
                 </td>
                 <td>${data.tipo}</td>
                 <td>v${data.version}</td>
-                <td><span class="status-badge status-${data.estado}">${data.estado}</span></td>
+                <td><span class="badge ${data.estado}">${data.estado}</span></td>
                 <td>
-                    <button class="btn-text" onclick="verDetalle('${data.desc}', '${data.fileUrl}')">Ver</button>
+                    <button class="btn-icon" onclick="verDetalles('${data.desc}', '${data.fileUrl}')" title="Ver Detalles">
+                        <span class="material-icons-round">visibility</span>
+                    </button>
                     ${currentUser.role === 'admin' && data.estado === 'Pendiente' ? 
-                        `<button class="btn-text" style="color:var(--success)" onclick="abrirFirma('${id}')">Aprobar</button>
-                         <button class="btn-text" style="color:var(--danger)" onclick="rechazar('${id}')">Rechazar</button>` : ''}
+                        `<button class="btn-icon" style="color:#10b981" onclick="firmar('${id}')" title="Aprobar">
+                            <span class="material-icons-round">thumb_up</span>
+                         </button>
+                         <button class="btn-icon" style="color:#ef4444" onclick="rechazar('${id}')" title="Rechazar">
+                            <span class="material-icons-round">thumb_down</span>
+                         </button>` : ''}
                 </td>
             `;
             tbody.appendChild(tr);
 
-            // Render Timeline (Solo últimos 5)
+            // Render Timeline (Últimos 5)
             if(stats.total <= 5) {
-                timeline.innerHTML += `
-                    <div class="timeline-item">
-                        <div class="timeline-line"></div>
-                        <div class="timeline-icon"><span class="material-icons-round">history</span></div>
-                        <div class="timeline-content">
-                            <strong>${data.accion}</strong> - ${data.title}
-                            <div style="font-size:0.8rem; color:#888">${new Date(data.createdAt).toLocaleString()} por ${data.createdBy}</div>
-                        </div>
-                    </div>
-                `;
+                const div = document.createElement("div");
+                div.style.marginBottom = "10px";
+                div.style.borderLeft = "2px solid #e2e8f0";
+                div.style.paddingLeft = "10px";
+                div.innerHTML = `<b>${data.accion}</b> - ${data.title} <br><small>${data.estado}</small>`;
+                timeline.appendChild(div);
             }
         });
 
-        // Update UI Stats
+        // Actualizar Stats UI
         document.getElementById("statTotal").innerText = stats.total;
-        document.getElementById("statPendientes").innerText = stats.pending;
-        document.getElementById("statAprobados").innerText = stats.approved;
-        
-        // Empty State
-        document.getElementById("emptyState").classList.toggle("hide", stats.total > 0);
+        document.getElementById("statPendientes").innerText = stats.pend;
+        document.getElementById("statAprobados").innerText = stats.ok;
 
-        // Update Charts
         updateChart(stats);
     });
 }
 
-// --- CHART.JS INTEGRATION ---
-let myChart = null;
+// Gráfico con Chart.js
 function updateChart(stats) {
-    const ctx = document.getElementById('mainChart').getContext('2d');
+    const ctx = document.getElementById('statusChart').getContext('2d');
     if(myChart) myChart.destroy();
     
     myChart = new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['Pendientes', 'Aprobados', 'Rechazados'],
+            labels: ['Pendiente', 'Aprobado'],
             datasets: [{
-                data: [stats.pending, stats.approved, stats.total - (stats.pending + stats.approved)],
-                backgroundColor: ['#f59e0b', '#10b981', '#ef4444'],
+                data: [stats.pend, stats.ok],
+                backgroundColor: ['#f59e0b', '#10b981'],
                 borderWidth: 0
             }]
         },
-        options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+        options: { responsive: true, maintainAspectRatio: false, cutout: '75%' }
     });
 }
 
-// --- SEARCH ---
-document.getElementById("globalSearch").addEventListener("keyup", (e) => {
-    const term = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll("#solTableBody tr");
-    rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(term) ? "" : "none";
-    });
-});
-
-// --- ACTIONS ---
-window.toggleModal = (id) => document.getElementById(id).classList.toggle("hide");
-window.checkModType = () => {
+// --- ACCIONES DEL NEGOCIO ---
+window.toggleDate = () => {
     const isMod = document.getElementById("solAccion").value === "Modificación";
     document.getElementById("solLastDate").disabled = !isMod;
 };
 
 window.crearSolicitud = async () => {
     const title = document.getElementById("solTitle").value;
-    const tipo = document.getElementById("solTipo").value;
-    const accion = document.getElementById("solAccion").value;
-    
-    if(!title) return Swal.fire("Error", "El título es obligatorio", "warning");
+    if(!title) return Swal.fire("Atención", "Título requerido", "warning");
 
-    showLoader(true);
-    // Simular upload
-    const fileUrl = "#"; // Aquí iría tu lógica de Cloudinary
+    loader(true);
+    // Simulación de URL de archivo
+    const fileUrl = "#"; 
 
-    try {
-        await addDoc(collection(db, "Solicitudes"), {
-            title, tipo, accion, 
-            version: document.getElementById("solVersion").value || "1.0",
-            desc: document.getElementById("solDesc").value,
-            fileUrl,
-            estado: "Pendiente",
-            createdBy: currentUser.usuario,
-            createdAt: new Date().toISOString()
-        });
-        notify("Solicitud Creada Exitosamente", "success");
-        toggleModal('modalSolicitud');
-    } catch (e) {
-        notify("Error al crear", "error");
-    } finally {
-        showLoader(false);
-    }
+    await addDoc(collection(db, "Solicitudes"), {
+        title,
+        tipo: document.getElementById("solTipo").value,
+        accion: document.getElementById("solAccion").value,
+        version: document.getElementById("solVersion").value || "1.0",
+        desc: document.getElementById("solDesc").value,
+        fileUrl,
+        estado: "Pendiente",
+        createdBy: currentUser.usuario,
+        createdAt: new Date().toISOString()
+    });
+
+    loader(false);
+    closeModal('modalNewSol');
+    Swal.fire("Éxito", "Solicitud creada correctamente", "success");
 };
 
-window.verDetalle = (desc, url) => {
+window.verDetalles = (desc, url) => {
     Swal.fire({
-        title: 'Detalles del Documento',
-        html: `<p>${desc}</p><br>${url !== '#' ? `<a href="${url}" target="_blank" class="btn-primary">Ver Archivo</a>` : 'Sin archivo adjunto'}`,
-        showCloseButton: true
+        title: 'Detalles',
+        text: desc,
+        footer: `<a href="${url}" target="_blank">Ver Archivo Adjunto</a>`
     });
 };
 
@@ -230,79 +225,60 @@ const canvas = document.getElementById("signaturePad");
 const ctx = canvas.getContext("2d");
 let drawing = false;
 
-// Funciones de dibujo (ratón y táctil)
+// Eventos Mouse/Touch para Canvas
 const getPos = (e) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-    const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
-    return { x, y };
-}
+    const r = canvas.getBoundingClientRect();
+    const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) - r.top;
+    return {x, y};
+};
 
-['mousedown', 'touchstart'].forEach(evt => 
-    canvas.addEventListener(evt, (e) => { drawing = true; ctx.beginPath(); const p = getPos(e); ctx.moveTo(p.x, p.y); })
-);
-['mousemove', 'touchmove'].forEach(evt => 
-    canvas.addEventListener(evt, (e) => { 
-        if(!drawing) return; 
-        e.preventDefault(); 
-        const p = getPos(e); 
-        ctx.lineTo(p.x, p.y); 
-        ctx.stroke(); 
-    })
-);
-['mouseup', 'touchend'].forEach(evt => canvas.addEventListener(evt, () => drawing = false));
+['mousedown', 'touchstart'].forEach(ev => canvas.addEventListener(ev, (e) => { drawing=true; ctx.beginPath(); const p=getPos(e); ctx.moveTo(p.x, p.y); }));
+['mousemove', 'touchmove'].forEach(ev => canvas.addEventListener(ev, (e) => { if(drawing){ e.preventDefault(); const p=getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }}));
+['mouseup', 'touchend'].forEach(ev => canvas.addEventListener(ev, () => drawing=false));
 
-document.getElementById("btnClearSign").onclick = () => ctx.clearRect(0,0,canvas.width, canvas.height);
+document.getElementById("btnClearSign").onclick = () => ctx.clearRect(0,0,400,200);
 
-window.abrirFirma = (id) => {
+window.firmar = (id) => {
     currentSignId = id;
-    document.getElementById("signerName").innerText = currentUser.usuario;
-    ctx.clearRect(0,0,canvas.width, canvas.height);
-    toggleModal("modalFirma");
+    ctx.clearRect(0,0,400,200);
+    openModal('modalSign');
 };
 
 document.getElementById("btnConfirmSign").onclick = async () => {
-    showLoader(true);
-    const firmaImg = canvas.toDataURL();
+    loader(true);
+    const firma = canvas.toDataURL(); // Base64 imagen
     
     await updateDoc(doc(db, "Solicitudes", currentSignId), {
         estado: "Aprobado",
-        firmaAdmin: firmaImg,
-        approvedAt: new Date().toISOString()
+        firmaAdmin: firma,
+        fechaAprobacion: new Date().toISOString()
     });
-    
-    toggleModal("modalFirma");
-    showLoader(false);
-    Swal.fire("¡Aprobado!", "El documento ha sido firmado y procesado.", "success");
+
+    loader(false);
+    closeModal('modalSign');
+    Swal.fire("Aprobado", "Documento firmado digitalmente", "success");
 };
 
 window.rechazar = async (id) => {
-    const result = await Swal.fire({
-        title: '¿Rechazar solicitud?',
-        text: "Esta acción no se puede deshacer",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, rechazar'
-    });
-
-    if (result.isConfirmed) {
+    const res = await Swal.fire({title: "¿Rechazar?", text: "No podrá deshacerse", icon: "warning", showCancelButton: true});
+    if(res.isConfirmed) {
+        loader(true);
         await updateDoc(doc(db, "Solicitudes", id), { estado: "Rechazado" });
-        notify("Solicitud rechazada", "info");
+        loader(false);
     }
 };
 
-// --- PESTAÑAS ---
-document.querySelectorAll(".nav-item").forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll(".nav-item").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(btn.dataset.tab).classList.add("active");
-        
-        // Mobile Sidebar Close
-        if(window.innerWidth < 768) document.querySelector(".sidebar").classList.remove("show");
-    };
-});
-
-// Inicialmente ocultar loader
-window.onload = () => showLoader(false);
+// Crear usuario (Admin)
+document.getElementById("btnCreateUser").onclick = async () => {
+    const u = document.getElementById("uName").value;
+    const p = document.getElementById("uPass").value;
+    const r = document.getElementById("uRole").value;
+    
+    if(u && p) {
+        await addDoc(collection(db, "Usuarios"), { usuario: u, pass: p, role: r });
+        Swal.fire("Usuario Creado", "", "success");
+        document.getElementById("uName").value = "";
+        document.getElementById("uPass").value = "";
+    }
+};
