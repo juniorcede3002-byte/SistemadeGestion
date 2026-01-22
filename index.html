@@ -3,205 +3,257 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGC Pro Ultra | Sistema de Gestión Documental ISO 9001</title>
+    <title>SGC Pro | Sistema Integrado</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <style>
         :root { 
-            --primary: #2563eb; --bg: #f1f5f9; --sidebar: #0f172a; --text: #1e293b;
+            --primary: #2563eb; --bg: #f8fafc; --sidebar: #0f172a; --text: #334155;
             --border: #e2e8f0; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; 
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
         body { background: var(--bg); display: flex; height: 100vh; overflow: hidden; color: var(--text); }
 
         /* Login */
-        #login-screen { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 5000; }
-        .login-box { background: white; padding: 40px; border-radius: 24px; width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        #login-screen { position: fixed; inset: 0; background: #020617; display: flex; align-items: center; justify-content: center; z-index: 3000; }
+        .login-box { background: white; padding: 40px; border-radius: 20px; width: 380px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
         
         /* Layout */
-        .sidebar { width: 280px; background: var(--sidebar); color: white; display: none; flex-direction: column; padding: 25px; }
-        .main { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+        .sidebar { width: 260px; background: var(--sidebar); color: white; display: none; flex-direction: column; padding: 25px; transition: 0.3s; }
+        .main { flex: 1; padding: 40px; overflow-y: auto; display: none; background: #f1f5f9; }
 
-        .nav-link { display: flex; align-items: center; padding: 12px 15px; color: #94a3b8; border: none; background: none; cursor: pointer; border-radius: 10px; width: 100%; margin-bottom: 5px; font-weight: 500; transition: 0.2s; }
-        .nav-link.active { background: var(--primary); color: white; }
-        .nav-link span { margin-right: 12px; }
+        /* Nav */
+        .nav-link { display: flex; align-items: center; padding: 14px; color: #94a3b8; border: none; background: none; cursor: pointer; border-radius: 12px; width: 100%; margin-bottom: 8px; font-weight: 500; font-size: 14px; text-align: left; transition: all 0.2s; }
+        .nav-link:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-link.active { background: var(--primary); color: white; font-weight: 700; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4); }
+        .nav-link span { margin-right: 12px; font-size: 20px; }
 
-        .section { display: none; }
+        /* UI Elements */
+        .section { display: none; animation: fadeIn 0.3s ease; }
         .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 6px; text-transform: uppercase; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 12px; background: #f8fafc; }
+        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+        label { display: block; font-size: 11px; font-weight: 800; color: #64748b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 15px; background: #fff; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; ring: 2px var(--primary); }
 
-        /* Firmas Progress Bar */
-        .signature-track { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; padding: 0 20px; }
-        .sig-step { text-align: center; position: relative; z-index: 2; flex: 1; }
-        .sig-dot { width: 35px; height: 35px; background: #e2e8f0; border-radius: 50%; margin: 0 auto 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 4px solid white; transition: 0.3s; }
-        .sig-step.active .sig-dot { background: var(--primary); color: white; }
-        .sig-step.completed .sig-dot { background: var(--success); color: white; }
-        .sig-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
-        .sig-step.active .sig-label { color: var(--primary); }
-
-        /* Chat System */
-        .chat-container { height: 400px; display: flex; flex-direction: column; background: #f8fafc; border-radius: 12px; border: 1px solid var(--border); }
-        .chat-messages { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-        .msg { max-width: 80%; padding: 10px 15px; border-radius: 15px; font-size: 13px; line-height: 1.4; }
-        .msg.sent { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 2px; }
-        .msg.received { align-self: flex-start; background: white; color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 2px; }
-        .msg-info { font-size: 9px; opacity: 0.8; margin-bottom: 4px; display: block; font-weight: 800; }
-
-        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-
-        .status-pill { padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-        
-        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); display: none; align-items: center; justify-content: center; z-index: 4000; backdrop-filter: blur(4px); }
-        .modal-content { background: white; width: 950px; border-radius: 20px; height: 90vh; display: grid; grid-template-columns: 1fr 350px; overflow: hidden; }
+        /* Stats & Tables */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 16px; border-left: 5px solid var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        .stat-value { font-size: 28px; font-weight: 800; margin-top: 5px; color: #0f172a; }
         
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: #f8fafc; font-size: 11px; color: #64748b; }
+        th { text-align: left; padding: 15px; font-size: 11px; color: #64748b; border-bottom: 2px solid #f1f5f9; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+
+        /* Buttons & Status */
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { transform: translateY(-1px); opacity: 0.9; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: #78350f; }
+
+        .status { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .st-pendiente { background: #fef3c7; color: #92400e; }
+        .st-aprobado { background: #dcfce7; color: #166534; }
+        .st-en-reunión { background: #e0f2fe; color: #0369a1; }
+        .st-rechazado { background: #fee2e2; color: #991b1b; }
+
+        /* Modal & Loader */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9); display: none; align-items: center; justify-content: center; z-index: 4000; backdrop-filter: blur(5px); }
+        .modal-content { background: white; width: 800px; border-radius: 20px; padding: 40px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #f1f5f9; align-items: center; }
+        .detail-label { width: 200px; font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
+        
+        .chat-box { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 10px; }
+        .chat-msg { font-size: 13px; margin-bottom: 5px; }
+        .chat-role { font-weight: 800; font-size: 10px; text-transform: uppercase; color: var(--primary); }
+
+        #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 5000; display: none; align-items: center; justify-content: center; flex-direction: column; }
     </style>
 </head>
 <body>
 
+    <div id="loading-overlay">
+        <div style="font-size: 30px; margin-bottom: 10px;">☁️</div>
+        <h3 style="color:var(--primary)">Procesando...</h3>
+        <p style="font-size:12px; color:#64748b">Subiendo archivos a Cloudinary y generando ID</p>
+    </div>
+
     <div id="login-screen">
         <div class="login-box">
-            <div style="font-size: 40px; margin-bottom: 10px;">🛡️</div>
-            <h1 style="color:var(--primary); font-weight: 800;">SGC PRO GOLD</h1>
-            <p style="color:#64748b; margin-bottom: 30px;">Gestión ISO 9001 - Flujo de 4 Firmas</p>
+            <h1 style="color:var(--primary); margin-bottom: 10px;">SGC PRO</h1>
+            <p style="color:#64748b; font-size:12px; margin-bottom:30px;">Acceso al Sistema de Gestión ISO 9001</p>
             <input type="text" id="userInput" placeholder="Usuario">
             <input type="password" id="passInput" placeholder="Contraseña">
-            <button class="btn btn-primary" id="btnLogin" style="width: 100%; justify-content: center;">ACCEDER AL PANEL</button>
-            <button id="btn-reset-hidden" style="opacity:0; width:1px; height:1px;">.</button>
+            <button class="btn btn-primary" id="btnLogin" style="width: 100%; justify-content: center; padding: 14px;">INICIAR SESIÓN</button>
+            <div style="margin-top: 20px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+                <button id="btnInit" style="background:none; border:none; color:#cbd5e1; font-size:11px; cursor:pointer;">Reset Admin</button>
+            </div>
         </div>
     </div>
 
     <aside class="sidebar" id="sidebar">
-        <div style="font-size: 20px; font-weight: 900; margin-bottom: 40px; display: flex; align-items: center; gap:10px;">
-            <span class="material-icons-round" style="color:var(--primary)">verified_user</span> SGC GOLD
-        </div>
+        <div style="font-size: 20px; font-weight: 900; color: #38bdf8; margin-bottom: 40px; text-align:center; letter-spacing: 2px;">SGC ISO</div>
         <nav style="flex:1">
-            <button class="nav-link active" onclick="cambiarVista('sec-dash', this)"><span class="material-icons-round">space_dashboard</span> Dashboard</button>
+            <button class="nav-link active" onclick="cambiarVista('sec-dash', this)"><span class="material-icons-round">analytics</span> Dashboard</button>
             <button class="nav-link" onclick="cambiarVista('sec-nueva', this)"><span class="material-icons-round">post_add</span> Nueva Solicitud</button>
-            <button class="nav-link" onclick="cambiarVista('sec-historial', this)"><span class="material-icons-round">folder_copy</span> Historial SGC</button>
-            <div id="admin-menu" style="display:none; margin-top:20px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.1);">
+            <button class="nav-link" onclick="cambiarVista('sec-historial', this)"><span class="material-icons-round">history_edu</span> Historial</button>
+            
+            <div id="admin-menu" style="display:none; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <p style="font-size: 10px; color: #64748b; margin-bottom: 10px; padding-left: 10px; font-weight: 800;">ADMINISTRACIÓN</p>
                 <button class="nav-link" onclick="cambiarVista('sec-usuarios', this)"><span class="material-icons-round">manage_accounts</span> Usuarios</button>
+                <button class="nav-link" onclick="cambiarVista('sec-estructura', this)"><span class="material-icons-round">account_tree</span> Estructura</button>
             </div>
         </nav>
-        <div id="u-profile" style="padding: 15px; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 10px; font-size: 12px;"></div>
-        <button class="btn btn-danger" onclick="location.reload()" style="width:100%; justify-content: center;">CERRAR SESIÓN</button>
+        <div style="font-size: 11px; color: #94a3b8; text-align: center; margin-bottom: 5px;" id="user-display-info"></div>
+        <div style="font-size: 10px; color: #64748b; text-align: center; margin-bottom: 20px;" id="user-gerencia-info"></div>
+        <button class="btn btn-danger" onclick="location.reload()" style="width:100%; justify-content: center;">Cerrar Sesión</button>
     </aside>
 
     <main class="main" id="main-content">
         <section id="sec-dash" class="section active">
-            <h1 style="margin-bottom: 25px;">Resumen de Control de Calidad</h1>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:20px; margin-bottom: 30px;">
-                <div class="card" style="border-left:5px solid #64748b"><h3>Total</h3><p id="c-total" style="font-size:32px; font-weight:800;">0</p></div>
-                <div class="card" style="border-left:5px solid var(--warning)"><h3>Pendientes</h3><p id="c-pen" style="font-size:32px; font-weight:800;">0</p></div>
-                <div class="card" style="border-left:5px solid var(--primary)"><h3>En Revisión</h3><p id="c-rev" style="font-size:32px; font-weight:800;">0</p></div>
-                <div class="card" style="border-left:5px solid var(--success)"><h3>Vigentes</h3><p id="c-ok" style="font-size:32px; font-weight:800;">0</p></div>
+            <h1 style="margin-bottom: 30px;">Panel General</h1>
+            <div class="stats-grid">
+                <div class="stat-card"><h3>Total Solicitudes</h3><p id="c-total" class="stat-value">0</p></div>
+                <div class="stat-card" style="border-color:var(--warning)"><h3>Pendientes</h3><p id="c-pen" class="stat-value">0</p></div>
+                <div class="stat-card" style="border-color:var(--primary)"><h3>En Gestión</h3><p id="c-reu" class="stat-value">0</p></div>
+                <div class="stat-card" style="border-color:var(--success)"><h3>Finalizados</h3><p id="c-ok" class="stat-value">0</p></div>
             </div>
         </section>
 
         <section id="sec-nueva" class="section">
-            <div class="card" style="max-width: 800px; margin: auto;">
-                <h2 style="margin-bottom: 20px;">Creación de Documento</h2>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                    <div><label>Acción</label>
+            <h1>Crear Solicitud</h1>
+            <div class="card">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div>
+                        <label>Acción</label>
                         <select id="sol-accion">
-                            <option value="creacion">Nueva Creación</option>
-                            <option value="modificacion">Modificación de Existente</option>
-                            <option value="inactivacion">Inactivación (Baja)</option>
+                            <option value="creacion">Creación</option>
+                            <option value="modificacion">Modificación</option>
+                            <option value="inactivacion">Inactivación</option>
                         </select>
                     </div>
-                    <div><label>Gerencia Solicitante</label><select id="sol-ger"></select></div>
+                    <div><label>Tipo Documento</label><select id="sol-tipo"><option>Procedimiento</option><option>Manual</option><option>Formato</option><option>Instructivo</option></select></div>
                 </div>
-                <label>Título del Documento</label><input type="text" id="sol-tit" placeholder="Ej: Manual de Seguridad Operativa">
-                <label>Justificación Técnica</label><textarea id="sol-jus" rows="4"></textarea>
-                <label>Documento de Referencia</label><input type="file" id="sol-file">
-                <button class="btn btn-primary" id="btnSend" style="width:100%; justify-content: center; padding: 15px;">INICIAR FLUJO DE FIRMAS (PASO 1)</button>
+
+                <div id="dynamic-code-field" style="display:none; background: #fff7ed; padding: 15px; border: 1px solid #ffedd5; border-radius: 8px; margin-bottom: 15px;">
+                    <label style="color:#c2410c;">⚠️ Código del Documento a Modificar/Inactivar</label>
+                    <input type="text" id="sol-codigo-ref" placeholder="Ej: FCI-PRO-001" style="margin-bottom:0;">
+                </div>
+
+                <label>Título del Documento</label><input type="text" id="sol-tit">
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div><label>Gerencia</label><select id="sol-ger"></select></div>
+                    <div><label>Departamento</label><select id="sol-dep"></select></div>
+                </div>
+                
+                <label>Adjuntar Referencia (Se subirá a Cloudinary)</label>
+                <input type="file" id="sol-file" style="border:none;">
+                
+                <label>Justificación</label><textarea id="sol-jus" rows="4"></textarea>
+                <button class="btn btn-primary" id="btnSend" style="width:100%; justify-content:center; padding: 15px;">Generar FCI-SOL y Enviar</button>
             </div>
         </section>
 
         <section id="sec-historial" class="section">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h1>Bandeja de Control Documental</h1>
-                <input type="text" id="main-search" placeholder="🔍 Buscar por código, título o solicitante..." style="width: 400px; margin:0;">
+                <h1>Bandeja de Entrada</h1>
+                <input type="text" id="search-filter" placeholder="🔍 Buscar por ID, Título o Estado..." style="width: 300px; margin:0;">
             </div>
+            
             <div class="card" style="padding:0; overflow:hidden;">
                 <table id="table-sol">
-                    <thead><tr><th>CÓDIGO</th><th>DOCUMENTO</th><th>SOLICITANTE</th><th>ESTADO ACTUAL</th><th>GESTIÓN</th></tr></thead>
+                    <thead><tr><th>ID</th><th>Título / Detalles</th><th>Estado</th><th>Gestión</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>
         </section>
 
         <section id="sec-usuarios" class="section">
+            <h1>Gestión de Usuarios</h1>
             <div class="card">
-                <h3>Gestionar Personal y Roles</h3><br>
                 <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:15px;">
                     <input type="text" id="u-nom" placeholder="Nombre Completo">
-                    <input type="text" id="u-usr" placeholder="ID de Usuario">
-                    <input type="email" id="u-mail" placeholder="Correo Electrónico">
-                    <select id="u-rol">
-                        <option value="applicant">Solicitante (Elabora)</option>
-                        <option value="verifier">Verificador Técnico</option>
-                        <option value="admin">Administrador SGC (Valida)</option>
-                        <option value="manager">Gerente General (Aprueba)</option>
-                    </select>
+                    <input type="text" id="u-usr" placeholder="Usuario ID">
+                    <input type="text" id="u-pas" placeholder="Contraseña">
+                    <select id="u-rol"><option value="applicant">Solicitante</option><option value="gerente">Gerente</option><option value="admin">Administrador</option></select>
                 </div>
-                <button class="btn btn-primary" id="btnUser">Registrar Usuario</button>
+                <label>Asignar Gerencia</label>
+                <select id="u-ger-assign"></select>
+                <button class="btn btn-primary" id="btnUser" style="margin-top:15px; width:100%">Registrar Usuario</button>
+            </div>
+            <div class="card" style="padding:0"><table id="table-u"><thead><tr><th>Usuario</th><th>Rol</th><th>Gerencia</th><th>X</th></tr></thead><tbody></tbody></table></div>
+        </section>
+
+        <section id="sec-estructura" class="section">
+            <h1>Estructura Organizativa</h1>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:25px;">
+                <div class="card">
+                    <h3>Gerencias</h3>
+                    <div style="display:flex; gap:10px; margin:15px 0;"><input type="text" id="in-ger"><button class="btn btn-primary" id="add-ger">Añadir</button></div>
+                    <div id="list-ger"></div>
+                </div>
+                <div class="card">
+                    <h3>Departamentos</h3>
+                    <div style="display:flex; gap:10px; margin:15px 0;"><input type="text" id="in-dep"><button class="btn btn-primary" id="add-dep">Añadir</button></div>
+                    <div id="list-dep"></div>
+                </div>
             </div>
         </section>
     </main>
 
     <div class="modal-overlay" id="modal">
         <div class="modal-content">
-            <div style="padding: 30px; overflow-y: auto; border-right: 1px solid #eee;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-                    <span id="m-fci" style="background:var(--primary); color:white; padding:5px 12px; border-radius:6px; font-weight:800; font-size:12px;"></span>
-                    <button class="btn btn-danger" onclick="closeModal()">Cerrar</button>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:20px;">
+                <div>
+                    <span id="m-id" style="font-size:12px; background:#e2e8f0; padding:4px 8px; border-radius:4px; font-weight:800;"></span>
+                    <h2 id="m-tit" style="color:var(--primary); margin-top:5px;">Detalle</h2>
                 </div>
-                <h2 id="m-tit" style="margin-bottom: 25px;"></h2>
+                <button class="btn btn-danger" onclick="window.closeModal()">Cerrar</button>
+            </div>
+            
+            <div id="m-body"></div>
 
-                <div class="signature-track">
-                    <div class="sig-step" id="step-1"><div class="sig-dot">1</div><div class="sig-label">Elaborado</div></div>
-                    <div class="sig-step" id="step-2"><div class="sig-dot">2</div><div class="sig-label">Verificado</div></div>
-                    <div class="sig-step" id="step-3"><div class="sig-dot">3</div><div class="sig-label">Validado SGC</div></div>
-                    <div class="sig-step" id="step-4"><div class="sig-dot">4</div><div class="sig-label">Aprobado</div></div>
-                </div>
-
-                <div id="m-body" style="font-size: 14px; line-height: 1.6; color: #475569;"></div>
-                
-                <div id="m-actions" style="margin-top:30px; padding-top:20px; border-top: 1px solid #eee;">
-                    <p style="font-weight:800; font-size:11px; color:#64748b; margin-bottom:15px;">ACCIONES DISPONIBLES PARA SU RANGO:</p>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                        <button class="btn btn-success" id="btn-next-step">
-                            <span class="material-icons-round">draw</span> <span id="btn-text-sig">Firmar y Avanzar</span>
-                        </button>
-                        <button class="btn btn-warning" id="btn-reunion">
-                            <span class="material-icons-round">groups</span> Solicitar Reunión
-                        </button>
-                        <button class="btn btn-danger" id="btn-reject">Rechazar</button>
-                    </div>
+            <div id="m-chat-area" style="display:none; margin-top:20px;">
+                <h4 style="color:var(--warning); margin-bottom:10px;">💬 Consultas Activas</h4>
+                <div id="m-chat-history" class="chat-box"></div>
+                <div id="m-chat-input" style="display:none; margin-top:10px; display:flex; gap:10px;">
+                    <input type="text" id="chat-response-text" placeholder="Escriba su respuesta aquí..." style="margin:0;">
+                    <button class="btn btn-primary" id="btn-reply-chat">Responder</button>
                 </div>
             </div>
 
-            <div style="background: #f8fafc; display: flex; flex-direction: column;">
-                <div style="padding: 20px; background: white; border-bottom: 1px solid #eee;">
-                    <h4 style="display:flex; align-items:center; gap:8px;"><span class="material-icons-round" style="color:var(--primary)">chat</span> Chat de la Solicitud</h4>
+            <div id="m-actions" style="margin-top:30px; display:none;">
+                <div style="background: #f8fafc; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom:10px; color:#64748b; font-size:11px; text-transform:uppercase;">Flujo de Firmas</h4>
+                    <div id="firma-status-visual"></div>
                 </div>
-                <div class="chat-messages" id="chat-box"></div>
-                <div style="padding: 15px; background: white;">
-                    <div style="display:flex; gap:10px;">
-                        <input type="text" id="chat-input" placeholder="Escriba un mensaje..." style="margin:0;">
-                        <button class="btn btn-primary" id="btnChatSend" style="padding: 10px;"><span class="material-icons-round">send</span></button>
-                    </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <button class="btn btn-primary" id="btn-firma-next">✍️ Firmar</button>
+                    <button class="btn btn-warning" id="btn-open-con">❓ Consulta</button>
+                    <button class="btn btn-warning" id="btn-open-reu">📅 Reunión</button>
+                    <button class="btn btn-danger" id="btn-rechazar" style="display:none;">⛔ Rechazar</button>
+                </div>
+                <div id="pane-reu" style="display:none; margin-top:15px; background:#fffbeb; padding:20px; border-radius:10px;">
+                    <label>Fecha</label><input type="date" id="reu-fec">
+                    <label>Motivo</label><textarea id="reu-mot"></textarea>
+                    <button class="btn btn-success" id="btn-reu-save">Confirmar</button>
+                </div>
+                <div id="pane-con" style="display:none; margin-top:15px; background:#eff6ff; padding:20px; border-radius:10px;">
+                    <label>Pregunta:</label><textarea id="con-mot"></textarea>
+                    <button class="btn btn-success" id="btn-con-save">Enviar</button>
+                </div>
+                <div id="pane-file" style="display:none; margin-top:15px; background:#f0fdf4; padding:20px; border-radius:10px;">
+                    <label>Subir Documento Final (PDF/Word)</label><input type="file" id="file-final">
+                </div>
+                <div id="pane-rechazo" style="display:none; margin-top:15px; background:#fef2f2; padding:20px; border-radius:10px;">
+                    <label>Motivo de Rechazo</label><textarea id="rechazo-mot"></textarea>
+                    <button class="btn btn-danger" id="btn-rechazo-save">Devolver</button>
                 </div>
             </div>
         </div>
@@ -209,7 +261,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, getDoc, runTransaction, setDoc, arrayUnion, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, doc, updateDoc, deleteDoc, getDoc, runTransaction, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDdzCiachuhbE9jATz-TesPI2vUVIJrHjM",
@@ -224,243 +276,374 @@
         const db = getFirestore(app);
         let user = null;
         let selectedId = null;
-        let cacheSolicitudes = [];
 
-        // --- AUTH & UI ---
+        // CLOUDINARY CONFIG
+        const CLOUD_NAME = "df79cjklp";
+        const UPLOAD_PRESET = "fci_documentos"; // Asegúrate que en Cloudinary esté como "Unsigned"
+        
+        // --- FUNCIÓN SUBIDA CLOUDINARY ---
+        async function uploadToCloudinary(file) {
+            if(!file) return null;
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', UPLOAD_PRESET);
+            
+            try {
+                const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+                return data.secure_url;
+            } catch(e) {
+                console.error("Error subida", e);
+                alert("Error subiendo archivo a Cloudinary");
+                return null;
+            }
+        }
+
+        // --- FUNCIÓN GENERAR ID CONSECUTIVO ---
+        async function getNextId() {
+            const counterRef = doc(db, "Contadores", "solicitudes");
+            let newId = "";
+            
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(counterRef);
+                    let count = 1;
+                    if (sfDoc.exists()) {
+                        count = sfDoc.data().count + 1;
+                    }
+                    transaction.set(counterRef, { count: count });
+                    // Formato FCI-SOL-0001
+                    newId = `FCI-SOL-${String(count).padStart(4, '0')}`;
+                });
+            } catch (e) {
+                console.error("Error ID", e);
+                newId = `FCI-ERR-${Date.now()}`; // Fallback por si falla
+            }
+            return newId;
+        }
+
+        // VISTA
+        window.cambiarVista = (vistaId, btn) => {
+            document.querySelectorAll('.section, .nav-link').forEach(el => el.classList.remove('active'));
+            document.getElementById(vistaId).classList.add('active');
+            if(btn) btn.classList.add('active');
+        };
+
+        // UI LÓGICA DINÁMICA
+        document.getElementById('sol-accion').addEventListener('change', (e) => {
+            const val = e.target.value;
+            const field = document.getElementById('dynamic-code-field');
+            if(val === 'modificacion' || val === 'inactivacion') {
+                field.style.display = 'block';
+            } else {
+                field.style.display = 'none';
+            }
+        });
+
+        // FILTRO DE BÚSQUEDA
+        document.getElementById('search-filter').addEventListener('keyup', (e) => {
+            const term = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#table-sol tbody tr');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(term) ? '' : 'none';
+            });
+        });
+
+        // LOGIN
         document.getElementById('btnLogin').onclick = async () => {
-            const u = document.getElementById('userInput').value;
-            const p = document.getElementById('passInput').value;
-            const q = query(collection(db, "Usuarios"), where("usuario", "==", u), where("pass", "==", p));
+            const uInput = document.getElementById('userInput').value;
+            const pInput = document.getElementById('passInput').value;
+            const q = query(collection(db, "Usuarios"), where("usuario", "==", uInput), where("pass", "==", pInput));
             const snap = await getDocs(q);
             
             if(!snap.empty) {
                 user = snap.docs[0].data();
-                document.getElementById('login-screen').style.display = 'none';
-                document.getElementById('sidebar').style.display = 'flex';
-                document.getElementById('main-content').style.display = 'block';
-                document.getElementById('u-profile').innerHTML = `<b>${user.nombre}</b><br>${user.role.toUpperCase()}`;
-                if(user.role === 'admin') document.getElementById('admin-menu').style.display = 'block';
-                iniciarSincronizacion();
-            } else alert("Error de credenciales");
+                document.getElementById('login-screen').style.display='none';
+                document.getElementById('sidebar').style.display='flex';
+                document.getElementById('main-content').style.display='block';
+                document.getElementById('user-display-info').innerText = `${user.nombre} (${user.role})`;
+                document.getElementById('user-gerencia-info').innerText = user.gerencia ? `Gerencia: ${user.gerencia}` : 'Global';
+                if(user.role === 'admin') document.getElementById('admin-menu').style.display='block';
+                iniciarSistema();
+            } else alert("Datos incorrectos");
         };
 
-        window.cambiarVista = (id, btn) => {
-            document.querySelectorAll('.section, .nav-link').forEach(e => e.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(btn) btn.classList.add('active');
-        };
-
-        // --- SISTEMA DE FIRMAS (ESTADOS) ---
-        const ESTADOS = [
-            "Paso 1: Elaborado",
-            "Paso 2: Verificado",
-            "Paso 3: Validado SGC",
-            "Paso 4: Aprobado Gerencia"
-        ];
-
-        // --- SINCRONIZACIÓN REALTIME ---
-        function iniciarSincronizacion() {
-            onSnapshot(collection(db, "Gerencias"), s => {
-                let opt = ""; s.forEach(d => opt += `<option>${d.data().nombre}</option>`);
+        function iniciarSistema() {
+            onSnapshot(collection(db, "Gerencias"), snap => {
+                let list="", opt="";
+                snap.forEach(d => {
+                    list += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${d.data().nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Gerencias','${d.id}')">X</button></div>`;
+                    opt += `<option>${d.data().nombre}</option>`;
+                });
+                document.getElementById('list-ger').innerHTML = list;
                 document.getElementById('sol-ger').innerHTML = opt;
+                document.getElementById('u-ger-assign').innerHTML = opt;
             });
 
+            onSnapshot(collection(db, "Departamentos"), snap => {
+                let list="", opt="";
+                snap.forEach(d => {
+                    list += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${d.data().nombre} <button class="btn-danger" style="padding:2px 6px; font-size:10px" onclick="window.delDoc('Departamentos','${d.id}')">X</button></div>`;
+                    opt += `<option>${d.data().nombre}</option>`;
+                });
+                document.getElementById('list-dep').innerHTML = list;
+                document.getElementById('sol-dep').innerHTML = opt;
+            });
+
+            // CARGA SOLICITUDES
             onSnapshot(collection(db, "Solicitudes"), snap => {
-                cacheSolicitudes = [];
-                const tb = document.querySelector('#table-sol tbody');
-                tb.innerHTML = "";
-                let stats = { total:0, pen:0, rev:0, ok:0 };
+                const tbody = document.querySelector('#table-sol tbody'); tbody.innerHTML = "";
+                let total=0, pen=0, reu=0, ok=0;
 
                 snap.forEach(d => {
                     const s = d.data();
-                    const visible = (user.role === 'admin' || user.role === 'manager' || s.gerencia === user.gerencia || s.solicitante === user.usuario);
-                    
-                    if(visible) {
-                        cacheSolicitudes.push({id: d.id, ...s});
-                        stats.total++;
-                        if(s.estado.includes("Paso 1")) stats.pen++;
-                        if(s.estado === ESTADOS[3]) stats.ok++; else stats.rev++;
+                    let ver = false;
+                    if(user.role === 'admin') ver = true;
+                    else if(user.role === 'gerente' && s.gerencia === user.gerencia) ver = true;
+                    else if(user.role === 'applicant' && s.solicitante === user.usuario) ver = true;
 
-                        tb.innerHTML += `<tr>
-                            <td><b>${s.customId}</b></td>
-                            <td>${s.titulo}</td>
-                            <td>${s.solicitante}</td>
-                            <td><span class="status-pill" style="background:#e2e8f0; color:#475569">${s.estado}</span></td>
-                            <td><button class="btn btn-primary" onclick="openPanel('${d.id}')">Gestionar</button></td>
+                    if(ver) {
+                        total++;
+                        if(s.estado === 'Pendiente') pen++;
+                        if(s.estado === 'En Reunión') reu++;
+                        if(s.estado === 'Aprobado') ok++;
+
+                        tbody.innerHTML += `<tr>
+                            <td style="font-weight:bold; font-size:11px;">${s.customId || 'Pendiente'}</td>
+                            <td>
+                                <b>${s.titulo}</b><br>
+                                <span style="font-size:10px; color:#64748b">${s.accion.toUpperCase()} - ${s.gerencia}</span>
+                            </td>
+                            <td><span class="status st-${s.estado.toLowerCase().replace(/\s/g, '-')}">${s.estado}</span></td>
+                            <td><button class="btn btn-primary" onclick="window.openPanel('${d.id}')">Ver</button></td>
                         </tr>`;
                     }
                 });
-                document.getElementById('c-total').innerText = stats.total;
-                document.getElementById('c-pen').innerText = stats.pen;
-                document.getElementById('c-rev').innerText = stats.rev;
-                document.getElementById('c-ok').innerText = stats.ok;
+                document.getElementById('c-total').innerText = total; document.getElementById('c-pen').innerText = pen; document.getElementById('c-reu').innerText = reu; document.getElementById('c-ok').innerText = ok;
             });
+
+            if(user.role === 'admin') {
+                onSnapshot(collection(db, "Usuarios"), snap => {
+                    const tb = document.querySelector('#table-u tbody'); tb.innerHTML = "";
+                    snap.forEach(d => {
+                        const u = d.data();
+                        tb.innerHTML += `<tr><td>${u.usuario}</td><td>${u.role}</td><td>${u.gerencia || '-'}</td><td><button class="btn-danger" onclick="window.delDoc('Usuarios','${d.id}')">X</button></td></tr>`;
+                    });
+                });
+            }
         }
 
-        // --- BUSCADOR ---
-        document.getElementById('main-search').oninput = (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = cacheSolicitudes.filter(s => 
-                s.customId.toLowerCase().includes(term) || 
-                s.titulo.toLowerCase().includes(term) ||
-                s.solicitante.toLowerCase().includes(term)
-            );
-            const tb = document.querySelector('#table-sol tbody');
-            tb.innerHTML = "";
-            filtered.forEach(s => {
-                tb.innerHTML += `<tr>
-                    <td><b>${s.customId}</b></td>
-                    <td>${s.titulo}</td>
-                    <td>${s.solicitante}</td>
-                    <td><span class="status-pill" style="background:#e2e8f0; color:#475569">${s.estado}</span></td>
-                    <td><button class="btn btn-primary" onclick="openPanel('${s.id}')">Gestionar</button></td>
-                </tr>`;
-            });
-        };
-
-        // --- CREAR SOLICITUD ---
-        document.getElementById('btnSend').onclick = async () => {
-            if(!document.getElementById('sol-tit').value) return alert("Complete el título");
-            
-            const fci = "FCI-ISO-" + Math.floor(Math.random() * 90000);
-            const docRef = {
-                customId: fci,
-                titulo: document.getElementById('sol-tit').value,
-                justificacion: document.getElementById('sol-jus').value,
-                gerencia: document.getElementById('sol-ger').value,
-                solicitante: user.nombre,
-                usuarioId: user.usuario,
-                estado: ESTADOS[0],
-                firmaActual: 0,
-                chat: []
-            };
-
-            await addDoc(collection(db, "Solicitudes"), docRef);
-            alert("Solicitud iniciada: " + fci);
-            cambiarVista('sec-historial');
-        };
-
-        // --- PANEL DE GESTIÓN Y CHAT ---
-        let chatUnsubscribe = null;
-
+        // PANEL & DETALLES
         window.openPanel = async (id) => {
             selectedId = id;
-            const snap = await getDoc(doc(db, "Solicitudes", id));
-            const s = snap.data();
+            const docRef = await getDoc(doc(db, "Solicitudes", id));
+            if (!docRef.exists()) return;
+            const s = docRef.data();
+            const f = s.firmas || { doc: false, ver: false, apr: false, gerente: false };
 
-            document.getElementById('m-fci').innerText = s.customId;
+            document.getElementById('m-id').innerText = s.customId || 'SIN ID';
             document.getElementById('m-tit').innerText = s.titulo;
+            
+            // Construir HTML de detalles condicionales
+            let extraDetails = '';
+            if(s.accion === 'modificacion' || s.accion === 'inactivacion') {
+                extraDetails = `<div class="detail-row" style="background:#fff7ed;"><div class="detail-label" style="color:#c2410c;">⚠️ Referencia Doc</div><div class="detail-value"><b>${s.codigoReferencia || 'No especificado'}</b></div></div>`;
+            }
+
             document.getElementById('m-body').innerHTML = `
-                <p><b>Justificación:</b> ${s.justificacion}</p>
-                <p><b>Gerencia:</b> ${s.gerencia}</p>
-                <p><b>Elaborado por:</b> ${s.solicitante}</p>
+                <div class="detail-row"><div class="detail-label">Acción</div><div class="detail-value" style="text-transform:uppercase;">${s.accion}</div></div>
+                ${extraDetails}
+                <div class="detail-row"><div class="detail-label">Estado</div><div class="detail-value"><span class="status st-${s.estado.toLowerCase().replace(' ','-')}">${s.estado}</span></div></div>
+                <div class="detail-row"><div class="detail-label">Solicitante</div><div class="detail-value">${s.solicitante}</div></div>
+                <div class="detail-row"><div class="detail-label">Gerencia</div><div class="detail-value">${s.gerencia} / ${s.departamento}</div></div>
+                <div class="detail-row"><div class="detail-label">Justificación</div><div class="detail-value">${s.justificacion}</div></div>
+                
+                <div class="detail-row" style="background:#f0f9ff; margin-top:10px; border-radius:8px; padding:10px;">
+                    <div class="detail-label">📂 Adjunto Inicial</div>
+                    <div class="detail-value">
+                        ${s.fileUrl ? 
+                            `<a href="${s.fileUrl}" target="_blank" class="btn btn-primary" style="padding:5px 10px; font-size:11px;">👁️ Ver Documento</a>` : 
+                            'Sin archivo adjunto'}
+                    </div>
+                </div>
+                ${s.fileFinalUrl ? `<div class="detail-row" style="background:#dcfce7; margin-top:5px; border-radius:8px; padding:10px;">
+                    <div class="detail-label">✅ Doc Oficial</div>
+                    <div class="detail-value"><a href="${s.fileFinalUrl}" target="_blank" style="color:green; font-weight:bold;">📥 Ver Final</a></div>
+                </div>` : ''}
             `;
 
-            actualizarFirmasVisual(s.firmaActual);
-            evaluarPermisosFirma(s.firmaActual);
+            document.getElementById('firma-status-visual').innerHTML = `
+                <span style="color:${f.doc?'green':'#cbd5e1'}">● Documentado</span> ➔ 
+                <span style="color:${f.ver?'green':'#cbd5e1'}">● Verificado</span> ➔ 
+                <span style="color:${f.apr?'green':'#cbd5e1'}">● Aprobado SGC</span> ➔ 
+                <span style="color:${f.gerente?'green':'#cbd5e1'}">● Aprob. Gerente</span>
+            `;
+
+            // Chat
+            const chatArea = document.getElementById('m-chat-area');
+            const chatHistory = document.getElementById('m-chat-history');
+            const chatInput = document.getElementById('m-chat-input');
             
-            // Cargar Chat
-            renderChat(s.chat);
+            chatArea.style.display = 'none';
+            chatHistory.innerHTML = "";
+            chatInput.style.display = 'none';
+
+            if(s.consulta) {
+                chatArea.style.display = 'block';
+                chatHistory.innerHTML += `<div class="chat-msg"><div class="chat-role">SGC Pregunta:</div>${s.consulta}</div>`;
+                if(s.respuestaConsulta) {
+                    chatHistory.innerHTML += `<div class="chat-msg" style="text-align:right; margin-top:10px;"><div class="chat-role">Usuario Responde:</div>${s.respuestaConsulta}</div>`;
+                } else if(user.role !== 'admin') {
+                    chatInput.style.display = 'flex';
+                }
+            }
+
+            // Permisos
+            const isAdmin = user.role === 'admin';
+            const isManager = user.role === 'gerente' && s.gerencia === user.gerencia;
+            document.querySelectorAll('#pane-reu, #pane-con, #pane-file, #pane-rechazo').forEach(e => e.style.display='none');
+            document.getElementById('m-actions').style.display = (isAdmin || isManager) ? 'block' : 'none';
+
+            let showSign = false;
+            if(isAdmin && (!f.doc || !f.ver || !f.apr)) showSign = true;
+            if(isManager && f.apr && !f.gerente) showSign = true;
+            document.getElementById('btn-firma-next').style.display = showSign ? 'inline-flex' : 'none';
+            document.getElementById('pane-file').style.display = (isAdmin && !f.doc && showSign) ? 'block' : 'none';
+            document.getElementById('btn-rechazar').style.display = (isManager && f.apr && !f.gerente) ? 'inline-flex' : 'none';
+
             document.getElementById('modal').style.display = 'flex';
         };
 
-        function actualizarFirmasVisual(paso) {
-            for(let i=1; i<=4; i++) {
-                const el = document.getElementById('step-'+i);
-                el.classList.remove('active', 'completed');
-                if(i <= paso) el.classList.add('completed');
-                if(i === paso + 1) el.classList.add('active');
-            }
-        }
-
-        function evaluarPermisosFirma(paso) {
-            const btn = document.getElementById('m-actions');
-            btn.style.display = 'none';
-
-            // Lógica de quién firma qué
-            const puedeFirmar = 
-                (paso === 0 && user.role === 'applicant') || // Solicitante firma el inicio
-                (paso === 1 && user.role === 'verifier')  || // Verificador firma el paso 2
-                (paso === 2 && user.role === 'admin')     || // Admin firma paso 3
-                (paso === 3 && user.role === 'manager');     // Gerente firma paso 4
-
-            if(puedeFirmar && paso < 3) {
-                btn.style.display = 'block';
-                document.getElementById('btn-text-sig').innerText = `Firmar como ${user.role.toUpperCase()}`;
-            } else if (paso === 3) {
-                document.getElementById('m-body').innerHTML += `<div style="color:var(--success); font-weight:800; margin-top:20px;">✓ ESTE DOCUMENTO ESTÁ COMPLETAMENTE APROBADO Y VIGENTE.</div>`;
-            }
-        }
-
-        // --- ACCIONES DE FIRMA ---
-        document.getElementById('btn-next-step').onclick = async () => {
-            const snap = await getDoc(doc(db, "Solicitudes", selectedId));
-            const nuevoPaso = snap.data().firmaActual + 1;
-            
-            await updateDoc(doc(db, "Solicitudes", selectedId), {
-                firmaActual: nuevoPaso,
-                estado: ESTADOS[nuevoPaso]
-            });
-            
-            enviarMensajeChat(`SISTEMA: Documento firmado por ${user.nombre}. Pasa a: ${ESTADOS[nuevoPaso]}`);
-            alert("Firma registrada con éxito");
-            window.closeModal();
-        };
-
-        // --- CHAT LOGIC ---
-        document.getElementById('btnChatSend').onclick = () => {
-            const txt = document.getElementById('chat-input').value;
-            if(txt) {
-                enviarMensajeChat(txt);
-                document.getElementById('chat-input').value = "";
-            }
-        };
-
-        async function enviarMensajeChat(texto) {
-            const msg = {
-                user: user.nombre,
-                msg: texto,
-                time: new Date().toLocaleTimeString(),
-                uid: user.usuario
-            };
-            await updateDoc(doc(db, "Solicitudes", selectedId), {
-                chat: arrayUnion(msg)
-            });
-            // Re-render local para inmediatez
-            const snap = await getDoc(doc(db, "Solicitudes", selectedId));
-            renderChat(snap.data().chat);
-        }
-
-        function renderChat(mensajes) {
-            const box = document.getElementById('chat-box');
-            box.innerHTML = mensajes.map(m => `
-                <div class="msg ${m.uid === user.usuario ? 'sent' : 'received'}">
-                    <span class="msg-info">${m.user} - ${m.time}</span>
-                    ${m.msg}
-                </div>
-            `).join('');
-            box.scrollTop = box.scrollHeight;
-        }
-
         window.closeModal = () => document.getElementById('modal').style.display = 'none';
 
-        // --- UTILS ---
+        // ACTIONS
+        document.getElementById('btn-open-reu').onclick = () => document.getElementById('pane-reu').style.display='block';
+        document.getElementById('btn-open-con').onclick = () => document.getElementById('pane-con').style.display='block';
+        document.getElementById('btn-rechazar').onclick = () => document.getElementById('pane-rechazo').style.display='block';
+
+        // PROCESO DE FIRMA (CON SUBIDA CLOUDINARY PARA EL FINAL)
+        document.getElementById('btn-firma-next').onclick = async () => {
+            document.getElementById('loading-overlay').style.display = 'flex';
+            const ref = doc(db, "Solicitudes", selectedId);
+            const s = (await getDoc(ref)).data();
+            let f = s.firmas || { doc: false, ver: false, apr: false, gerente: false };
+            let up = {};
+
+            if(user.role === 'admin') {
+                if(!f.doc) {
+                    const fileInput = document.getElementById('file-final');
+                    if(fileInput.files.length === 0) {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        return alert("Debe subir documento elaborado");
+                    }
+                    // Subir a Cloudinary
+                    const url = await uploadToCloudinary(fileInput.files[0]);
+                    if(url) {
+                        f.doc = true; 
+                        up.fileFinalUrl = url;
+                    } else {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                        return; // Error subida
+                    }
+                } else if(!f.ver) f.ver = true;
+                else if(!f.apr) f.apr = true;
+            } else if(user.role === 'gerente') {
+                f.gerente = true; up.estado = 'Aprobado';
+            }
+            up.firmas = f;
+            await updateDoc(ref, up); 
+            document.getElementById('loading-overlay').style.display = 'none';
+            closeModal();
+        };
+
+        // RESPUESTAS Y CONSULTAS
+        document.getElementById('btn-reply-chat').onclick = async () => {
+            const txt = document.getElementById('chat-response-text').value;
+            if(!txt) return;
+            await updateDoc(doc(db, "Solicitudes", selectedId), { respuestaConsulta: txt });
+            closeModal();
+        };
+        document.getElementById('btn-con-save').onclick = async () => {
+            await updateDoc(doc(db, "Solicitudes", selectedId), { consulta: document.getElementById('con-mot').value, respuestaConsulta: "" });
+            closeModal();
+        };
+        document.getElementById('btn-reu-save').onclick = async () => {
+            await updateDoc(doc(db, "Solicitudes", selectedId), { estado: 'En Reunión', reunionFecha: document.getElementById('reu-fec').value, reunionMotivo: document.getElementById('reu-mot').value });
+            closeModal();
+        };
+        document.getElementById('btn-rechazo-save').onclick = async () => {
+            await updateDoc(doc(db, "Solicitudes", selectedId), { estado: 'Pendiente', firmas: {doc:false, ver:false, apr:false, gerente:false}, motivoRechazo: document.getElementById('rechazo-mot').value });
+            closeModal();
+        };
+
+        // --- CREACIÓN DE SOLICITUD (INTEGRADO ID + CLOUDINARY) ---
+        document.getElementById('btnSend').onclick = async () => {
+            const tit = document.getElementById('sol-tit').value;
+            const accion = document.getElementById('sol-accion').value;
+            
+            if(!tit) return alert("Título obligatorio");
+            
+            // Mostrar carga
+            document.getElementById('loading-overlay').style.display = 'flex';
+
+            // 1. Subir archivo inicial si existe
+            const fileInput = document.getElementById('sol-file');
+            let fileUrl = "";
+            if(fileInput.files.length > 0) {
+                fileUrl = await uploadToCloudinary(fileInput.files[0]);
+            }
+
+            // 2. Generar ID Consecutivo
+            const customId = await getNextId();
+
+            // 3. Guardar en Firestore
+            await addDoc(collection(db, "Solicitudes"), {
+                customId: customId,
+                titulo: tit,
+                accion: accion,
+                codigoReferencia: document.getElementById('sol-codigo-ref').value || '', // Código si es mod/inact
+                tipo: document.getElementById('sol-tipo').value,
+                gerencia: document.getElementById('sol-ger').value,
+                departamento: document.getElementById('sol-dep').value,
+                justificacion: document.getElementById('sol-jus').value,
+                fileUrl: fileUrl, // URL de Cloudinary
+                solicitante: user.usuario,
+                fecha: new Date().toLocaleDateString(),
+                estado: 'Pendiente',
+                firmas: { doc: false, ver: false, apr: false, gerente: false }
+            });
+
+            document.getElementById('loading-overlay').style.display = 'none';
+            alert(`Solicitud ${customId} Creada Exitosamente`);
+            
+            // Reset y cambio de vista
+            document.getElementById('sol-tit').value="";
+            document.getElementById('sol-jus').value="";
+            document.getElementById('sol-file').value="";
+            document.getElementById('sol-codigo-ref').value="";
+            cambiarVista('sec-historial');
+        };
+
+        // USUARIOS
         document.getElementById('btnUser').onclick = async () => {
             await addDoc(collection(db, "Usuarios"), {
                 nombre: document.getElementById('u-nom').value,
                 usuario: document.getElementById('u-usr').value,
-                pass: "1234",
+                pass: document.getElementById('u-pas').value,
                 role: document.getElementById('u-rol').value,
-                email: document.getElementById('u-mail').value
+                gerencia: document.getElementById('u-ger-assign').value
             });
-            alert("Usuario registrado");
+            alert("Usuario Creado");
         };
 
-        document.getElementById('btn-reset-hidden').onclick = async () => {
-            await setDoc(doc(db, "Usuarios", "root"), { nombre: "Admin SGC", usuario: "admin", pass: "1234", role: "admin" });
-            alert("Root creado: admin/1234");
-        };
-
+        document.getElementById('add-ger').onclick = async () => { await addDoc(collection(db, "Gerencias"), { nombre: document.getElementById('in-ger').value }); document.getElementById('in-ger').value=""; };
+        document.getElementById('add-dep').onclick = async () => { await addDoc(collection(db, "Departamentos"), { nombre: document.getElementById('in-dep').value }); document.getElementById('in-dep').value=""; };
+        window.delDoc = async (c, id) => { if(confirm("¿Eliminar?")) await deleteDoc(doc(db, c, id)); };
+        document.getElementById('btnInit').onclick = async () => { await addDoc(collection(db, "Usuarios"), { usuario: "admin", pass: "123", role: "admin", nombre: "Admin SGC", gerencia: "SGC" }); alert("admin / 123"); };
     </script>
 </body>
 </html>
