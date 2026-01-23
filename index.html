@@ -505,7 +505,7 @@
                         tb.innerHTML += `
                             <tr>
                                 <td><b style="color:var(--primary)">${s.customId}</b></td>
-                                <td>${s.tipo}</td>
+                                <td><span class="badge badge-${s.tipo}">${s.tipo.substring(0,3)}</span></td>
                                 <td>${s.titulo}</td>
                                 <td>${s.solicitante}</td>
                                 <td><span class="badge ${s.estado==='Aprobado'?'badge-creacion':'badge-modificacion'}">${s.estado}</span></td>
@@ -561,47 +561,57 @@
 
         // --- DETALLES Y GESTIÓN ---
         window.verDetalle = async (id) => {
-            selectedId = id;
-            const docSnap = await getDoc(doc(db, "Solicitudes", id));
-            const s = docSnap.data();
+            try {
+                selectedId = id;
+                const docSnap = await getDoc(doc(db, "Solicitudes", id));
+                if (!docSnap.exists()) return alert("No encontrado");
+                
+                const s = docSnap.data();
+                
+                document.getElementById('m-id').innerText = s.customId || 'SIN ID';
+                document.getElementById('m-tit').innerText = s.titulo || 'Sin Título';
+                document.getElementById('m-sol').innerText = s.solicitante || 'Desconocido';
+                document.getElementById('m-ger').innerText = `${s.gerencia || '-'} / ${s.departamento || '-'}`;
+                document.getElementById('m-jus').innerText = s.justificacion || '';
+                document.getElementById('m-badges').innerHTML = `<span class="badge badge-modificacion">${s.estado || 'Desconocido'}</span>`;
 
-            document.getElementById('m-fci').innerText = s.customId;
-            document.getElementById('m-tit').innerText = s.titulo;
-            document.getElementById('m-sol').innerText = s.solicitante;
-            document.getElementById('m-ger').innerText = `${s.gerencia} / ${s.departamento}`;
-            document.getElementById('m-jus').innerText = s.justificacion;
-            document.getElementById('m-badges').innerHTML = `<span class="badge badge-modificacion">${s.estado}</span>`;
+                // ISO DATA
+                if(s.accion !== 'creacion') {
+                    document.getElementById('m-iso-data').style.display = 'block';
+                    document.getElementById('m-ref').innerText = s.referencia || '-';
+                    document.getElementById('m-ver').innerText = `V.${s.version || '1'} (${s.fechaUltVer || '-'})`;
+                } else {
+                    document.getElementById('m-iso-data').style.display = 'none';
+                }
 
-            // ISO DATA
-            if(s.accion !== 'creacion') {
-                document.getElementById('m-iso-data').style.display = 'block';
-                document.getElementById('m-ref').innerText = s.referencia;
-                document.getElementById('m-ver').innerText = `V.${s.version} (${s.fechaUltVer})`;
-            } else {
-                document.getElementById('m-iso-data').style.display = 'none';
+                // FILE LINKS
+                let fileHtml = "";
+                if(s.fileUrl && s.fileUrl !== '#') fileHtml += `<a href="${s.fileUrl}" target="_blank" class="btn btn-info" style="margin-right:10px;">📄 Ver Borrador</a>`;
+                if(s.fileFinalUrl) fileHtml += `<a href="${s.fileFinalUrl}" target="_blank" class="btn btn-success">✅ Ver Documento Final</a>`;
+                if(fileHtml === "") fileHtml = "No hay archivos adjuntos.";
+                document.getElementById('m-file-area').innerHTML = fileHtml;
+
+                // RENDER CHAT
+                renderChat(s.chat || []);
+
+                // PERMISOS DE GESTIÓN
+                const rolesPasos = ["applicant", "verifier", "admin", "manager"];
+                const paso = s.pasoActual || 1;
+                const miTurno = rolesPasos[paso] === user.role;
+                const activo = s.estado !== 'Aprobado' && s.estado !== 'Rechazado';
+                
+                const actionsDiv = document.getElementById('m-actions');
+                if (actionsDiv) actionsDiv.style.display = (miTurno && activo) ? 'block' : 'none';
+                
+                // ADMIN UPLOAD FINAL
+                const adminUploadDiv = document.getElementById('admin-file-upload');
+                if (adminUploadDiv) adminUploadDiv.style.display = (user.role === 'admin' || user.role === 'manager') ? 'block' : 'none';
+
+                document.getElementById('modal').style.display = 'grid';
+            } catch (e) {
+                console.error(e);
+                alert("Error cargando detalles");
             }
-
-            // FILE LINKS
-            let fileHtml = "";
-            if(s.fileUrl !== '#') fileHtml += `<a href="${s.fileUrl}" target="_blank" class="btn btn-info" style="margin-right:10px;">📄 Ver Borrador</a>`;
-            if(s.fileFinalUrl) fileHtml += `<a href="${s.fileFinalUrl}" target="_blank" class="btn btn-success">✅ Ver Documento Final</a>`;
-            if(fileHtml === "") fileHtml = "No hay archivos adjuntos.";
-            document.getElementById('m-file-area').innerHTML = fileHtml;
-
-            // RENDER CHAT
-            renderChat(s.chat);
-
-            // PERMISOS DE GESTIÓN
-            const rolesPasos = ["applicant", "verifier", "admin", "manager"];
-            const miTurno = rolesPasos[s.pasoActual] === user.role;
-            const activo = s.estado !== 'Aprobado' && s.estado !== 'Rechazado';
-            
-            document.getElementById('m-actions').style.display = (miTurno && activo) ? 'block' : 'none';
-            
-            // ADMIN UPLOAD FINAL
-            document.getElementById('admin-file-upload').style.display = (user.role === 'admin' || user.role === 'manager') ? 'block' : 'none';
-
-            document.getElementById('modal').style.display = 'grid';
         };
 
         // SUBIDA ADMIN DOCUMENTO FINAL
@@ -624,12 +634,12 @@
             const snap = await getDoc(doc(db, "Solicitudes", selectedId));
             const s = snap.data();
             const nextPaso = s.pasoActual + 1;
-            const estados = ["Elaborado", "Verificado", "Validado SGC", "Aprobado"];
+            const estados = ["Elaborado", "Verificado", "Validado SGC", "Aprobado", "Aprobado"]; // 4 pasos + final
             
             await updateDoc(doc(db, "Solicitudes", selectedId), {
                 pasoActual: nextPaso,
                 estado: estados[nextPaso] || "Aprobado",
-                chat: arrayUnion({u: "SISTEMA", m: `Firma registrada por ${user.nombre}. Avanza a ${estados[nextPaso]}`, t: new Date().toLocaleTimeString()})
+                chat: arrayUnion({u: "SISTEMA", m: `Firma registrada por ${user.nombre}. Avanza a ${estados[nextPaso] || 'Final'}`, t: new Date().toLocaleTimeString()})
             });
             window.closeModal();
         };
@@ -668,12 +678,16 @@
 
         function renderChat(chat) {
             const box = document.getElementById('chat-box');
-            box.innerHTML = chat.map(c => `
-                <div class="msg ${c.u==='SISTEMA'?'msg-sys':(c.u===user.nombre?'msg-me':'msg-user')}">
-                    <b>${c.u}</b> <small>${c.t}</small><br>${c.m}
-                </div>
-            `).join('');
-            box.scrollTop = box.scrollHeight;
+            if (chat) {
+                box.innerHTML = chat.map(c => `
+                    <div class="msg ${c.u==='SISTEMA'?'msg-sys':(c.u===user.nombre?'msg-me':'msg-user')}">
+                        <b>${c.u}</b> <small>${c.t}</small><br>${c.m}
+                    </div>
+                `).join('');
+                box.scrollTop = box.scrollHeight;
+            } else {
+                box.innerHTML = "";
+            }
         }
 
         // BUSCADOR
@@ -690,8 +704,8 @@
                     <td><b style="color:var(--primary)">${s.customId}</b></td>
                     <td><span class="badge badge-${s.tipo}">${s.tipo.substring(0,3)}</span></td>
                     <td>${s.titulo}</td>
-                    <td>${s.gerencia}</td>
-                    <td>${s.estado}</td>
+                    <td>${s.solicitante}</td>
+                    <td><span class="badge ${s.estado==='Aprobado'?'badge-creacion':'badge-modificacion'}">${s.estado}</span></td>
                     <td><button class="btn btn-primary" onclick="verDetalle('${s.id}')">VER</button></td>
                 </tr>`;
             });
