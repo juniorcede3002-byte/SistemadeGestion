@@ -44,6 +44,9 @@
         label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px; display: block; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 15px; font-size: 14px; }
 
+        .permiso-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 13px; color: #475569; cursor: pointer; }
+        .permiso-item input { width: auto; margin: 0; }
+
         .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; }
         .btn-primary { background: var(--primary); color: white; }
         .btn-success { background: var(--success); color: white; }
@@ -107,7 +110,7 @@
         
         <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;">
             <p id="curr-name" style="font-weight: 700; font-size: 13px;"></p>
-            <button onclick="location.reload()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px;">Salir</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px;">Cerrar Sesión</button>
         </div>
     </aside>
 
@@ -149,17 +152,27 @@
         </section>
 
         <section id="sec-users" class="section">
-            <h1>Usuarios</h1>
+            <h1>Gestión de Usuarios</h1>
             <div class="grid-2" style="margin-top:20px;">
                 <div class="card">
-                    <label>Nombre</label><input type="text" id="u-nom">
-                    <label>ID Usuario</label><input type="text" id="u-id">
-                    <label>Pass</label><input type="text" id="u-pass" value="123">
-                    <label>Gerencia</label><select id="u-ger-sel"></select>
-                    <button class="btn btn-primary" id="btnSaveUser" style="width:100%">CREAR USUARIO</button>
+                    <h3>Nuevo Usuario</h3>
+                    <label>Nombre Completo</label><input type="text" id="u-nom">
+                    <label>ID Usuario / Login</label><input type="text" id="u-id">
+                    <label>Contraseña</label><input type="text" id="u-pass" value="123">
+                    <label>Gerencia Perteneciente</label><select id="u-ger-sel"></select>
+                    
+                    <label style="margin-top: 10px;">Accesos Permitidos</label>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 15px;">
+                        <label class="permiso-item"><input type="checkbox" id="p_dash" checked> Dashboard Principal</label>
+                        <label class="permiso-item"><input type="checkbox" id="p_gest_sgc"> Bandeja de Gestión SGC</label>
+                        <label class="permiso-item"><input type="checkbox" id="p_users"> Administración de Usuarios</label>
+                        <label class="permiso-item"><input type="checkbox" id="p_struct"> Configuración de Estructura</label>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="btnSaveUser" style="width:100%">GUARDAR USUARIO</button>
                 </div>
                 <div class="card" style="padding:0">
-                    <table><thead><tr><th>User</th><th>Gerencia</th><th>X</th></tr></thead><tbody id="tb-users"></tbody></table>
+                    <table><thead><tr><th>User</th><th>Gerencia</th><th>Permisos</th><th>X</th></tr></thead><tbody id="tb-users"></tbody></table>
                 </div>
             </div>
         </section>
@@ -170,12 +183,12 @@
                 <div class="card">
                     <h3>Gerencias</h3>
                     <div style="display:flex; gap:5px; margin:10px 0;"><input type="text" id="g-nom" style="margin:0;"><button class="btn btn-success" id="btnSaveGer">+</button></div>
-                    <div id="list-ger"></div>
+                    <div id="list-ger" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
                 <div class="card">
                     <h3>Departamentos</h3>
                     <div style="display:flex; gap:5px; margin:10px 0;"><input type="text" id="d-nom" style="margin:0;"><button class="btn btn-success" id="btnSaveDep">+</button></div>
-                    <div id="list-dep"></div>
+                    <div id="list-dep" style="max-height: 300px; overflow-y: auto;"></div>
                 </div>
             </div>
         </section>
@@ -183,7 +196,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, updateDoc, setDoc, deleteDoc, query, where } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -201,7 +214,7 @@
 
         let currentUser = null;
 
-        // AUTH CON MANEJO DE ERRORES
+        // AUTH
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
@@ -209,13 +222,11 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-            } catch (e) {
-                console.warn("Auth falló, pero continuaremos en modo local:", e.message);
-            }
+            } catch (e) { console.warn("Modo local:", e.message); }
         };
         initAuth();
 
-        // FUNCIONES DE UI
+        // UI NAVIGATION
         window.cambiarVista = (id, btn) => {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
@@ -228,30 +239,39 @@
             if(!user) return;
             const isAdmin = user.usuario === 'admin';
             
-            // Mostrar botones según rol
-            document.getElementById('nav-dash').classList.add('visible');
+            // Visibilidad basada en permisos guardados
+            const p = user.permisos || {};
+
+            if(isAdmin || p.p_dash) document.getElementById('nav-dash').classList.add('visible');
             document.getElementById('nav-crear').classList.add('visible');
             document.getElementById('nav-hist').classList.add('visible');
 
-            if(isAdmin || user.permisos?.p_gest_sgc) document.getElementById('nav-gest').classList.add('visible');
-            if(isAdmin || user.permisos?.p_users) document.getElementById('nav-users').classList.add('visible');
-            if(isAdmin || user.permisos?.p_struct) document.getElementById('nav-struct').classList.add('visible');
+            if(isAdmin || p.p_gest_sgc) document.getElementById('nav-gest').classList.add('visible');
+            if(isAdmin || p.p_users) document.getElementById('nav-users').classList.add('visible');
+            if(isAdmin || p.p_struct) document.getElementById('nav-struct').classList.add('visible');
 
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('sidebar').style.display = 'flex';
             document.getElementById('main').style.display = 'block';
             document.getElementById('curr-name').innerText = user.nombre;
-            cambiarVista('sec-dash', document.getElementById('nav-dash'));
+            
+            const firstView = isAdmin || p.p_dash ? 'sec-dash' : 'sec-crear';
+            cambiarVista(firstView, document.getElementById(isAdmin || p.p_dash ? 'nav-dash' : 'nav-crear'));
         };
 
-        // LOGIN
+        // LOGIN LÓGICA
         document.getElementById('btnLogin').onclick = async () => {
             const u = document.getElementById('login-user').value.toLowerCase().trim();
             const p = document.getElementById('login-pass').value.trim();
 
             if(u === 'admin' && p === '1130') {
-                const adminData = { nombre: "Administrador", usuario: "admin", pass: "1130", gerencia: "SGC", permisos: { p_gest_sgc:true, p_users:true, p_struct:true } };
-                await setDoc(doc(db, "artifacts", appId, "public", "data", "Usuarios", "admin"), adminData);
+                const adminData = { 
+                    nombre: "Administrador", 
+                    usuario: "admin", 
+                    pass: "1130", 
+                    gerencia: "Dirección", 
+                    permisos: { p_dash:true, p_gest_sgc:true, p_users:true, p_struct:true } 
+                };
                 currentUser = adminData;
                 configurarMenu(currentUser);
                 cargarDatos();
@@ -264,8 +284,8 @@
                     currentUser = snap.docs[0].data();
                     configurarMenu(currentUser);
                     cargarDatos();
-                } else alert("Credenciales inválidas");
-            }, err => console.error(err));
+                } else alert("Usuario o contraseña incorrectos");
+            });
         };
 
         document.getElementById('btnDirect').onclick = () => {
@@ -274,99 +294,133 @@
             document.getElementById('btnLogin').click();
         };
 
-        // CARGA DE DATOS
+        // GESTIÓN DE DATOS (CRUD)
         function cargarDatos() {
             const p = (col) => collection(db, "artifacts", appId, "public", "data", col);
 
-            // Usuarios
+            // Carga Usuarios con visualización de permisos
             onSnapshot(p("Usuarios"), s => {
                 const tb = document.getElementById('tb-users');
-                if(tb) {
-                    tb.innerHTML = "";
-                    s.forEach(d => {
-                        const u = d.data();
-                        tb.innerHTML += `<tr><td>${u.usuario}</td><td>${u.gerencia}</td><td><button onclick="eliminarDoc('Usuarios','${d.id}')" style="color:red; background:none; border:none; cursor:pointer;">✕</button></td></tr>`;
-                    });
-                }
+                if(!tb) return;
+                tb.innerHTML = "";
+                s.forEach(d => {
+                    const u = d.data();
+                    const perms = [];
+                    if(u.permisos?.p_gest_sgc) perms.push('SGC');
+                    if(u.permisos?.p_users) perms.push('USR');
+                    if(u.permisos?.p_struct) perms.push('EST');
+                    
+                    tb.innerHTML += `
+                        <tr>
+                            <td><b>${u.usuario}</b><br><small>${u.nombre}</small></td>
+                            <td>${u.gerencia}</td>
+                            <td>${perms.join(', ') || 'Básico'}</td>
+                            <td><button onclick="eliminarDoc('Usuarios','${d.id}')" style="color:var(--danger); border:none; background:none; cursor:pointer;">✕</button></td>
+                        </tr>`;
+                });
             });
 
-            // Gerencias
+            // Carga Gerencias y actualiza selectores
             onSnapshot(p("Gerencias"), s => {
                 let h = "", l = "";
                 s.forEach(d => {
                     const n = d.data().nombre;
                     h += `<option value="${n}">${n}</option>`;
-                    l += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${n} <span onclick="eliminarDoc('Gerencias','${d.id}')" style="color:red; cursor:pointer;">✕</span></div>`;
+                    l += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                            <span>${n}</span>
+                            <span onclick="eliminarDoc('Gerencias','${d.id}')" style="color:red; cursor:pointer;">✕</span>
+                          </div>`;
                 });
                 document.getElementById('sol-ger').innerHTML = h;
                 document.getElementById('u-ger-sel').innerHTML = h;
                 document.getElementById('list-ger').innerHTML = l;
             });
 
-            // Departamentos
+            // Carga Departamentos
             onSnapshot(p("Departamentos"), s => {
                 let h = "", l = "";
                 s.forEach(d => {
                     const n = d.data().nombre;
                     h += `<option value="${n}">${n}</option>`;
-                    l += `<div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">${n} <span onclick="eliminarDoc('Departamentos','${d.id}')" style="color:red; cursor:pointer;">✕</span></div>`;
+                    l += `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee;">
+                            <span>${n}</span>
+                            <span onclick="eliminarDoc('Departamentos','${d.id}')" style="color:red; cursor:pointer;">✕</span>
+                          </div>`;
                 });
                 document.getElementById('sol-dep').innerHTML = h;
                 document.getElementById('list-dep').innerHTML = l;
             });
 
-            // Solicitudes
+            // Estadísticas Dashboard
             onSnapshot(p("Solicitudes"), s => {
                 const th = document.getElementById('tb-hist');
                 const tg = document.getElementById('tb-gest');
                 if(th) th.innerHTML = "";
                 if(tg) tg.innerHTML = "";
-                let count = 0;
+                let count = 0, pend = 0;
                 s.forEach(d => {
                     const sol = d.data();
                     count++;
-                    if(th) th.innerHTML += `<tr><td>${d.id.substring(0,5)}</td><td>${sol.titulo}</td><td>${sol.estado}</td></tr>`;
-                    if(tg) tg.innerHTML += `<tr><td>${d.id.substring(0,5)}</td><td>${sol.solicitante}</td><td>${sol.titulo}</td><td><button class="btn btn-ghost">Gestionar</button></td></tr>`;
+                    if(sol.estado === "Pendiente") pend++;
+                    if(th) th.innerHTML += `<tr><td>#${d.id.substring(0,4)}</td><td>${sol.titulo}</td><td><span class="badge" style="background:#fef3c7;color:#92400e">${sol.estado}</span></td></tr>`;
+                    if(tg) tg.innerHTML += `<tr><td>#${d.id.substring(0,4)}</td><td>${sol.solicitante}</td><td>${sol.titulo}</td><td><button class="btn btn-ghost" style="padding:5px 10px;">Revisar</button></td></tr>`;
                 });
                 document.getElementById('count-total').innerText = count;
+                document.getElementById('count-pend').innerText = pend;
             });
         }
 
-        // ACCIONES
+        // ACCIONES GLOBALES
         window.eliminarDoc = async (col, id) => {
-            if(confirm("¿Eliminar este registro?")) {
+            if(confirm(`¿Está seguro de eliminar este registro de ${col}?`)) {
                 await deleteDoc(doc(db, "artifacts", appId, "public", "data", col, id));
             }
         };
 
         document.getElementById('btnSaveGer').onclick = async () => {
-            const n = document.getElementById('g-nom').value;
+            const n = document.getElementById('g-nom').value.trim();
             if(n) await addDoc(collection(db, "artifacts", appId, "public", "data", "Gerencias"), { nombre: n });
             document.getElementById('g-nom').value = "";
         };
 
         document.getElementById('btnSaveDep').onclick = async () => {
-            const n = document.getElementById('d-nom').value;
+            const n = document.getElementById('d-nom').value.trim();
             if(n) await addDoc(collection(db, "artifacts", appId, "public", "data", "Departamentos"), { nombre: n });
             document.getElementById('d-nom').value = "";
         };
 
+        // CREACIÓN DE USUARIO CON PERMISOS
         document.getElementById('btnSaveUser').onclick = async () => {
-            const uid = document.getElementById('u-id').value.toLowerCase();
-            if(!uid) return;
-            await setDoc(doc(db, "artifacts", appId, "public", "data", "Usuarios", uid), {
-                nombre: document.getElementById('u-nom').value,
+            const uid = document.getElementById('u-id').value.toLowerCase().trim();
+            const nom = document.getElementById('u-nom').value.trim();
+            if(!uid || !nom) return alert("Complete nombre e ID de usuario");
+
+            const newUser = {
+                nombre: nom,
                 usuario: uid,
                 pass: document.getElementById('u-pass').value,
                 gerencia: document.getElementById('u-ger-sel').value,
-                permisos: { p_gest_sgc: true } // Por defecto para este ejemplo
-            });
-            alert("Usuario creado");
+                permisos: {
+                    p_dash: document.getElementById('p_dash').checked,
+                    p_gest_sgc: document.getElementById('p_gest_sgc').checked,
+                    p_users: document.getElementById('p_users').checked,
+                    p_struct: document.getElementById('p_struct').checked
+                }
+            };
+
+            await setDoc(doc(db, "artifacts", appId, "public", "data", "Usuarios", uid), newUser);
+            alert("Usuario guardado con éxito");
+            
+            // Limpiar campos
+            ['u-nom', 'u-id'].forEach(id => document.getElementById(id).value = "");
         };
 
         document.getElementById('btnEnviar').onclick = async () => {
+            const tit = document.getElementById('sol-tit').value.trim();
+            if(!tit) return alert("Ingrese el nombre del documento");
+
             await addDoc(collection(db, "artifacts", appId, "public", "data", "Solicitudes"), {
-                titulo: document.getElementById('sol-tit').value,
+                titulo: tit,
                 gerencia: document.getElementById('sol-ger').value,
                 departamento: document.getElementById('sol-dep').value,
                 justificacion: document.getElementById('sol-motivo').value,
@@ -374,7 +428,9 @@
                 estado: "Pendiente",
                 fecha: new Date().toISOString()
             });
-            alert("Solicitud enviada");
+            alert("Solicitud enviada al SGC");
+            document.getElementById('sol-tit').value = "";
+            document.getElementById('sol-motivo').value = "";
             cambiarVista('sec-hist', document.getElementById('nav-hist'));
         };
 
