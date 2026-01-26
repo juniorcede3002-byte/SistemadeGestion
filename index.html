@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SGC | Sistema de Gestión</title>
+    <title>SGC Pro Platinum | Gestión Documental</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <style>
         :root {
-            --primary: #1e40af; --accent: #3b82f6; --bg: #f8fafc;
+            --primary: #1e40af; --accent: #3b82f6; --bg: #f1f5f9;
             --success: #059669; --warning: #d97706; --danger: #dc2626;
-            --white: #ffffff; --border: #e2e8f0; --sidebar: #0f172a;
+            --white: #ffffff; --border: #cbd5e1; --sidebar: #0f172a;
             --text-main: #1e293b; --text-muted: #64748b;
         }
 
@@ -22,170 +22,169 @@
         /* Login Screen */
         #login-screen { position: fixed; inset: 0; background: var(--sidebar); display: flex; align-items: center; justify-content: center; z-index: 5000; }
         .login-box { background: var(--white); padding: 40px; border-radius: 24px; width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); text-align: center; margin: 20px; }
-        .login-box h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 5px; text-transform: uppercase; }
-        .login-box p { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+        .login-box h1 { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 5px; }
 
         /* Sidebar */
-        .sidebar { width: 280px; background: var(--sidebar); color: white; display: none; flex-direction: column; padding: 20px; border-right: 1px solid rgba(255,255,255,0.1); transition: all 0.3s; }
+        .sidebar { width: 280px; background: var(--sidebar); color: white; display: none; flex-direction: column; padding: 20px; transition: all 0.3s; }
         .nav-link { 
             display: none; align-items: center; padding: 12px 16px; color: #94a3b8; border: none; 
-            background: none; cursor: pointer; width: 100%; border-radius: 12px; margin-bottom: 5px; transition: 0.3s; font-size: 14px; text-align: left;
+            background: none; cursor: pointer; width: 100%; border-radius: 12px; margin-bottom: 5px; transition: 0.3s; font-size: 14px;
         }
         .nav-link.visible { display: flex; }
         .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-link.active { background: var(--accent); color: white; font-weight: 600; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .nav-link.active { background: var(--accent); color: white; font-weight: 600; }
         .nav-link span { margin-right: 12px; font-size: 20px; }
 
-        /* Main Content Area */
-        .main { flex: 1; padding: 40px; overflow-y: auto; display: none; }
-        .section { display: none; max-width: 1100px; margin: 0 auto; }
-        .section.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Main Content */
+        .main { flex: 1; padding: 30px; overflow-y: auto; display: none; }
+        .section { display: none; max-width: 1200px; margin: 0 auto; }
+        .section.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Cards & UI Elements */
-        .card { background: white; padding: 30px; border-radius: 20px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        .card { background: white; padding: 25px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.02); margin-bottom: 20px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
         
-        h2 { font-size: 20px; font-weight: 700; margin-bottom: 20px; color: #0f172a; }
-        label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
+        h2 { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; display: block; }
         
         input, select, textarea { 
-            width: 100%; padding: 12px 16px; border: 1.5px solid var(--border); border-radius: 12px; 
-            margin-bottom: 20px; font-size: 14px; background: #fff; transition: border-color 0.2s;
+            width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; 
+            margin-bottom: 15px; font-size: 14px; background: #fff;
         }
-        input:focus, select:focus { outline: none; border-color: var(--accent); }
-        
-        .btn { padding: 14px 24px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; transition: 0.2s; text-transform: uppercase; }
+
+        .file-upload-zone {
+            border: 2px dashed var(--border); border-radius: 12px; padding: 20px; text-align: center;
+            background: #f8fafc; cursor: pointer; transition: 0.2s; margin-bottom: 15px;
+        }
+        .file-upload-zone:hover { border-color: var(--accent); background: #f1f7ff; }
+        #file-list { margin-bottom: 15px; }
+        .file-item { display: flex; align-items: center; justify-content: space-between; background: #e2e8f0; padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 5px; }
+
+        .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; transition: 0.2s; }
         .btn-primary { background: #2563eb; color: white; }
-        .btn-primary:hover { background: #1d4ed8; }
         .btn-success { background: var(--success); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
 
-        /* Dynamic Fields Logic */
-        .field-conditional { display: none; }
-        .field-conditional.show { display: block; }
-
-        /* Tables */
         table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: #f8fafc; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
-        td { padding: 15px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: var(--text-main); }
+        th { text-align: left; padding: 12px; background: #f8fafc; border-bottom: 2px solid var(--border); font-size: 11px; color: var(--text-muted); text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 
-        .badge { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .badge { padding: 4px 10px; border-radius: 6px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
         .status-pendiente { background: #fef3c7; color: #92400e; }
         .status-aprobado { background: #d1fae5; color: #065f46; }
+        .status-rechazado { background: #fee2e2; color: #991b1b; }
 
-        #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 6000; display: none; align-items: center; justify-content: center; flex-direction: column; }
+        .field-conditional { display: none; }
+        .field-conditional.show { display: block; }
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay"><div class="spinner"></div><h3>Cargando sistema...</h3></div>
-
-    <!-- PANTALLA DE INGRESO -->
     <div id="login-screen">
         <div class="login-box">
-            <h1>SGC PLATINUM PRO</h1>
-            <p>Sistema Integrado de Calidad</p>
+            <span class="material-icons-round" style="font-size: 48px; color: var(--accent);">verified_user</span>
+            <h1>SGC PRO PLATINUM</h1>
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">Gestión Documental de Calidad</p>
             <div style="text-align: left;">
-                <label>ID DE USUARIO</label>
-                <input type="text" id="login-user" placeholder="Ej: admin">
-                <label>CONTRASEÑA</label>
-                <input type="password" id="login-pass" placeholder="••••••••">
+                <label>Usuario</label>
+                <input type="text" id="login-user" placeholder="admin">
+                <label>Contraseña</label>
+                <input type="password" id="login-pass" placeholder="••••">
             </div>
-            <button class="btn btn-primary" id="btnLogin" style="width: 100%;">INICIAR SESIÓN</button>
-            <div style="margin-top:20px; font-size: 11px; color: rgba(255,255,255,0.3);">[Reiniciar Admin]</div>
+            <button class="btn btn-primary" id="btnLogin" style="width: 100%;">ENTRAR AL SISTEMA</button>
         </div>
     </div>
 
-    <!-- BARRA LATERAL -->
     <aside class="sidebar" id="sidebar">
-        <div style="padding: 10px 0 30px 0; display:flex; align-items:center; gap:12px;">
-            <div style="background:var(--accent); padding:8px; border-radius:10px;">
-                <span class="material-icons-round" style="color: white; margin:0;">verified</span>
+        <div style="padding: 10px 0 30px 0; display:flex; align-items:center; gap:10px;">
+            <div style="background:var(--accent); padding:6px; border-radius:8px;">
+                <span class="material-icons-round" style="color: white; margin:0; font-size: 24px;">description</span>
             </div>
-            <h2 style="color: white; margin:0; font-size: 20px;">SGC PRO</h2>
+            <h2 style="color: white; margin:0; font-size: 18px;">SGC PLATINUM</h2>
         </div>
         
         <nav style="flex:1">
             <button class="nav-link" id="nav-dash" onclick="cambiarVista('sec-dash', this)">
-                <span class="material-icons-round">space_dashboard</span> Dashboard
+                <span class="material-icons-round">dashboard</span> Inicio
             </button>
             <button class="nav-link" id="nav-crear" onclick="cambiarVista('sec-crear', this)">
-                <span class="material-icons-round">note_add</span> Nueva Solicitud
+                <span class="material-icons-round">add_circle</span> Nueva Solicitud
             </button>
             <button class="nav-link" id="nav-hist" onclick="cambiarVista('sec-hist', this)">
-                <span class="material-icons-round">list_alt</span> Historial
+                <span class="material-icons-round">history</span> Mis Solicitudes
             </button>
             <button class="nav-link" id="nav-gest" onclick="cambiarVista('sec-gest', this)">
-                <span class="material-icons-round">rule</span> Gestión SGC
+                <span class="material-icons-round">fact_check</span> Gestión SGC
             </button>
             <button class="nav-link" id="nav-users" onclick="cambiarVista('sec-users', this)">
-                <span class="material-icons-round">manage_accounts</span> Usuarios
+                <span class="material-icons-round">people</span> Usuarios
             </button>
             <button class="nav-link" id="nav-struct" onclick="cambiarVista('sec-struct', this)">
-                <span class="material-icons-round">schema</span> Estructura
+                <span class="material-icons-round">lan</span> Estructura
             </button>
         </nav>
         
-        <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.1);">
-            <p id="curr-name" style="font-weight: 700; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></p>
-            <p id="curr-ger" style="font-size: 11px; color: #94a3b8; margin-top: 4px;"></p>
-            <button onclick="location.reload()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:11px; display: flex; align-items: center; gap: 6px; margin-top: 15px; font-weight: 600;">
-                <span class="material-icons-round" style="font-size:16px;">power_settings_new</span> CERRAR SESIÓN
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+            <p id="curr-name" style="font-weight: 700; font-size: 13px;"></p>
+            <p id="curr-ger" style="font-size: 10px; color: #94a3b8;"></p>
+            <button onclick="location.reload()" style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:10px; display: flex; align-items: center; gap: 5px; margin-top: 12px; font-weight: 700;">
+                <span class="material-icons-round" style="font-size:14px;">logout</span> SALIR
             </button>
         </div>
     </aside>
 
-    <!-- CONTENIDO PRINCIPAL -->
     <main class="main" id="main">
         
-        <!-- DASHBOARD -->
         <section id="sec-dash" class="section">
-            <h2>Panel de Resumen</h2>
+            <h2>Dashboard General</h2>
             <div class="grid-3">
                 <div class="card">
-                    <label>Total Global</label>
-                    <h1 id="count-total" style="font-size: 36px; font-weight: 800;">0</h1>
+                    <label>Total Sistema</label>
+                    <h1 id="count-total">0</h1>
                 </div>
                 <div class="card">
-                    <label>Pendientes</label>
-                    <h1 id="count-pend" style="font-size: 36px; font-weight: 800; color: var(--warning);">0</h1>
+                    <label>Pendientes de Revisión</label>
+                    <h1 id="count-pend" style="color: var(--warning);">0</h1>
                 </div>
                 <div class="card">
-                    <label>Mis Solicitudes</label>
-                    <h1 id="count-user" style="font-size: 36px; font-weight: 800; color: var(--accent);">0</h1>
+                    <label>Mis Documentos</label>
+                    <h1 id="count-user" style="color: var(--accent);">0</h1>
                 </div>
             </div>
         </section>
 
-        <!-- FORMULARIO DE SOLICITUD -->
         <section id="sec-crear" class="section">
-            <div class="card">
-                <h2>Nueva Solicitud</h2>
+            <div class="card" style="max-width: 800px; margin: 0 auto;">
+                <h2>Registrar Solicitud</h2>
                 
-                <label>Tipo de Acción</label>
-                <select id="sol-accion" onchange="toggleCamposDocumento()">
-                    <option value="Creación">Creación (Nuevo Documento)</option>
-                    <option value="Modificación">Modificación (Cambio en documento existente)</option>
-                    <option value="Inactivación">Inactivación (Eliminar documento del sistema)</option>
-                </select>
+                <div class="grid-2">
+                    <div>
+                        <label>Tipo de Acción</label>
+                        <select id="sol-accion" onchange="toggleForm()">
+                            <option value="Creación">Creación</option>
+                            <option value="Modificación">Modificación</option>
+                            <option value="Inactivación">Inactivación</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Nombre del Documento</label>
+                        <input type="text" id="sol-tit" placeholder="Nombre completo">
+                    </div>
+                </div>
 
-                <label>Nombre del Documento</label>
-                <input type="text" id="sol-tit" placeholder="Ej: Procedimiento de Compras Nacionales">
-
-                <!-- Campos Condicionales para Modificación/Inactivación -->
-                <div id="campos-documento" class="field-conditional">
+                <div id="campos-extra" class="field-conditional">
                     <div class="grid-3">
                         <div>
                             <label>Código Actual</label>
-                            <input type="text" id="sol-cod" placeholder="Ej: ABC-PR-01">
+                            <input type="text" id="sol-cod">
                         </div>
                         <div>
-                            <label>Versión Actual</label>
-                            <input type="text" id="sol-ver" placeholder="01">
+                            <label>Versión</label>
+                            <input type="text" id="sol-ver">
                         </div>
                         <div>
-                            <label>Fecha Última Rev.</label>
+                            <label>Última Fecha</label>
                             <input type="date" id="sol-fec-u">
                         </div>
                     </div>
@@ -202,28 +201,33 @@
                     </div>
                 </div>
 
-                <label>Motivo de la Solicitud</label>
-                <textarea id="sol-motivo" rows="4" placeholder="Describa brevemente por qué solicita esta acción..."></textarea>
+                <label>Justificación del Cambio</label>
+                <textarea id="sol-motivo" rows="3"></textarea>
+
+                <label>Adjuntar Documento Relacionado</label>
+                <div class="file-upload-zone" onclick="document.getElementById('file-input').click()">
+                    <span class="material-icons-round">cloud_upload</span>
+                    <p style="font-size: 12px; margin-top: 8px;">Haz clic para seleccionar archivos de tu PC</p>
+                    <input type="file" id="file-input" hidden multiple onchange="handleFiles(this.files)">
+                </div>
+                <div id="file-list"></div>
 
                 <button class="btn btn-primary" id="btnEnviar" style="width:100%">
-                    <span class="material-icons-round">send</span> ENVIAR SOLICITUD
+                    <span class="material-icons-round">send</span> ENVIAR PARA REVISIÓN
                 </button>
             </div>
         </section>
 
-        <!-- HISTORIAL -->
         <section id="sec-hist" class="section">
-            <div style="display:flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
-                <h2>Historial de Solicitudes</h2>
-                <div id="hist-badge" style="background: #e0f2fe; color: #0369a1; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;"></div>
-            </div>
+            <h2>Mi Historial de Solicitudes</h2>
             <div class="card" style="padding:0; overflow: hidden;">
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Documento / Código</th>
+                            <th>Fecha</th>
+                            <th>Documento</th>
                             <th>Acción</th>
+                            <th>Adjuntos</th>
                             <th>Estado</th>
                         </tr>
                     </thead>
@@ -232,9 +236,8 @@
             </div>
         </section>
 
-        <!-- GESTIÓN SGC (ADMIN) -->
         <section id="sec-gest" class="section">
-            <h2>Bandeja de Revisión SGC</h2>
+            <h2>Bandeja de Aprobación</h2>
             <div class="card" style="padding:0;">
                 <table>
                     <thead>
@@ -242,7 +245,8 @@
                             <th>Solicitante</th>
                             <th>Documento</th>
                             <th>Acción</th>
-                            <th>Acciones</th>
+                            <th>Archivos</th>
+                            <th>Decisión</th>
                         </tr>
                     </thead>
                     <tbody id="tb-gest"></tbody>
@@ -250,56 +254,53 @@
             </div>
         </section>
 
-        <!-- CONFIGURACIÓN DE USUARIOS -->
         <section id="sec-users" class="section">
-            <h2>Gestión de Usuarios</h2>
             <div class="grid-2">
                 <div class="card">
+                    <h2>Nuevo Usuario</h2>
                     <label>Nombre Completo</label>
                     <input type="text" id="u-nom">
                     <label>ID Usuario / Login</label>
                     <input type="text" id="u-id">
                     <label>Contraseña</label>
-                    <input type="text" id="u-pass" value="123">
-                    <label>Gerencia Perteneciente</label>
+                    <input type="password" id="u-pass">
+                    <label>Gerencia</label>
                     <select id="u-ger-sel"></select>
                     
-                    <label>Accesos Permitidos</label>
-                    <div style="background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
-                        <div style="margin-bottom:10px;"><input type="checkbox" id="p_ver_gerencia" style="width:auto; margin:0 10px 0 0;"> Ver solicitudes de mi gerencia</div>
-                        <div style="margin-bottom:10px;"><input type="checkbox" id="p_gest_sgc" style="width:auto; margin:0 10px 0 0;"> Bandeja de Gestión SGC</div>
-                        <div><input type="checkbox" id="p_admin_full" style="width:auto; margin:0 10px 0 0;"> Administrador Maestro</div>
+                    <label>Privilegios de Acceso</label>
+                    <div style="background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid var(--border); font-size: 12px;">
+                        <div style="margin-bottom:8px;"><input type="checkbox" id="p_ver_ger"> Ver solicitudes de mi gerencia</div>
+                        <div style="margin-bottom:8px;"><input type="checkbox" id="p_gest"> Gestionar Bandeja SGC</div>
+                        <div style="margin-bottom:8px;"><input type="checkbox" id="p_admin"> Administrador Maestro</div>
                     </div>
-                    
-                    <button class="btn btn-primary" id="btnSaveUser" style="width:100%; margin-top:20px;">GUARDAR USUARIO</button>
+                    <button class="btn btn-primary" id="btnSaveUser" style="width:100%; margin-top:15px;">CREAR USUARIO</button>
                 </div>
                 <div class="card" style="padding:0">
                     <table>
-                        <thead><tr><th>User</th><th>Gerencia</th><th>Permisos</th></tr></thead>
+                        <thead><tr><th>Usuario</th><th>Gerencia</th><th>Rol</th><th>Acción</th></tr></thead>
                         <tbody id="tb-users"></tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- ESTRUCTURA ORGANIZACIONAL -->
         <section id="sec-struct" class="section">
             <div class="grid-2">
                 <div class="card">
-                    <h3>Gerencias</h3>
-                    <div style="display:flex; gap:10px; margin:15px 0;">
-                        <input type="text" id="g-nom" style="margin:0;" placeholder="Nueva Gerencia">
-                        <button class="btn btn-success" id="btnSaveGer">+</button>
+                    <h2>Gerencias</h2>
+                    <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                        <input type="text" id="g-nom" style="margin:0;" placeholder="Nombre Gerencia">
+                        <button class="btn btn-success" id="btnSaveGer">AÑADIR</button>
                     </div>
-                    <div id="list-ger" style="display:grid; gap:8px;"></div>
+                    <div id="list-ger"></div>
                 </div>
                 <div class="card">
-                    <h3>Departamentos</h3>
-                    <div style="display:flex; gap:10px; margin:15px 0;">
-                        <input type="text" id="d-nom" style="margin:0;" placeholder="Nuevo Depto">
-                        <button class="btn btn-success" id="btnSaveDep">+</button>
+                    <h2>Departamentos</h2>
+                    <div style="display:flex; gap:10px; margin-bottom: 15px;">
+                        <input type="text" id="d-nom" style="margin:0;" placeholder="Nombre Depto">
+                        <button class="btn btn-success" id="btnSaveDep">AÑADIR</button>
                     </div>
-                    <div id="list-dep" style="display:grid; gap:8px;"></div>
+                    <div id="list-dep"></div>
                 </div>
             </div>
         </section>
@@ -310,31 +311,14 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, query, where, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // CONFIGURACIÓN ROBUSTA DE FIREBASE
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "sgc-pro" };
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "demo", projectId: "sgc-pro-v2" };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sgc-platinum-final';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sgc-platinum-final-fixed';
 
         let currentUser = null;
-
-        // INICIALIZACIÓN
-        window.onload = async () => { 
-            await signInAnonymously(auth);
-            console.log("Firebase Conectado");
-        };
-
-        // LÓGICA DE CAMPOS DINÁMICOS
-        window.toggleCamposDocumento = () => {
-            const accion = document.getElementById('sol-accion').value;
-            const contenedor = document.getElementById('campos-documento');
-            if (accion === 'Modificación' || accion === 'Inactivación') {
-                contenedor.classList.add('show');
-            } else {
-                contenedor.classList.remove('show');
-            }
-        };
+        let selectedFiles = [];
 
         // NAVEGACIÓN
         window.cambiarVista = (id, btn) => {
@@ -344,90 +328,98 @@
             if(btn) btn.classList.add('active');
         };
 
+        window.toggleForm = () => {
+            const acc = document.getElementById('sol-accion').value;
+            const extra = document.getElementById('campos-extra');
+            (acc !== 'Creación') ? extra.classList.add('show') : extra.classList.remove('show');
+        };
+
+        window.handleFiles = (files) => {
+            selectedFiles = Array.from(files).map(f => ({ name: f.name, size: (f.size / 1024).toFixed(1) + 'KB', type: f.type }));
+            const list = document.getElementById('file-list');
+            list.innerHTML = selectedFiles.map(f => `<div class="file-item"><span>${f.name}</span> <small>${f.size}</small></div>`).join('');
+        };
+
         // LOGIN
-        document.getElementById('btnLogin').onclick = () => {
+        document.getElementById('btnLogin').onclick = async () => {
             const u = document.getElementById('login-user').value.toLowerCase().trim();
             const p = document.getElementById('login-pass').value;
 
             if(u === 'admin' && p === '1130') {
-                currentUser = { nombre: "Administrador Maestro", usuario: "admin", gerencia: "SGC", p_admin_full: true, p_gest_sgc: true };
+                currentUser = { nombre: "Soporte Maestro", usuario: "admin", gerencia: "TI / Calidad", p_admin: true, p_gest: true };
                 setupUI(currentUser);
                 return;
             }
 
-            // Buscar en Firebase Usuarios
+            // Consulta Firestore para usuarios
             const q = query(collection(db, "artifacts", appId, "public", "data", "Usuarios"), where("usuario", "==", u), where("pass", "==", p));
             onSnapshot(q, s => {
                 if(!s.empty) {
                     currentUser = s.docs[0].data();
                     setupUI(currentUser);
                 } else {
-                    alert("Usuario o contraseña incorrectos");
+                    alert("Credenciales incorrectas");
                 }
-            }, err => alert("Error de conexión: " + err.message));
+            });
         };
 
-        function setupUI(user) {
+        async function setupUI(user) {
+            await signInAnonymously(auth);
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('sidebar').style.display = 'flex';
             document.getElementById('main').style.display = 'block';
             document.getElementById('curr-name').innerText = user.nombre;
             document.getElementById('curr-ger').innerText = user.gerencia;
 
-            // Configurar permisos visibles
-            document.getElementById('nav-dash').classList.add('visible');
-            document.getElementById('nav-crear').classList.add('visible');
-            document.getElementById('nav-hist').classList.add('visible');
+            const links = {
+                'nav-dash': true, 'nav-crear': true, 'nav-hist': true,
+                'nav-gest': user.p_gest || user.p_admin,
+                'nav-users': user.p_admin,
+                'nav-struct': user.p_admin
+            };
 
-            if(user.p_gest_sgc || user.p_admin_full) document.getElementById('nav-gest').classList.add('visible');
-            if(user.p_admin_full) {
-                document.getElementById('nav-users').classList.add('visible');
-                document.getElementById('nav-struct').classList.add('visible');
-            }
-
+            for(let id in links) if(links[id]) document.getElementById(id).classList.add('visible');
             cambiarVista('sec-dash', document.getElementById('nav-dash'));
-            syncCollections();
+            syncData();
         }
 
-        // SINCRONIZACIÓN DE DATOS
-        function syncCollections() {
-            const path = (c) => collection(db, "artifacts", appId, "public", "data", c);
+        function syncData() {
+            const ref = (c) => collection(db, "artifacts", appId, "public", "data", c);
 
-            // 1. Gerencias y Departamentos
-            onSnapshot(path("Gerencias"), s => {
-                let opts = ""; let list = "";
+            // Gerencias
+            onSnapshot(ref("Gerencias"), s => {
+                let html = ""; let opts = "";
                 s.forEach(d => {
-                    const n = d.data().nombre;
-                    opts += `<option value="${n}">${n}</option>`;
-                    list += `<div style="padding:10px; background:#f1f5f9; border-radius:8px; display:flex; justify-content:space-between;">${n} <span class="material-icons-round" style="font-size:16px; color:var(--danger); cursor:pointer;" onclick="eliminarDoc('Gerencias','${d.id}')">delete</span></div>`;
+                    html += `<div style="padding:10px; background:white; border:1px solid var(--border); border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between;">${d.data().nombre} <button onclick="deleteItem('Gerencias','${d.id}')" style="color:red; border:none; background:none; cursor:pointer;"><span class="material-icons-round" style="font-size:16px;">delete</span></button></div>`;
+                    opts += `<option value="${d.data().nombre}">${d.data().nombre}</option>`;
                 });
+                document.getElementById('list-ger').innerHTML = html;
                 document.getElementById('sol-ger').innerHTML = opts;
                 document.getElementById('u-ger-sel').innerHTML = opts;
-                document.getElementById('list-ger').innerHTML = list;
             });
 
-            onSnapshot(path("Departamentos"), s => {
-                let opts = ""; let list = "";
+            // Departamentos
+            onSnapshot(ref("Departamentos"), s => {
+                let html = ""; let opts = "";
                 s.forEach(d => {
-                    const n = d.data().nombre;
-                    opts += `<option value="${n}">${n}</option>`;
-                    list += `<div style="padding:10px; background:#f1f5f9; border-radius:8px; display:flex; justify-content:space-between;">${n} <span class="material-icons-round" style="font-size:16px; color:var(--danger); cursor:pointer;" onclick="eliminarDoc('Departamentos','${d.id}')">delete</span></div>`;
+                    html += `<div style="padding:10px; background:white; border:1px solid var(--border); border-radius:8px; margin-bottom:5px; display:flex; justify-content:space-between;">${d.data().nombre} <button onclick="deleteItem('Departamentos','${d.id}')" style="color:red; border:none; background:none; cursor:pointer;"><span class="material-icons-round" style="font-size:16px;">delete</span></button></div>`;
+                    opts += `<option value="${d.data().nombre}">${d.data().nombre}</option>`;
                 });
+                document.getElementById('list-dep').innerHTML = html;
                 document.getElementById('sol-dep').innerHTML = opts;
-                document.getElementById('list-dep').innerHTML = list;
             });
 
-            // 2. Usuarios
-            onSnapshot(path("Usuarios"), s => {
+            // Usuarios
+            onSnapshot(ref("Usuarios"), s => {
                 const tb = document.getElementById('tb-users'); tb.innerHTML = "";
                 s.forEach(d => {
                     const u = d.data();
-                    tb.innerHTML += `<tr><td>${u.usuario}</td><td>${u.gerencia}</td><td><small>${u.p_admin_full?'ADMIN':''} ${u.p_gest_sgc?'SGC':''}</small></td></tr>`;
+                    tb.innerHTML += `<tr><td>${u.nombre}<br><small>${u.usuario}</small></td><td>${u.gerencia}</td><td>${u.p_admin?'Admin':(u.p_gest?'Gestor':'Usuario')}</td><td><button onclick="deleteItem('Usuarios','${d.id}')" class="btn btn-danger" style="padding:5px;"><span class="material-icons-round" style="font-size:14px;">delete</span></button></td></tr>`;
                 });
             });
 
-            // 3. Solicitudes (Lógica de filtrado de Firebase)
-            onSnapshot(path("Solicitudes"), s => {
+            // Solicitudes
+            onSnapshot(ref("Solicitudes"), s => {
                 const th = document.getElementById('tb-hist'); th.innerHTML = "";
                 const tg = document.getElementById('tb-gest'); tg.innerHTML = "";
                 let counts = { total: 0, pend: 0, user: 0 };
@@ -437,28 +429,33 @@
                     counts.total++;
                     if(sol.estado === 'Pendiente') counts.pend++;
 
-                    // Reglas de visibilidad del historial
-                    let visible = false;
-                    if(currentUser.p_admin_full) visible = true;
-                    else if(currentUser.p_ver_gerencia && sol.gerencia === currentUser.gerencia) visible = true;
-                    else if(sol.user_id === currentUser.usuario) { visible = true; counts.user++; }
+                    const fileCount = sol.archivos ? sol.archivos.length : 0;
+                    const date = sol.fecha ? new Date(sol.fecha).toLocaleDateString() : 'N/A';
 
-                    if(visible) {
+                    // Historial Personal / Gerencia
+                    let verHist = (sol.user_id === currentUser.usuario || currentUser.p_admin || (currentUser.p_ver_ger && sol.gerencia === currentUser.gerencia));
+                    if(verHist) {
+                        if(sol.user_id === currentUser.usuario) counts.user++;
                         th.innerHTML += `<tr>
-                            <td>#${d.id.substring(0,4).toUpperCase()}</td>
-                            <td><b>${sol.titulo}</b><br><small style="color:var(--accent)">${sol.codigo || 'S/C'}</small></td>
+                            <td>${date}</td>
+                            <td><b>${sol.titulo}</b><br><small>${sol.codigo || 'CREACIÓN'}</small></td>
                             <td>${sol.accion}</td>
+                            <td>${fileCount} arch.</td>
                             <td><span class="badge status-${sol.estado.toLowerCase()}">${sol.estado}</span></td>
                         </tr>`;
                     }
 
-                    // Bandeja SGC
-                    if((currentUser.p_gest_sgc || currentUser.p_admin_full) && sol.estado === 'Pendiente') {
+                    // Gestión SGC
+                    if((currentUser.p_gest || currentUser.p_admin) && sol.estado === 'Pendiente') {
                         tg.innerHTML += `<tr>
                             <td>${sol.solicitante}</td>
                             <td>${sol.titulo}</td>
                             <td>${sol.accion}</td>
-                            <td><button class="btn btn-primary" style="padding:6px 12px; font-size:10px;" onclick="gestionarSolicitud('${d.id}')">REVISAR</button></td>
+                            <td>${fileCount} items</td>
+                            <td style="display:flex; gap:5px;">
+                                <button class="btn btn-success" style="padding:6px;" onclick="updateStatus('${d.id}','Aprobado')">✔</button>
+                                <button class="btn btn-danger" style="padding:6px;" onclick="updateStatus('${d.id}','Rechazado')">✖</button>
+                            </td>
                         </tr>`;
                     }
                 });
@@ -466,47 +463,35 @@
                 document.getElementById('count-total').innerText = counts.total;
                 document.getElementById('count-pend').innerText = counts.pend;
                 document.getElementById('count-user').innerText = counts.user;
-                document.getElementById('hist-badge').innerText = currentUser.p_admin_full ? "MODO AUDITOR" : `GERENCIA: ${currentUser.gerencia}`;
             });
         }
 
-        // ACCIONES
+        // ACCIONES FIREBASE
         document.getElementById('btnEnviar').onclick = async () => {
             const btn = document.getElementById('btnEnviar');
-            btn.disabled = true; btn.innerText = "ENVIANDO...";
+            btn.disabled = true; btn.innerText = "PROCESANDO...";
+            
+            const docData = {
+                titulo: document.getElementById('sol-tit').value,
+                accion: document.getElementById('sol-accion').value,
+                codigo: document.getElementById('sol-cod').value,
+                version: document.getElementById('sol-ver').value,
+                fecha_u: document.getElementById('sol-fec-u').value,
+                gerencia: document.getElementById('sol-ger').value,
+                departamento: document.getElementById('sol-dep').value,
+                motivo: document.getElementById('sol-motivo').value,
+                solicitante: currentUser.nombre,
+                user_id: currentUser.usuario,
+                archivos: selectedFiles,
+                fecha: new Date().toISOString(),
+                estado: "Pendiente"
+            };
 
-            try {
-                const data = {
-                    titulo: document.getElementById('sol-tit').value,
-                    accion: document.getElementById('sol-accion').value,
-                    codigo: document.getElementById('sol-cod').value,
-                    version: document.getElementById('sol-ver').value,
-                    fecha_u: document.getElementById('sol-fec-u').value,
-                    gerencia: document.getElementById('sol-ger').value,
-                    departamento: document.getElementById('sol-dep').value,
-                    motivo: document.getElementById('sol-motivo').value,
-                    solicitante: currentUser.nombre,
-                    user_id: currentUser.usuario,
-                    fecha: new Date().toISOString(),
-                    estado: "Pendiente"
-                };
-                await addDoc(collection(db, "artifacts", appId, "public", "data", "Solicitudes"), data);
-                alert("Solicitud registrada correctamente.");
-                cambiarVista('sec-hist', document.getElementById('nav-hist'));
-            } catch(e) { alert("Error al enviar: " + e.message); }
-            finally { btn.disabled = false; btn.innerText = "ENVIAR SOLICITUD"; }
-        };
-
-        window.gestionarSolicitud = async (id) => {
-            if(confirm("¿Desea APROBAR esta solicitud? (Aceptar = Aprobar / Cancelar = No hacer nada)")) {
-                await updateDoc(doc(db, "artifacts", appId, "public", "data", "Solicitudes", id), { estado: "Aprobado" });
-            }
-        };
-
-        window.eliminarDoc = async (coll, id) => {
-            if(confirm("¿Seguro de eliminar este registro?")) {
-                await deleteDoc(doc(db, "artifacts", appId, "public", "data", coll, id));
-            }
+            await addDoc(collection(db, "artifacts", appId, "public", "data", "Solicitudes"), docData);
+            alert("Solicitud enviada correctamente.");
+            btn.disabled = false; btn.innerText = "ENVIAR PARA REVISIÓN";
+            document.getElementById('file-list').innerHTML = ""; selectedFiles = [];
+            cambiarVista('sec-hist', document.getElementById('nav-hist'));
         };
 
         document.getElementById('btnSaveUser').onclick = async () => {
@@ -516,22 +501,34 @@
                 nombre: document.getElementById('u-nom').value,
                 pass: document.getElementById('u-pass').value,
                 gerencia: document.getElementById('u-ger-sel').value,
-                p_ver_gerencia: document.getElementById('p_ver_gerencia').checked,
-                p_gest_sgc: document.getElementById('p_gest_sgc').checked,
-                p_admin_full: document.getElementById('p_admin_full').checked
+                p_ver_ger: document.getElementById('p_ver_ger').checked,
+                p_gest: document.getElementById('p_gest').checked,
+                p_admin: document.getElementById('p_admin').checked
             };
             await setDoc(doc(db, "artifacts", appId, "public", "data", "Usuarios", uid), data);
-            alert("Usuario creado/actualizado.");
+            alert("Usuario registrado.");
         };
 
         document.getElementById('btnSaveGer').onclick = async () => {
-            await addDoc(collection(db, "artifacts", appId, "public", "data", "Gerencias"), { nombre: document.getElementById('g-nom').value });
+            const n = document.getElementById('g-nom').value;
+            if(n) await addDoc(collection(db, "artifacts", appId, "public", "data", "Gerencias"), { nombre: n });
             document.getElementById('g-nom').value = "";
         };
 
         document.getElementById('btnSaveDep').onclick = async () => {
-            await addDoc(collection(db, "artifacts", appId, "public", "data", "Departamentos"), { nombre: document.getElementById('d-nom').value });
+            const n = document.getElementById('d-nom').value;
+            if(n) await addDoc(collection(db, "artifacts", appId, "public", "data", "Departamentos"), { nombre: n });
             document.getElementById('d-nom').value = "";
+        };
+
+        window.updateStatus = async (id, status) => {
+            await updateDoc(doc(db, "artifacts", appId, "public", "data", "Solicitudes", id), { estado: status });
+        };
+
+        window.deleteItem = async (coll, id) => {
+            if(confirm("¿Seguro que desea eliminarlo?")) {
+                await deleteDoc(doc(db, "artifacts", appId, "public", "data", coll, id));
+            }
         };
 
     </script>
